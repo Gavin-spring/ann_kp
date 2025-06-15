@@ -1,0 +1,18 @@
+# Deperated files
+misc/
+
+# test data
+*.txt
+
+# Python Caches
+__pycache__/
+
+# Generated output files
+plots/
+
+# VSCode specific
+.vscode/
+
+# Virtual environment
+venv/
+*.env
