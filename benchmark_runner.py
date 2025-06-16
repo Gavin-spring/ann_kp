@@ -96,8 +96,7 @@ def plot_results(df):
     plt.savefig(output_path)
     print(f"Plot successfully saved to {output_path}")
     
-    plt.show()
-
+    plt.close()
 
 if __name__ == "__main__":
     results_df = run_benchmarks()

@@ -1,4 +1,4 @@
-# knapsack.py
+# algorithms.py
 # -*- coding: utf-8 -*-
 
 

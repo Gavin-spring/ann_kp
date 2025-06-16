@@ -10,7 +10,7 @@ First, you need to create a consistent set of test problems. Open your terminal 
 python generate_test_suite.py
 ```
 
-This command will create the test_cases/ directory and fill it with .txt files, each representing a unique problem instance.
+This command will create the test_cases/ directory and fill it with .csv files, each representing a unique problem instance.
 
 ## 2. Run the Benchmark
 
