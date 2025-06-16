@@ -1,20 +1,26 @@
 # generate_test_suite.py
+# -*- coding: utf-8 -*-
+
+
+'''
+This script generates a suite of knapsack problem instances for benchmarking algorithms.
+It creates a series of CSV files in the specified directory, each containing a unique instance.
+'''
 
 import os
 import generator as gen
+import config as cfg
 
-# --- Configuration for Test Suite ---
-TEST_SUITE_DIR = "test_cases"
+
+# --- Test suite Configuration ---
+TEST_SUITE_DIR = cfg.TEST_SUITE_DIR
 CORRELATION_TYPE = 'uncorrelated'
+N_RANGE = cfg.N_RANGE
+# Item properties
+MAX_WEIGHT = cfg.MAX_WEIGHT
+MAX_VALUE = cfg.MAX_VALUE
+CAPACITY_RATIO = cfg.CAPACITY_RATIO
 
-# Define the problem sizes
-# Format: (start, stop, step)
-N_RANGE = (10, 501, 10) 
-
-# Other parameters
-MAX_WEIGHT = 100
-MAX_VALUE = 100
-CAPACITY_RATIO = 0.5
 
 def create_suite():
     """Generates and saves a suite of knapsack problem instances."""

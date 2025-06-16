@@ -1,4 +1,5 @@
 # benchmark_runner.py
+# -*- coding: utf-8 -*-
 
 import os
 import time
@@ -6,19 +7,16 @@ import glob
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
-import algorithms as alg
 import generator as gen
+import config as cfg
+
 
 # --- Benchmark Configuration ---
-TEST_SUITE_DIR = "test_cases"
-PLOT_DIR = "plots"
-
+TEST_SUITE_DIR = cfg.TEST_SUITE_DIR
+PLOT_DIR = cfg.PLOT_DIR
+RESULTS_DIR = cfg.RESULTS_DIR
 # Algorithms to test
-ALGORITHMS_TO_TEST = {
-    "2D DP": alg.knapsack_01_2d,
-    "1D DP (Optimized)": alg.knapsack_01_1d
-}
+ALGORITHMS_TO_TEST = cfg.ALGORITHMS_TO_TEST
 
 
 
@@ -52,6 +50,7 @@ def run_benchmarks():
             end_time = time.perf_counter()
             
             execution_time = end_time - start_time
+            # TODO: delete after debugging
             print(f"  -> {name}: {execution_time:.6f} seconds")
             
             # Store the result
@@ -102,6 +101,12 @@ def plot_results(df):
 
 if __name__ == "__main__":
     results_df = run_benchmarks()
-    if results_df is not None:
+    if results_df is not None and not results_df.empty:
+        # Save results to CSV
+        os.makedirs(RESULTS_DIR, exist_ok=True)
+        results_filepath = os.path.join(RESULTS_DIR, "benchmark_results.csv")
+        results_df.to_csv(results_filepath, index=False)
+        print(f"\n--- Benchmark results saved to '{results_filepath}' ---")
+        # Plot the results
         plot_results(results_df)
-        print("\n--- Benchmark Complete. Plot saved to 'benchmark_comparison.png' ---")
+        print(f"\n--- Benchmark Complete. Plot saved in '{PLOT_DIR}' directory. ---")
