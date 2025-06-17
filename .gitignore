@@ -9,6 +9,7 @@ __pycache__/
 
 # Generated output files
 # plots/
+*.log
 
 # VSCode specific
 .vscode/

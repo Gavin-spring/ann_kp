@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import generator as gen
 import config as cfg
+import argparse
 from logger_config import setup_logger
 import logging
 
@@ -24,9 +25,11 @@ ALGORITHMS_TO_TEST = cfg.ALGORITHMS_TO_TEST
 BASELINE_ALGORITHM_FUNCTION = cfg.BASELINE_ALGORITHM
 
 
-def run_benchmarks():
+def run_benchmarks(limit=None):
     """
     Loads instances, runs all algorithms, and collects performance data.
+    Args:
+        limit (int, optional): The maximum number of instances to run. Defaults to None (run all).
     Returns:
         - A DataFrame for execution times.
         - A DataFrame for solution quality (MSE).
@@ -37,6 +40,14 @@ def run_benchmarks():
         logger.error(f"No test cases found in '{TEST_SUITE_DIR}'.")
         logger.warning("Please run 'generate_test_suite.py' first.")
         return None, None, None
+
+    # Sort files by the number of items 'n' to ensure we test the smallest instances first
+    sorted_files = sorted(test_files, key=lambda p: int(p.split('_n')[1].split('_')[0]))
+
+    # If a limit is provided, slice the list of files
+    if limit is not None and limit > 0:
+        logger.info(f"--- Running in limited mode. Processing only the first {limit} instances. ---")
+        sorted_files = sorted_files[:limit]
 
     # --- Find the string key for the baseline algorithm ---
     baseline_key = None
@@ -50,13 +61,12 @@ def run_benchmarks():
         return None, None, None
     
     logger.info(f"Using '{baseline_key}' as the baseline for quality comparison.")
-
-    logger.info(f"--- Running benchmarks on {len(test_files)} instances ---")
+    logger.info(f"--- Running benchmarks on {len(sorted_files)} instances ---")
 
     time_results = []
     quality_results = []
 
-    for filepath in sorted(test_files, key=lambda p: int(p.split('_n')[1].split('_')[0])):
+    for filepath in sorted_files:
         n_items = int(os.path.basename(filepath).split('_n')[1].split('_')[0])
         logger.info(f"Processing instance: {os.path.basename(filepath)} (n={n_items})")
         weights, values, capacity = gen.load_instance_from_file(filepath)
@@ -161,10 +171,17 @@ def plot_quality_results(df, baseline_key):
 
 
 if __name__ == "__main__":
+    # --- Command-Line Argument Parsing ---
+    parser = argparse.ArgumentParser(description="Run benchmark tests for knapsack algorithms.")
+    parser.add_argument('--limit', type=int, default=None,
+                        help='Limit the number of test instances to run (for quick testing).')
+    args = parser.parse_args()
+
+    # --- Directory and Benchmark Execution ---
     os.makedirs(RESULTS_DIR, exist_ok=True)
     os.makedirs(PLOT_DIR, exist_ok=True)
 
-    time_df, quality_df, baseline_key = run_benchmarks()
+    time_df, quality_df, baseline_key = run_benchmarks(limit=args.limit)
 
     if time_df is not None and not time_df.empty:
         time_filepath = os.path.join(RESULTS_DIR, "benchmark_time_results.csv")
