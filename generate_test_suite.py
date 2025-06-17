@@ -10,6 +10,8 @@ It creates a series of CSV files in the specified directory, each containing a u
 import os
 import generator as gen
 import config as cfg
+import logging
+from logger_config import setup_logger
 
 
 # --- Test suite Configuration ---
@@ -21,16 +23,19 @@ MAX_WEIGHT = cfg.MAX_WEIGHT
 MAX_VALUE = cfg.MAX_VALUE
 CAPACITY_RATIO = cfg.CAPACITY_RATIO
 
+# Setup logger for this module
+setup_logger('generation')
+logger = logging.getLogger(__name__)
 
 def create_suite():
     """Generates and saves a suite of knapsack problem instances."""
-    print(f"--- Generating Test Suite in '{TEST_SUITE_DIR}' Directory ---")
+    logger.info(f"--- Generating Test Suite in '{TEST_SUITE_DIR}' Directory ---")
     
     # Ensure the target directory exists
     os.makedirs(TEST_SUITE_DIR, exist_ok=True)
 
     for n_items in range(N_RANGE[0], N_RANGE[1], N_RANGE[2]):
-        print(f"\nGenerating instance for n = {n_items}...")
+        logger.info(f"\nGenerating instance for n = {n_items}...")
         
         # Generate the instance
         items, capacity = gen.generate_knapsack_instance(
@@ -47,7 +52,7 @@ def create_suite():
         # Save the instance to the file
         gen.save_instance_to_file(items, capacity, filename)
         
-    print("\n--- Test Suite Generation Complete ---")
+    logger.info("\n--- Test Suite Generation Complete ---")
 
 if __name__ == "__main__":
     create_suite()

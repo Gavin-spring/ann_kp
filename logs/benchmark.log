@@ -1,0 +1,511 @@
+2025-06-17 15:13:41,412 - KnapsackBenchmark - INFO - generate_test_suite.py:28 - --- Generating Test Suite in 'd:\mycode\UOBCODE\semester2\OR\Mine\test_cases' Directory ---
+2025-06-17 15:13:41,413 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 10...
+2025-06-17 15:13:41,413 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n10_uncorrelated.csv
+2025-06-17 15:13:41,413 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 20...
+2025-06-17 15:13:41,414 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n20_uncorrelated.csv
+2025-06-17 15:13:41,414 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 30...
+2025-06-17 15:13:41,415 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n30_uncorrelated.csv
+2025-06-17 15:13:41,415 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 40...
+2025-06-17 15:13:41,415 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n40_uncorrelated.csv
+2025-06-17 15:13:41,415 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 50...
+2025-06-17 15:13:41,416 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n50_uncorrelated.csv
+2025-06-17 15:13:41,416 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 60...
+2025-06-17 15:13:41,416 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n60_uncorrelated.csv
+2025-06-17 15:13:41,417 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 70...
+2025-06-17 15:13:41,417 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n70_uncorrelated.csv
+2025-06-17 15:13:41,417 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 80...
+2025-06-17 15:13:41,418 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n80_uncorrelated.csv
+2025-06-17 15:13:41,418 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 90...
+2025-06-17 15:13:41,418 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n90_uncorrelated.csv
+2025-06-17 15:13:41,418 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 100...
+2025-06-17 15:13:41,419 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n100_uncorrelated.csv
+2025-06-17 15:13:41,419 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 110...
+2025-06-17 15:13:41,420 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n110_uncorrelated.csv
+2025-06-17 15:13:41,420 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 120...
+2025-06-17 15:13:41,420 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n120_uncorrelated.csv
+2025-06-17 15:13:41,421 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 130...
+2025-06-17 15:13:41,422 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n130_uncorrelated.csv
+2025-06-17 15:13:41,422 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 140...
+2025-06-17 15:13:41,423 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n140_uncorrelated.csv
+2025-06-17 15:13:41,423 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 150...
+2025-06-17 15:13:41,423 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n150_uncorrelated.csv
+2025-06-17 15:13:41,423 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 160...
+2025-06-17 15:13:41,424 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n160_uncorrelated.csv
+2025-06-17 15:13:41,424 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 170...
+2025-06-17 15:13:41,424 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n170_uncorrelated.csv
+2025-06-17 15:13:41,424 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 180...
+2025-06-17 15:13:41,425 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n180_uncorrelated.csv
+2025-06-17 15:13:41,425 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 190...
+2025-06-17 15:13:41,426 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n190_uncorrelated.csv
+2025-06-17 15:13:41,426 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 200...
+2025-06-17 15:13:41,427 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n200_uncorrelated.csv
+2025-06-17 15:13:41,427 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 210...
+2025-06-17 15:13:41,428 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n210_uncorrelated.csv
+2025-06-17 15:13:41,428 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 220...
+2025-06-17 15:13:41,430 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n220_uncorrelated.csv
+2025-06-17 15:13:41,431 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 230...
+2025-06-17 15:13:41,432 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n230_uncorrelated.csv
+2025-06-17 15:13:41,433 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 240...
+2025-06-17 15:13:41,434 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n240_uncorrelated.csv
+2025-06-17 15:13:41,434 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 250...
+2025-06-17 15:13:41,435 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n250_uncorrelated.csv
+2025-06-17 15:13:41,435 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 260...
+2025-06-17 15:13:41,436 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n260_uncorrelated.csv
+2025-06-17 15:13:41,437 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 270...
+2025-06-17 15:13:41,437 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n270_uncorrelated.csv
+2025-06-17 15:13:41,437 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 280...
+2025-06-17 15:13:41,438 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n280_uncorrelated.csv
+2025-06-17 15:13:41,438 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 290...
+2025-06-17 15:13:41,439 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n290_uncorrelated.csv
+2025-06-17 15:13:41,439 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 300...
+2025-06-17 15:13:41,439 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n300_uncorrelated.csv
+2025-06-17 15:13:41,439 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 310...
+2025-06-17 15:13:41,442 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n310_uncorrelated.csv
+2025-06-17 15:13:41,442 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 320...
+2025-06-17 15:13:41,443 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n320_uncorrelated.csv
+2025-06-17 15:13:41,443 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 330...
+2025-06-17 15:13:41,444 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n330_uncorrelated.csv
+2025-06-17 15:13:41,444 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 340...
+2025-06-17 15:13:41,445 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n340_uncorrelated.csv
+2025-06-17 15:13:41,445 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 350...
+2025-06-17 15:13:41,447 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n350_uncorrelated.csv
+2025-06-17 15:13:41,448 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 360...
+2025-06-17 15:13:41,449 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n360_uncorrelated.csv
+2025-06-17 15:13:41,449 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 370...
+2025-06-17 15:13:41,450 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n370_uncorrelated.csv
+2025-06-17 15:13:41,451 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 380...
+2025-06-17 15:13:41,452 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n380_uncorrelated.csv
+2025-06-17 15:13:41,452 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 390...
+2025-06-17 15:13:41,453 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n390_uncorrelated.csv
+2025-06-17 15:13:41,453 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 400...
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n400_uncorrelated.csv
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 410...
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n410_uncorrelated.csv
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 420...
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n420_uncorrelated.csv
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 430...
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n430_uncorrelated.csv
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 440...
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n440_uncorrelated.csv
+2025-06-17 15:13:41,454 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 450...
+2025-06-17 15:13:41,461 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n450_uncorrelated.csv
+2025-06-17 15:13:41,461 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 460...
+2025-06-17 15:13:41,462 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n460_uncorrelated.csv
+2025-06-17 15:13:41,462 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 470...
+2025-06-17 15:13:41,463 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n470_uncorrelated.csv
+2025-06-17 15:13:41,463 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 480...
+2025-06-17 15:13:41,464 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n480_uncorrelated.csv
+2025-06-17 15:13:41,464 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 490...
+2025-06-17 15:13:41,466 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n490_uncorrelated.csv
+2025-06-17 15:13:41,466 - KnapsackBenchmark - INFO - generate_test_suite.py:34 - 
+Generating instance for n = 500...
+2025-06-17 15:13:41,467 - KnapsackBenchmark - INFO - generator.py:138 - Instance successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n500_uncorrelated.csv
+2025-06-17 15:13:41,467 - KnapsackBenchmark - INFO - generate_test_suite.py:51 - 
+--- Test Suite Generation Complete ---
+2025-06-17 15:15:18,737 - KnapsackBenchmark - INFO - benchmark_runner.py:34 - --- Running Benchmarks on 50 Instances ---
+2025-06-17 15:15:18,737 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n10_uncorrelated.csv (n=10)
+2025-06-17 15:15:18,738 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n10_uncorrelated.csv (10 items).
+2025-06-17 15:15:18,738 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.000371 seconds
+2025-06-17 15:15:18,738 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.000190 seconds
+2025-06-17 15:15:18,738 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000093 seconds
+2025-06-17 15:15:18,819 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.083903 seconds
+2025-06-17 15:15:18,819 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n20_uncorrelated.csv (n=20)
+2025-06-17 15:15:18,819 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n20_uncorrelated.csv (20 items).
+2025-06-17 15:15:18,819 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.002553 seconds
+2025-06-17 15:15:18,819 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.001699 seconds
+2025-06-17 15:15:18,829 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000259 seconds
+2025-06-17 15:15:18,830 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.001301 seconds
+2025-06-17 15:15:18,831 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n30_uncorrelated.csv (n=30)
+2025-06-17 15:15:18,831 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n30_uncorrelated.csv (30 items).
+2025-06-17 15:15:18,835 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.004178 seconds
+2025-06-17 15:15:18,837 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.002056 seconds
+2025-06-17 15:15:18,838 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000304 seconds
+2025-06-17 15:15:18,839 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.000822 seconds
+2025-06-17 15:15:18,839 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n40_uncorrelated.csv (n=40)
+2025-06-17 15:15:18,839 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n40_uncorrelated.csv (40 items).
+2025-06-17 15:15:18,846 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.007283 seconds
+2025-06-17 15:15:18,851 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.004280 seconds
+2025-06-17 15:15:18,851 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000370 seconds
+2025-06-17 15:15:18,853 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.000942 seconds
+2025-06-17 15:15:18,853 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n50_uncorrelated.csv (n=50)
+2025-06-17 15:15:18,853 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n50_uncorrelated.csv (50 items).
+2025-06-17 15:15:18,866 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.012513 seconds
+2025-06-17 15:15:18,866 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.006917 seconds
+2025-06-17 15:15:18,866 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000309 seconds
+2025-06-17 15:15:18,866 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.000902 seconds
+2025-06-17 15:15:18,866 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n60_uncorrelated.csv (n=60)
+2025-06-17 15:15:18,866 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n60_uncorrelated.csv (60 items).
+2025-06-17 15:15:18,889 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.018446 seconds
+2025-06-17 15:15:18,904 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.010344 seconds
+2025-06-17 15:15:18,904 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000367 seconds
+2025-06-17 15:15:18,906 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.000990 seconds
+2025-06-17 15:15:18,906 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n70_uncorrelated.csv (n=70)
+2025-06-17 15:15:18,906 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n70_uncorrelated.csv (70 items).
+2025-06-17 15:15:18,919 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.022045 seconds
+2025-06-17 15:15:18,938 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.012780 seconds
+2025-06-17 15:15:18,938 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001108 seconds
+2025-06-17 15:15:18,938 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.001090 seconds
+2025-06-17 15:15:18,938 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n80_uncorrelated.csv (n=80)
+2025-06-17 15:15:18,938 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n80_uncorrelated.csv (80 items).
+2025-06-17 15:15:18,970 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.026413 seconds
+2025-06-17 15:15:18,987 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.015105 seconds
+2025-06-17 15:15:18,988 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000629 seconds
+2025-06-17 15:15:18,988 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.001224 seconds
+2025-06-17 15:15:18,988 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n90_uncorrelated.csv (n=90)
+2025-06-17 15:15:18,988 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n90_uncorrelated.csv (90 items).
+2025-06-17 15:15:19,022 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.038257 seconds
+2025-06-17 15:15:19,048 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.021179 seconds
+2025-06-17 15:15:19,048 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000653 seconds
+2025-06-17 15:15:19,063 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.013738 seconds
+2025-06-17 15:15:19,063 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n100_uncorrelated.csv (n=100)
+2025-06-17 15:15:19,063 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n100_uncorrelated.csv (100 items).
+2025-06-17 15:15:19,099 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.042149 seconds
+2025-06-17 15:15:19,130 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.025155 seconds
+2025-06-17 15:15:19,130 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000794 seconds
+2025-06-17 15:15:19,130 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.001507 seconds
+2025-06-17 15:15:19,130 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n110_uncorrelated.csv (n=110)
+2025-06-17 15:15:19,130 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n110_uncorrelated.csv (110 items).
+2025-06-17 15:15:19,184 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.049560 seconds
+2025-06-17 15:15:19,215 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.029735 seconds
+2025-06-17 15:15:19,216 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.000682 seconds
+2025-06-17 15:15:19,229 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.012971 seconds
+2025-06-17 15:15:19,230 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n120_uncorrelated.csv (n=120)
+2025-06-17 15:15:19,230 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n120_uncorrelated.csv (120 items).
+2025-06-17 15:15:19,280 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.063988 seconds
+2025-06-17 15:15:19,329 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.035962 seconds
+2025-06-17 15:15:19,329 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001482 seconds
+2025-06-17 15:15:19,329 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.004330 seconds
+2025-06-17 15:15:19,329 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n130_uncorrelated.csv (n=130)
+2025-06-17 15:15:19,329 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n130_uncorrelated.csv (130 items).
+2025-06-17 15:15:19,414 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.080495 seconds
+2025-06-17 15:15:19,464 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.045659 seconds
+2025-06-17 15:15:19,466 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001200 seconds
+2025-06-17 15:15:19,474 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.008378 seconds
+2025-06-17 15:15:19,474 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n140_uncorrelated.csv (n=140)
+2025-06-17 15:15:19,475 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n140_uncorrelated.csv (140 items).
+2025-06-17 15:15:19,563 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.087371 seconds
+2025-06-17 15:15:19,615 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.051591 seconds
+2025-06-17 15:15:19,617 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002199 seconds
+2025-06-17 15:15:19,625 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007908 seconds
+2025-06-17 15:15:19,625 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n150_uncorrelated.csv (n=150)
+2025-06-17 15:15:19,625 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n150_uncorrelated.csv (150 items).
+2025-06-17 15:15:19,730 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.106085 seconds
+2025-06-17 15:15:19,780 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.060526 seconds
+2025-06-17 15:15:19,780 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001104 seconds
+2025-06-17 15:15:19,798 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.004307 seconds
+2025-06-17 15:15:19,798 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n160_uncorrelated.csv (n=160)
+2025-06-17 15:15:19,798 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n160_uncorrelated.csv (160 items).
+2025-06-17 15:15:19,920 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.120877 seconds
+2025-06-17 15:15:19,993 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.073334 seconds
+2025-06-17 15:15:19,996 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002280 seconds
+2025-06-17 15:15:20,004 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007945 seconds
+2025-06-17 15:15:20,005 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n170_uncorrelated.csv (n=170)
+2025-06-17 15:15:20,005 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n170_uncorrelated.csv (170 items).
+2025-06-17 15:15:20,113 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.120459 seconds
+2025-06-17 15:15:20,199 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.073863 seconds
+2025-06-17 15:15:20,201 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001409 seconds
+2025-06-17 15:15:20,206 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.004774 seconds
+2025-06-17 15:15:20,207 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n180_uncorrelated.csv (n=180)
+2025-06-17 15:15:20,207 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n180_uncorrelated.csv (180 items).
+2025-06-17 15:15:20,362 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.159483 seconds
+2025-06-17 15:15:20,455 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.088547 seconds
+2025-06-17 15:15:20,455 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001978 seconds
+2025-06-17 15:15:20,465 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.008035 seconds
+2025-06-17 15:15:20,465 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n190_uncorrelated.csv (n=190)
+2025-06-17 15:15:20,465 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n190_uncorrelated.csv (190 items).
+2025-06-17 15:15:20,630 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.163884 seconds
+2025-06-17 15:15:20,721 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.095390 seconds
+2025-06-17 15:15:20,721 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002349 seconds
+2025-06-17 15:15:20,735 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005199 seconds
+2025-06-17 15:15:20,735 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n200_uncorrelated.csv (n=200)
+2025-06-17 15:15:20,735 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n200_uncorrelated.csv (200 items).
+2025-06-17 15:15:20,923 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.187389 seconds
+2025-06-17 15:15:21,023 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.108912 seconds
+2025-06-17 15:15:21,023 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.001509 seconds
+2025-06-17 15:15:21,039 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005275 seconds
+2025-06-17 15:15:21,039 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n210_uncorrelated.csv (n=210)
+2025-06-17 15:15:21,039 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n210_uncorrelated.csv (210 items).
+2025-06-17 15:15:21,240 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.205904 seconds
+2025-06-17 15:15:21,355 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.116520 seconds
+2025-06-17 15:15:21,367 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003626 seconds
+2025-06-17 15:15:21,372 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.009028 seconds
+2025-06-17 15:15:21,372 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n220_uncorrelated.csv (n=220)
+2025-06-17 15:15:21,372 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n220_uncorrelated.csv (220 items).
+2025-06-17 15:15:21,608 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.238149 seconds
+2025-06-17 15:15:21,756 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.142802 seconds
+2025-06-17 15:15:21,756 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002127 seconds
+2025-06-17 15:15:21,765 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.003870 seconds
+2025-06-17 15:15:21,765 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n230_uncorrelated.csv (n=230)
+2025-06-17 15:15:21,765 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n230_uncorrelated.csv (230 items).
+2025-06-17 15:15:22,010 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.252476 seconds
+2025-06-17 15:15:22,157 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.146414 seconds
+2025-06-17 15:15:22,168 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002977 seconds
+2025-06-17 15:15:22,174 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.009142 seconds
+2025-06-17 15:15:22,174 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n240_uncorrelated.csv (n=240)
+2025-06-17 15:15:22,174 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n240_uncorrelated.csv (240 items).
+2025-06-17 15:15:22,443 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.265321 seconds
+2025-06-17 15:15:22,595 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.150318 seconds
+2025-06-17 15:15:22,598 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.002874 seconds
+2025-06-17 15:15:22,603 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.004957 seconds
+2025-06-17 15:15:22,603 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n250_uncorrelated.csv (n=250)
+2025-06-17 15:15:22,604 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n250_uncorrelated.csv (250 items).
+2025-06-17 15:15:22,890 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.285957 seconds
+2025-06-17 15:15:23,065 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.174395 seconds
+2025-06-17 15:15:23,069 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003938 seconds
+2025-06-17 15:15:23,074 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005249 seconds
+2025-06-17 15:15:23,074 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n260_uncorrelated.csv (n=260)
+2025-06-17 15:15:23,075 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n260_uncorrelated.csv (260 items).
+2025-06-17 15:15:23,423 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.348455 seconds
+2025-06-17 15:15:23,612 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.200658 seconds
+2025-06-17 15:15:23,628 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.004450 seconds
+2025-06-17 15:15:23,628 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.004993 seconds
+2025-06-17 15:15:23,628 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n270_uncorrelated.csv (n=270)
+2025-06-17 15:15:23,628 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n270_uncorrelated.csv (270 items).
+2025-06-17 15:15:23,978 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.357775 seconds
+2025-06-17 15:15:24,180 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.196287 seconds
+2025-06-17 15:15:24,195 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.005331 seconds
+2025-06-17 15:15:24,202 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007463 seconds
+2025-06-17 15:15:24,202 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n280_uncorrelated.csv (n=280)
+2025-06-17 15:15:24,202 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n280_uncorrelated.csv (280 items).
+2025-06-17 15:15:24,564 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.361002 seconds
+2025-06-17 15:15:24,762 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.206060 seconds
+2025-06-17 15:15:24,762 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003490 seconds
+2025-06-17 15:15:24,780 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005697 seconds
+2025-06-17 15:15:24,780 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n290_uncorrelated.csv (n=290)
+2025-06-17 15:15:24,780 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n290_uncorrelated.csv (290 items).
+2025-06-17 15:15:25,178 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.397583 seconds
+2025-06-17 15:15:25,395 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.230623 seconds
+2025-06-17 15:15:25,414 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.004040 seconds
+2025-06-17 15:15:25,420 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005672 seconds
+2025-06-17 15:15:25,420 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n300_uncorrelated.csv (n=300)
+2025-06-17 15:15:25,420 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n300_uncorrelated.csv (300 items).
+2025-06-17 15:15:25,846 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.426250 seconds
+2025-06-17 15:15:26,096 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.249371 seconds
+2025-06-17 15:15:26,096 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.004450 seconds
+2025-06-17 15:15:26,108 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006844 seconds
+2025-06-17 15:15:26,108 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n310_uncorrelated.csv (n=310)
+2025-06-17 15:15:26,109 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n310_uncorrelated.csv (310 items).
+2025-06-17 15:15:26,532 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.425927 seconds
+2025-06-17 15:15:26,778 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.246245 seconds
+2025-06-17 15:15:26,778 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003788 seconds
+2025-06-17 15:15:26,778 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005545 seconds
+2025-06-17 15:15:26,778 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n320_uncorrelated.csv (n=320)
+2025-06-17 15:15:26,778 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n320_uncorrelated.csv (320 items).
+2025-06-17 15:15:27,243 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.451834 seconds
+2025-06-17 15:15:27,494 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.258230 seconds
+2025-06-17 15:15:27,510 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.007342 seconds
+2025-06-17 15:15:27,511 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006521 seconds
+2025-06-17 15:15:27,511 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n330_uncorrelated.csv (n=330)
+2025-06-17 15:15:27,511 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n330_uncorrelated.csv (330 items).
+2025-06-17 15:15:28,031 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.524443 seconds
+2025-06-17 15:15:28,328 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.289907 seconds
+2025-06-17 15:15:28,328 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003746 seconds
+2025-06-17 15:15:28,328 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005384 seconds
+2025-06-17 15:15:28,328 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n340_uncorrelated.csv (n=340)
+2025-06-17 15:15:28,328 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n340_uncorrelated.csv (340 items).
+2025-06-17 15:15:28,903 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.560683 seconds
+2025-06-17 15:15:29,211 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.321198 seconds
+2025-06-17 15:15:29,227 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006085 seconds
+2025-06-17 15:15:29,237 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.009669 seconds
+2025-06-17 15:15:29,237 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n350_uncorrelated.csv (n=350)
+2025-06-17 15:15:29,237 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n350_uncorrelated.csv (350 items).
+2025-06-17 15:15:29,861 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.619684 seconds
+2025-06-17 15:15:30,211 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.354214 seconds
+2025-06-17 15:15:30,211 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.003622 seconds
+2025-06-17 15:15:30,226 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006423 seconds
+2025-06-17 15:15:30,227 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n360_uncorrelated.csv (n=360)
+2025-06-17 15:15:30,227 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n360_uncorrelated.csv (360 items).
+2025-06-17 15:15:30,869 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.642151 seconds
+2025-06-17 15:15:31,243 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.374589 seconds
+2025-06-17 15:15:31,243 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.004683 seconds
+2025-06-17 15:15:31,243 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006925 seconds
+2025-06-17 15:15:31,243 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n370_uncorrelated.csv (n=370)
+2025-06-17 15:15:31,243 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n370_uncorrelated.csv (370 items).
+2025-06-17 15:15:31,929 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.672859 seconds
+2025-06-17 15:15:32,309 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.378530 seconds
+2025-06-17 15:15:32,310 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.004755 seconds
+2025-06-17 15:15:32,310 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.005927 seconds
+2025-06-17 15:15:32,310 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n380_uncorrelated.csv (n=380)
+2025-06-17 15:15:32,310 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n380_uncorrelated.csv (380 items).
+2025-06-17 15:15:33,011 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.698709 seconds
+2025-06-17 15:15:33,414 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.401836 seconds
+2025-06-17 15:15:33,427 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.007104 seconds
+2025-06-17 15:15:33,435 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.011500 seconds
+2025-06-17 15:15:33,435 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n390_uncorrelated.csv (n=390)
+2025-06-17 15:15:33,435 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n390_uncorrelated.csv (390 items).
+2025-06-17 15:15:34,196 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.756567 seconds
+2025-06-17 15:15:34,611 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.419370 seconds
+2025-06-17 15:15:34,611 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.005157 seconds
+2025-06-17 15:15:34,631 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007473 seconds
+2025-06-17 15:15:34,631 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n400_uncorrelated.csv (n=400)
+2025-06-17 15:15:34,631 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n400_uncorrelated.csv (400 items).
+2025-06-17 15:15:35,364 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.733483 seconds
+2025-06-17 15:15:35,793 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.427071 seconds
+2025-06-17 15:15:35,794 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.011702 seconds
+2025-06-17 15:15:35,810 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007566 seconds
+2025-06-17 15:15:35,810 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n410_uncorrelated.csv (n=410)
+2025-06-17 15:15:35,810 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n410_uncorrelated.csv (410 items).
+2025-06-17 15:15:36,627 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.824711 seconds
+2025-06-17 15:15:37,109 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.483500 seconds
+2025-06-17 15:15:37,126 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006120 seconds
+2025-06-17 15:15:37,135 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006227 seconds
+2025-06-17 15:15:37,135 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n420_uncorrelated.csv (n=420)
+2025-06-17 15:15:37,135 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n420_uncorrelated.csv (420 items).
+2025-06-17 15:15:37,955 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.820254 seconds
+2025-06-17 15:15:38,424 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.468799 seconds
+2025-06-17 15:15:38,427 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.007751 seconds
+2025-06-17 15:15:38,427 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006795 seconds
+2025-06-17 15:15:38,427 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n430_uncorrelated.csv (n=430)
+2025-06-17 15:15:38,427 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n430_uncorrelated.csv (430 items).
+2025-06-17 15:15:39,309 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.875360 seconds
+2025-06-17 15:15:39,827 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.511555 seconds
+2025-06-17 15:15:39,834 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006095 seconds
+2025-06-17 15:15:39,841 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007150 seconds
+2025-06-17 15:15:39,841 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n440_uncorrelated.csv (n=440)
+2025-06-17 15:15:39,842 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n440_uncorrelated.csv (440 items).
+2025-06-17 15:15:40,742 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.904790 seconds
+2025-06-17 15:15:41,263 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.515602 seconds
+2025-06-17 15:15:41,269 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006750 seconds
+2025-06-17 15:15:41,279 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.008799 seconds
+2025-06-17 15:15:41,279 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n450_uncorrelated.csv (n=450)
+2025-06-17 15:15:41,279 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n450_uncorrelated.csv (450 items).
+2025-06-17 15:15:42,242 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 0.975680 seconds
+2025-06-17 15:15:42,823 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.568733 seconds
+2025-06-17 15:15:42,831 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006160 seconds
+2025-06-17 15:15:42,831 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.006311 seconds
+2025-06-17 15:15:42,831 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n460_uncorrelated.csv (n=460)
+2025-06-17 15:15:42,831 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n460_uncorrelated.csv (460 items).
+2025-06-17 15:15:43,894 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 1.059618 seconds
+2025-06-17 15:15:44,517 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.619022 seconds
+2025-06-17 15:15:44,524 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.006894 seconds
+2025-06-17 15:15:44,525 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007707 seconds
+2025-06-17 15:15:44,525 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n470_uncorrelated.csv (n=470)
+2025-06-17 15:15:44,525 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n470_uncorrelated.csv (470 items).
+2025-06-17 15:15:45,608 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 1.078115 seconds
+2025-06-17 15:15:46,226 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.615521 seconds
+2025-06-17 15:15:46,226 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.008421 seconds
+2025-06-17 15:15:46,241 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.008283 seconds
+2025-06-17 15:15:46,241 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n480_uncorrelated.csv (n=480)
+2025-06-17 15:15:46,241 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n480_uncorrelated.csv (480 items).
+2025-06-17 15:15:47,408 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 1.166648 seconds
+2025-06-17 15:15:48,101 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.698574 seconds
+2025-06-17 15:15:48,116 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.009159 seconds
+2025-06-17 15:15:48,116 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007082 seconds
+2025-06-17 15:15:48,116 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n490_uncorrelated.csv (n=490)
+2025-06-17 15:15:48,116 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n490_uncorrelated.csv (490 items).
+2025-06-17 15:15:49,341 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 1.216368 seconds
+2025-06-17 15:15:50,026 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.689071 seconds
+2025-06-17 15:15:50,042 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.008566 seconds
+2025-06-17 15:15:50,042 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.007505 seconds
+2025-06-17 15:15:50,042 - KnapsackBenchmark - INFO - benchmark_runner.py:43 - 
+Processing instance: instance_n500_uncorrelated.csv (n=500)
+2025-06-17 15:15:50,042 - KnapsackBenchmark - INFO - generator.py:184 - Instance successfully loaded from d:\mycode\UOBCODE\semester2\OR\Mine\test_cases\instance_n500_uncorrelated.csv (500 items).
+2025-06-17 15:15:51,207 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 2D DP: 1.159175 seconds
+2025-06-17 15:15:51,872 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> 1D DP (Optimized): 0.661390 seconds
+2025-06-17 15:15:51,872 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Branch and Bound: 0.009457 seconds
+2025-06-17 15:15:51,890 - KnapsackBenchmark - DEBUG - benchmark_runner.py:54 -   -> Gurobi: 0.008217 seconds
+2025-06-17 15:15:51,890 - KnapsackBenchmark - INFO - benchmark_runner.py:108 - 
+--- Benchmark results saved to 'd:\mycode\UOBCODE\semester2\OR\Mine\results\benchmark_results.csv' ---
+2025-06-17 15:15:51,890 - KnapsackBenchmark - INFO - benchmark_runner.py:73 - 
+--- Plotting Results ---
+2025-06-17 15:15:52,215 - KnapsackBenchmark - INFO - benchmark_runner.py:97 - Plot successfully saved to d:\mycode\UOBCODE\semester2\OR\Mine\plots\benchmark_comparison.png
+2025-06-17 15:15:52,231 - KnapsackBenchmark - INFO - benchmark_runner.py:111 - 
+--- Benchmark Complete. Plot saved in 'd:\mycode\UOBCODE\semester2\OR\Mine\plots' directory. ---

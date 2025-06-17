@@ -8,7 +8,7 @@ misc/
 __pycache__/
 
 # Generated output files
-plots/
+# plots/
 
 # VSCode specific
 .vscode/

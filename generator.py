@@ -10,7 +10,8 @@ import random
 from typing import List, Tuple
 import os
 import csv
-
+import logging
+logger = logging.getLogger(__name__)
 
 
 # Function to generate a knapsack instance with one constraint
@@ -135,7 +136,7 @@ def save_instance_to_file(items: List[Tuple[int, int]], capacity: int, filename:
         for value, weight in items:
             writer.writerow([value, weight])
             
-    print(f"Instance successfully saved to {filename}")
+    logger.info(f"Instance successfully saved to {filename}")
 
 
 
@@ -167,7 +168,7 @@ def load_instance_from_file(filename: str) -> Tuple[List[int], List[int], int]:
             next(reader)
         except StopIteration:
             # This handles the case where the file has a header but no data rows
-            print(f"Warning: File '{filename}' contains no data rows.")
+            logger.warning(f"Warning: File '{filename}' contains no data rows.")
             # We can decide to return early or continue
         
         # 4. Read each data row
@@ -178,16 +179,16 @@ def load_instance_from_file(filename: str) -> Tuple[List[int], List[int], int]:
     # 5. VALIDATION STEP: Check if the actual number of items matches the expected number
     actual_num_items = len(values)
     if actual_num_items != expected_num_items:
-        print(f"Warning: Inconsistent data in '{filename}'.")
-        print(f"  Header specified {expected_num_items} items, but file contained {actual_num_items} items.")
+        logger.warning(f"Inconsistent data in '{filename}'. \
+                       Header specified {expected_num_items} items, but file contained {actual_num_items} items.")
 
-    print(f"Instance successfully loaded from {filename} ({actual_num_items} items).")
+    logger.info(f"Instance successfully loaded from {filename} ({actual_num_items} items).")
     return weights, values, capacity
 
 
 if __name__ == '__main__':
-    print("This script provides functions to generate and handle knapsack instances.")
-    print("To generate a full test suite, run 'generate_test_suite.py'.")
+    logger.info("This script provides functions to generate and handle knapsack instances.")
+    logger.info("To generate a full test suite, run 'generate_test_suite.py'.")
 
 # Example usage of the generator
 # if __name__ == "__main__":

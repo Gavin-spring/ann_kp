@@ -9,6 +9,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEST_SUITE_DIR = os.path.join(BASE_DIR, "test_cases")
 PLOT_DIR = os.path.join(BASE_DIR, "plots")
 RESULTS_DIR = os.path.join(BASE_DIR, "results")
+LOG_DIR = os.path.join(BASE_DIR, "logs")
 
 # --- Test Suite Generation Settings ---
 # See generator.py for correlation options:
