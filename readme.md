@@ -6,6 +6,7 @@ This project provides a suite of tools to generate, solve, and benchmark various
 
 After running the scripts, the project will automatically generate the following directory structure:
 
+```text
 .
 ├── test_cases/            # Contains the generated test cases (.csv files)
 ├── results/               # Contains the raw benchmark data (.csv files)
@@ -16,6 +17,7 @@ After running the scripts, the project will automatically generate the following
 ├── generate_test_suite.py # Test suite generator
 ├── config.py              # Global configuration file
 └── ...                    # Other utility scripts
+```
 
 ## How to Use
 
