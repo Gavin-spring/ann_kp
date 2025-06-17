@@ -2,7 +2,7 @@
 misc/
 
 # test data
-*.txt
+# *.txt
 
 # Python Caches
 __pycache__/

@@ -1,0 +1,7 @@
+# Core dependencies for data handling and plotting
+pandas
+matplotlib
+seaborn
+
+# Solver dependency
+gurobipy
