@@ -17,6 +17,7 @@ Algorithms list:
 
 # Library imports
 from queue import PriorityQueue
+import math
 
 # This function is to learn the process of filling the DP table step by step.
 def knapsack_01_2d_with_trace(*, weights: list, values: list, capacity: int) -> int:
@@ -181,6 +182,62 @@ def knapsack_01_1d(*, weights: list, values: list, capacity: int) -> int:
 
 
 
+# Applying this function, when capacity is much larger than total value
+def knapsack_01_1d_value(*, weights: list, values: list, capacity: int) -> int:
+    """
+    Solves the 0/1 knapsack problem using dynamic programming based on value.
+    This approach is efficient when the total value of all items is significantly
+    smaller than the knapsack's capacity.
+
+    Time Complexity: O(n * V_total), where V_total is the sum of all values.
+    Space Complexity: O(V_total).
+
+    Args:
+        weights (list): A list of weights for each item.
+        values (list): A list of values for each item.
+        capacity (int): The maximum capacity of the knapsack.
+
+    Returns:
+        int: The maximum total value that can be obtained.
+    """
+    if not weights or capacity < 0:
+        return 0
+
+    # 1. Calculate the total possible value
+    total_value = sum(values)
+
+    # 2. Initialize DP array
+    # dp[v] stores the minimum weight required to achieve a value of exactly v.
+    # Initialize all weights to infinity, except for value 0, which requires 0 weight.
+    dp = [math.inf] * (total_value + 1)
+    dp[0] = 0
+
+    # 3. Fill the DP table
+    # Iterate through each item
+    for i in range(len(weights)):
+        item_weight = weights[i]
+        item_value = values[i]
+
+        # Iterate backwards through values to ensure each item is used only once
+        for v in range(total_value, item_value - 1, -1):
+            # The new minimum weight to achieve value v is the smaller of:
+            #   a) The current minimum weight for value v.
+            #   b) The minimum weight to achieve (v - item_value) plus the current item's weight.
+            dp[v] = min(dp[v], dp[v - item_value] + item_weight)
+
+    # 4. Find the maximum value achievable within the given capacity
+    # Iterate backwards from the highest possible value
+    for v in range(total_value, -1, -1):
+        # The first value v (from high to low) that has a required weight
+        # less than or equal to the capacity is our optimal value.
+        if dp[v] <= capacity:
+            return v
+
+    # This line should ideally not be reached if capacity >= 0, as dp[0]=0 will always satisfy the condition.
+    return 0
+
+
+
 # Gurobi solver for 0/1 knapsack problem
 def knapsack_gurobi(*, weights: list, values: list, capacity: int) -> int:
     """
@@ -312,3 +369,52 @@ def knapsack_branch_and_bound(weights: list, values: list, capacity: int) -> int
     return max_value
 
 
+
+# Greedy algorithm for 0/1 knapsack problem
+def knapsack_greedy_density(*, weights: list, values: list, capacity: int) -> int:
+    """
+    Solves the 0/1 knapsack problem using a greedy approach based on value-to-weight density.
+    
+    This algorithm is very fast but DOES NOT GUARANTEE an optimal solution. It is an approximation algorithm.
+
+    Time Complexity: O(n * log(n)) due to sorting.
+    Space Complexity: O(n) to store items with their densities.
+
+    Args:
+        weights (list): A list of weights for each item.
+        values (list): A list of values for each item.
+        capacity (int): The maximum capacity of the knapsack.
+
+    Returns:
+        int: The total value of items selected by the greedy strategy.
+    """
+    if not weights or capacity <= 0:
+        return 0
+
+    n = len(weights)
+    # 1. Create a list of items with their value, weight, and density
+    items = []
+    for i in range(n):
+        # Avoid division by zero for items with zero weight
+        if weights[i] > 0:
+            density = values[i] / weights[i]
+            items.append({'value': values[i], 'weight': weights[i], 'density': density})
+        # Optional: handle items with zero weight and positive value separately if they should be prioritized
+        elif values[i] > 0:
+             # For this example, we treat them as having infinite density
+             items.append({'value': values[i], 'weight': weights[i], 'density': float('inf')})
+
+
+    # 2. Sort items by density in descending order
+    items.sort(key=lambda x: x['density'], reverse=True)
+
+    total_value = 0
+    current_weight = 0
+
+    # 3. Iterate through sorted items and add them to the knapsack if they fit
+    for item in items:
+        if current_weight + item['weight'] <= capacity:
+            current_weight += item['weight']
+            total_value += item['value']
+
+    return total_value

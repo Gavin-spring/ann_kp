@@ -189,17 +189,3 @@ def load_instance_from_file(filename: str) -> Tuple[List[int], List[int], int]:
 if __name__ == '__main__':
     logger.info("This script provides functions to generate and handle knapsack instances.")
     logger.info("To generate a full test suite, run 'generate_test_suite.py'.")
-
-# Example usage of the generator
-# if __name__ == "__main__":
-#     print("--- Example 1.1: Small, Uncorrelated Instance ---")
-#     small_items, small_capacity = generate_knapsack_instance(
-#         n=15,
-#         correlation='uncorrelated',
-#         max_weight=10,
-#         max_value=1000,
-#         capacity_ratio=0.6
-#     )
-#     print(f"Generated {len(small_items)} items with capacity {small_capacity}")
-#     save_instance_to_file(small_items, small_capacity, "small_uncorrelated_2.txt")
-#     print("-" * 40)

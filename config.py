@@ -30,10 +30,10 @@ CAPACITY_RATIO = 0.5 # Knapsack capacity as a ratio of total item weight
 ALGORITHMS_TO_TEST = {
     "2D DP": alg.knapsack_01_2d,
     "1D DP (Optimized)": alg.knapsack_01_1d,
+    "1D DP (on value)": alg.knapsack_01_1d_value,
     "Branch and Bound": alg.knapsack_branch_and_bound,
-    "Gurobi": alg.knapsack_gurobi
+    "Gurobi": alg.knapsack_gurobi,
+    "Greedy": alg.knapsack_greedy_density
 }
 
 BASELINE_ALGORITHM = ALGORITHMS_TO_TEST["Gurobi"]  # Default baseline algorithm for comparison
-
-# TODO: check outputs of every algorithm with gurobi
