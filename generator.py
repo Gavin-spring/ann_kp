@@ -1,12 +1,20 @@
 # generator.py
 # -*- coding: utf-8 -*-
 
+
+'''
+This module provides functions to generate different variants of instances of the knapsack problem.
+'''
+
 import random
 from typing import List, Tuple
 import os
 import csv
+import logging
+logger = logging.getLogger(__name__)
 
 
+# Function to generate a knapsack instance with one constraint
 def generate_knapsack_instance(
     n: int,
     correlation: str = 'uncorrelated',
@@ -16,7 +24,7 @@ def generate_knapsack_instance(
 ) -> Tuple[List[Tuple[int, int]], int]:
 
     """
-    Generate an instance of the knapsack problem.
+    Generate an instance of the knapsack problem with one constraintion.
 
     Args:
         n (int): Number of items to generate.
@@ -72,6 +80,48 @@ def generate_knapsack_instance(
 
 
 
+# Function to generate a multi-dimensional knapsack problem instance
+def generate_mckp_instance(
+    n: int,
+    num_constraints: int,
+    max_weights: List[int],
+    max_value: int = 1000,
+    capacity_ratios: List[float] = None
+) -> Tuple[List[Tuple[int, List[int]]], List[int]]:
+    """
+    generate a multi-dimensional knapsack problem instance.
+    Args:
+        n (int): Number of items to generate.
+        num_constraints (int): Number of constraints (dimensions).
+        max_weights (List[int]): Maximum weight for each constraint.
+        max_value (int): Maximum value for a single item.
+        capacity_ratios (List[float]): Ratios of knapsack capacities to the total weights of all items.
+
+    Returns:
+        - items: [(value, [weight1, weight2, ...]), ...]
+        - capacities: [capacity1, capacity2, ...]
+    """
+    if len(max_weights) != num_constraints or len(capacity_ratios) != num_constraints:
+        # Ensure that max_weights and capacity_ratios match the number of constraints
+        raise ValueError("max_weights and capacity_ratios must have the same length as num_constraints")
+
+    items = []
+    total_weights = [0] * num_constraints
+
+    for _ in range(n):
+        value = random.randint(1, max_value)
+        weights = [random.randint(1, max_w) for max_w in max_weights]
+        items.append((value, weights))
+        for i in range(num_constraints):
+            total_weights[i] += weights[i]
+
+    capacities = [int(total_weights[i] * capacity_ratios[i]) for i in range(num_constraints)]
+
+    return items, capacities
+
+# TODO: refactor save_instance_to_file and load_instance_from_file to handle multi-dimensional instances
+
+
 def save_instance_to_file(items: List[Tuple[int, int]], capacity: int, filename: str):
     """Saves the generated instance to a csv file."""
     # Ensure the directory exists
@@ -86,7 +136,7 @@ def save_instance_to_file(items: List[Tuple[int, int]], capacity: int, filename:
         for value, weight in items:
             writer.writerow([value, weight])
             
-    print(f"Instance successfully saved to {filename}")
+    logger.info(f"Instance successfully saved to {filename}")
 
 
 
@@ -118,7 +168,7 @@ def load_instance_from_file(filename: str) -> Tuple[List[int], List[int], int]:
             next(reader)
         except StopIteration:
             # This handles the case where the file has a header but no data rows
-            print(f"Warning: File '{filename}' contains no data rows.")
+            logger.warning(f"Warning: File '{filename}' contains no data rows.")
             # We can decide to return early or continue
         
         # 4. Read each data row
@@ -129,16 +179,16 @@ def load_instance_from_file(filename: str) -> Tuple[List[int], List[int], int]:
     # 5. VALIDATION STEP: Check if the actual number of items matches the expected number
     actual_num_items = len(values)
     if actual_num_items != expected_num_items:
-        print(f"Warning: Inconsistent data in '{filename}'.")
-        print(f"  Header specified {expected_num_items} items, but file contained {actual_num_items} items.")
+        logger.warning(f"Inconsistent data in '{filename}'. \
+                       Header specified {expected_num_items} items, but file contained {actual_num_items} items.")
 
-    print(f"Instance successfully loaded from {filename} ({actual_num_items} items).")
+    logger.info(f"Instance successfully loaded from {filename} ({actual_num_items} items).")
     return weights, values, capacity
 
 
 if __name__ == '__main__':
-    print("This script provides functions to generate and handle knapsack instances.")
-    print("To generate a full test suite, run 'generate_test_suite.py'.")
+    logger.info("This script provides functions to generate and handle knapsack instances.")
+    logger.info("To generate a full test suite, run 'generate_test_suite.py'.")
 
 # Example usage of the generator
 # if __name__ == "__main__":
