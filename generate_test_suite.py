@@ -23,7 +23,7 @@ MAX_WEIGHT = cfg.MAX_WEIGHT
 MAX_VALUE = cfg.MAX_VALUE
 CAPACITY_RATIO = cfg.CAPACITY_RATIO
 
-# Setup logger for this module
+# --- Logger Setup ---
 setup_logger('generation')
 logger = logging.getLogger(__name__)
 

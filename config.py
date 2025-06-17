@@ -34,6 +34,6 @@ ALGORITHMS_TO_TEST = {
     "Gurobi": alg.knapsack_gurobi
 }
 
-BASELINE_ALGORITHM_NAME = "Gurobi"
+BASELINE_ALGORITHM = ALGORITHMS_TO_TEST["Gurobi"]  # Default baseline algorithm for comparison
 
 # TODO: check outputs of every algorithm with gurobi
