@@ -6,23 +6,22 @@ This script generates a suite of knapsack problem instances ONLY for model train
 
 import sys
 import os
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if parent_dir not in sys.path:
-    sys.path.append(parent_dir)
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+if PROJECT_ROOT not in sys.path:
+    sys.path.append(PROJECT_ROOT)
 
 import generator as gen
 import model_config as cfg
 import logging
 from logger_config import setup_logger
 
-# Configurations for logging
 setup_logger('model_testcase')
 logger = logging.getLogger(__name__)
 
-# Generate a suite of fixed-size knapsack instances for model training or testing
+
 def model_create_fixed_size_suite(n: int, num_instances: int, mode: str):
     """
-    Generates a suite of knapsack instances and saves them to the appropriate directory.
+    Generates a suite of fixed-size knapsack instances and saves them to the appropriate directory.
 
     Args:
         n (int): The fixed number of items for each instance.
@@ -65,16 +64,42 @@ def model_create_fixed_size_suite(n: int, num_instances: int, mode: str):
 
     logger.info(f"\n--- Generation of {num_instances} fixed-size instances complete ---")
 
+
+def generate_varied_size_suite(start_n: int, end_n: int, step_n: int, instances_per_n: int, mode: str):
+    """
+    Generates enough instances for a range of n values.
+
+    Args:
+        start_n (int): The starting number of items.
+        end_n (int): The ending number of items.
+        step_n (int): The step to increment n by.
+        instances_per_n (int): How many instances to generate for each n.
+        mode (str): 'train' or 'test'.
+    """
+    logger.info(f"--- Starting generation for varied sizes from n={start_n} to n={end_n} ---")
+    for n in range(start_n, end_n + step_n, step_n):
+        model_create_fixed_size_suite(n=n, num_instances=instances_per_n, mode=mode)
+    logger.info("--- All generation tasks complete ---")
+
+
 if __name__ == "__main__":
-    # Generate 1000 instances (n=10) for model training and validation
-    logger.info("Starting model training case generation...")
-    model_create_fixed_size_suite(n=10, num_instances=1000, mode='train')
-    logger.info("Model training case generation completed successfully.")
-    
-    # Generate 200 instances (n=10) for final model testing
-    logger.info("Starting model testing case generation...")
-    model_create_fixed_size_suite(n=10, num_instances=200, mode='test')
-    logger.info("Model test case generation completed successfully.")
-    
+    # Generate model training instances for n=5 to n=100, with 200 instances per n
+    generate_varied_size_suite(
+        start_n=5, 
+        end_n=100, 
+        step_n=5, 
+        instances_per_n=200, 
+        mode='train'
+    )
+
+    # Generate model testing instances for n=5 to n=100, with 50 instances per n
+    generate_varied_size_suite(
+        start_n=5, 
+        end_n=100, 
+        step_n=5, 
+        instances_per_n=50, 
+        mode='test'
+    )
+    logger.info("Model training and testing instances generation complete.")   
 
 
