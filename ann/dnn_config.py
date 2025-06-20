@@ -18,7 +18,7 @@ MODEL_TEST_CASES = os.path.join(ANN_DIR, "model_test_cases")
 SAVED_MODELS_DIR = os.path.join(ANN_DIR, "saved_models")
 MODEL_PLOTS_DIR = os.path.join(ANN_DIR, "model_plots")
 MODEL_LOGS_DIR = os.path.join(ANN_DIR, "model_logs")
-
+LOG_DIR = MODEL_LOGS_DIR
 
 # --- Test cases Generation Settings ---
 CORRELATION_TYPE = 'uncorrelated'
@@ -32,19 +32,18 @@ START_N = 5
 END_N = 100
 STEP_N = 5
 MAX_N = END_N  # The largest 'n' determines the model's input size
-INPUT_SIZE = MAX_N * 2 + 1
-MAX_WEIGHT = 1000 # Assuming this was the max weight used for normalization
+INPUT_SIZE = MAX_N * 4 + 1
+
+MAX_WEIGHT = 100 # Assuming this was the max weight used for normalization
+MAX_VALUE = 100 # Assuming this was the max value used for normalization
+CAPACITY_RATIO = 0.5  # Ratio of capacity to the sum of weights
+TARGET_SCALE_FACTOR = float(MAX_N * MAX_VALUE) # A plausible upper bound for the optimal value in any instance.
 
 # --- Training Hyperparameters ---
 EPOCHS_PER_N = 10
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
 WEIGHT_DECAY = 1e-5
-
-# Item properties
-# MAX_WEIGHT = 100
-# MAX_VALUE = 100
-# CAPACITY_RATIO = 0.5
 
 # Baseline Algorithm
 import algorithms as alg

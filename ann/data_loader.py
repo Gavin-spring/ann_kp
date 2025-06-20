@@ -13,8 +13,8 @@ import dnn_config as cfg
 
 def load_knapsack_dataset_from_files(n_items: int, data_dir: str, max_n: int):
     """
-    Loads all instance files for a given n, computes the optimal solution,
-    and returns a padded feature vector and the solution.
+    Loads instance files, computes the optimal solution, and returns a
+    FULLY NORMALIZED and padded feature vector and the solution.
     """
     dataset = []
     if n_items > max_n:
@@ -29,16 +29,47 @@ def load_knapsack_dataset_from_files(n_items: int, data_dir: str, max_n: int):
         print(f"Warning: No .csv files found for n={n_items} in '{data_dir}'.")
         return None
         
-    target_feature_len = max_n * 2 + 1
+    target_feature_len = max_n * 4 + 1 
+        
     for filepath in instance_files:
         weights, values, capacity = gen.load_instance_from_file(filepath)
-        optimal_value = alg.knapsack_gurobi(weights=weights, values=values, capacity=capacity)
         
-        feature_vector = np.array(weights + values + [capacity / cfg.MAX_WEIGHT], dtype=np.float32)
+        weights_np = np.array(weights, dtype=np.float32)
+        values_np = np.array(values, dtype=np.float32)
+
+        # --- START OF NORMALIZATION ---
+        
+        # 1. Normalize weights and values to be between [0, 1]
+        #    Assumes cfg.MAX_WEIGHT and cfg.MAX_VALUE are the upper bounds from generation.
+        weights_norm = weights_np / cfg.MAX_WEIGHT
+        values_norm = values_np / cfg.MAX_VALUE
+
+        # 2. Calculate Value Density using the NORMALIZED values
+        #    This keeps the density feature on a more controlled scale.
+        value_densities = values_norm / (weights_norm + 1e-6)
+
+        # 3. Calculate Weight-to-Capacity Ratio (this is already a ratio, so it's fine)
+        weight_to_capacity_ratios = weights_np / capacity
+
+        # 4. Normalize optimal value
+        optimal_value = alg.knapsack_gurobi(weights=weights, values=values, capacity=capacity)
+        normalized_optimal_value = np.float32(optimal_value / cfg.TARGET_SCALE_FACTOR)
+        
+        # --- END OF NORMALIZATION ---
+        
+        # Combine all NORMALIZED features into one vector
+        feature_vector = np.concatenate([
+            weights_norm, 
+            values_norm,
+            value_densities,
+            weight_to_capacity_ratios,
+            [capacity / cfg.MAX_WEIGHT] # Normalized capacity
+        ]).astype(np.float32)
+
         padding_size = target_feature_len - len(feature_vector)
         padded_feature_vector = np.pad(feature_vector, (0, padding_size), 'constant')
-        
-        dataset.append((padded_feature_vector, np.float32(optimal_value)))
+                
+        dataset.append((padded_feature_vector, normalized_optimal_value))
         
     return dataset
 

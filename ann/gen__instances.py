@@ -11,11 +11,11 @@ if PROJECT_ROOT not in sys.path:
     sys.path.append(PROJECT_ROOT)
 
 import generator as gen
-import model_config as cfg
+import dnn_config as cfg
 import logging
 from logger_config import setup_logger
 
-setup_logger('model_testcase')
+setup_logger('instance_generation')
 logger = logging.getLogger(__name__)
 
 
