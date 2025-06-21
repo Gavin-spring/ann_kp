@@ -1,6 +1,0 @@
-# First, install all the core requirements
--r requirements.txt
-
-# Additional packages for testing and development
-pytest
-pytest-cov

@@ -45,6 +45,63 @@ Project Structure:
 ├── readme.md
 ```
 
+
+```text
+.
+├── artifacts/              # ◀━ 1. 新建：所有运行时产出物（代替 plots/, results/, ann/saved_models 等）
+│   ├── models/             #    - 保存训练好的模型 (.pth)
+│   ├── plots/              #    - 保存所有的图表 (.png)
+│   ├── logs/               #    - 保存所有的日志 (.log)
+│   └── results/            #    - 保存实验结果 (.csv)
+│
+├── configs/                # ◀━ 2. 新建：统一管理所有配置文件
+│   ├── dnn_solver.yaml     #    - DNN模型的配置 (推荐用 .yaml 或 .toml)
+│   ├── rnn_solver.yaml     #    - 未来RNN模型的配置
+│   └── classic_solvers.yaml#    - 传统算法的配置
+│
+├── data/                   # ◀━ 3. 新建：所有原始数据和测试用例
+│   ├── training/           #    - 训练用例
+│   ├── testing/            #    - 测试用例
+│   └── validation/         #    - 验证用例
+│
+├── src/                    # ◀━ 4. 新建：所有核心 Python 源代码
+│   ├── __init__.py
+│   ├── solvers/            #    - 核心：所有求解器/模型算法
+│   │   ├── __init__.py
+│   │   ├── interface.py    #    - 定义所有 Solver 的抽象基类/接口
+│   │   ├── classic/        #    - 传统算法
+│   │   │   └── __init__.py #      (内容来自 algorithms.py)
+│   │   └── ml/             #    - 机器学习模型
+│   │       ├── __init__.py
+│   │       ├── dnn_model.py#      (内容来自 ann/model.py)
+│   │       └── data_loader.py # (来自 ann/data_loader.py, 但会变得更通用)
+│   │
+│   ├── utils/              #    - 所有可复用的工具/辅助函数
+│   │   ├── __init__.py
+│   │   ├── logger.py       #    - (合并 logger_config.py 和 ann/model_logger.py)
+│   │   └── generator.py    #    - (合并 generator.py 和 ann/gen__instances.py)
+│   │
+│   └── evaluation/         #    - 评估和基准测试相关代码
+│       ├── __init__.py
+│       └── metrics.py      #    - 定义评估指标
+│
+├── tests/                  # ◀━ 5. 结构调整：测试代码应镜像 src 结构
+│   ├── __init__.py
+│   └── solvers/
+│       ├── test_classic.py
+│       └── ml/
+│           └── test_dnn_model.py
+│
+├── train.py                # ◀━ 6. 核心脚本：训练ML模型
+├── evaluate.py             # ◀━ 核心脚本：评估所有Solver的性能
+├── generate_data.py        # ◀━ 核心脚本：调用 src/utils/generator.py 生成数据
+│
+├── pyproject.toml
+├── requirements.txt
+├── requirements-dev.txt
+└── readme.md
+```
+
 ## How to Use
 
 Please follow the steps in order to ensure the system works correctly.

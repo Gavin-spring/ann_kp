@@ -3,6 +3,7 @@ misc/
 
 # test data
 # *.txt
+.csv
 
 # Python Caches
 __pycache__/
@@ -20,3 +21,4 @@ venv/
 
 # Shell scripts
 *.sh
+*.ps1

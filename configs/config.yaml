@@ -1,0 +1,60 @@
+# configs/config.yaml
+# Centralized configuration for the entire project using YAML.
+
+# 1. 路径管理 (Path Management)
+# 注意：这里只定义了相对目录名，绝对路径将在 Python 中动态构建
+paths:
+  sources: src
+  configs: configs
+  data: data
+  artifacts: artifacts
+  # artifacts 的子目录
+  models: artifacts/models
+  plots: artifacts/plots
+  logs: artifacts/logs
+  results: artifacts/results
+  # data 的子目录
+  data_training: data/training
+  data_testing: data/testing
+  data_validation: data/validation
+
+# 2. 数据生成配置 (Data Generation Config)
+data_gen:
+  correlation_type: 'uncorrelated'
+  n_range: [10, 501, 10] # YAML 中列表的写法
+  max_weight: 100
+  max_value: 100
+  capacity_ratio: 0.5
+
+# 3. 传统求解器配置 (Classic Solvers Config)
+classic_solvers:
+  # 在YAML中我们只列出名字，Python代码会根据名字去查找对应的函数
+  algorithms_to_test:
+    - "Gurobi"
+    - "2D DP"
+    - "1D DP (Optimized)"
+    - "Branch and Bound"
+    - "Greedy"
+  baseline_algorithm: "Gurobi"
+
+# 4. 机器学习模型配置 (Machine Learning Config)
+ml:
+  device: "auto" # "auto" 会在Python中被解析为 cuda or cpu
+  
+  dnn:
+    generation:
+      start_n: 5
+      end_n: 100
+      step_n: 5
+
+    hyperparams:
+      # MAX_N 会在Python中动态计算
+      input_size_factor: 4 # e.g., input_size = MAX_N * 4 + 1
+      input_size_plus: 1
+      target_scale_factor_multiplier: 1.0 # e.g., target_scale = MAX_N * MAX_VALUE * this
+
+    training:
+      epochs_per_n: 10
+      batch_size: 32
+      learning_rate: 0.001
+      weight_decay: 1e-5
