@@ -2,6 +2,13 @@
 pandas
 matplotlib
 seaborn
+tqdm
+torch
+pyyaml
 
 # Solver dependency
 gurobipy
+
+# Additional packages for testing and development
+pytest
+pytest-cov
