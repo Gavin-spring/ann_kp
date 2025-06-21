@@ -1,12 +1,15 @@
-# File: ann/model.py
+# src/solvers/ml/dnn_model.py
 import torch.nn as nn
 
-class KnapsackPredictor(nn.Module):
-    def __init__(self, input_size):
-        super(KnapsackPredictor, self).__init__()
+class KnapsackDNN(nn.Module):
+    """
+    Defines the neural network architecture for predicting knapsack solutions.
+    """
+    def __init__(self, input_size: int, config: dict = None):
+        super(KnapsackDNN, self).__init__()
 
+        # Configuration for layers can be made more dynamic if needed
         self.layer1 = nn.Linear(input_size, 512)
-        # Add BatchNorm layer after the linear layer
         self.bn1 = nn.BatchNorm1d(512) 
 
         self.layer2 = nn.Linear(512, 256)
@@ -23,11 +26,10 @@ class KnapsackPredictor(nn.Module):
         self.relu = nn.ReLU()
 
     def forward(self, x):
-        # The new forward pass: Linear -> BatchNorm -> ReLU
+        """ The new forward pass: Linear -> BatchNorm -> ReLU """
         x = self.relu(self.bn1(self.layer1(x)))
         x = self.relu(self.bn2(self.layer2(x)))
         x = self.relu(self.bn3(self.layer3(x)))
         x = self.relu(self.bn4(self.layer4(x)))
-
-        x = self.layer5(x) # No activation/bn on the final output layer
+        x = self.layer5(x) # No activation on the final output layer
         return x

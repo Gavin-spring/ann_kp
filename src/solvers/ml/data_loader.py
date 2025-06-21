@@ -1,83 +1,88 @@
-# File: data_loader.py
-# -*- coding: utf-8 -*-
-
+# src/solvers/ml/data_loader.py
 import os
 import glob
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-# Local imports
-import generator as gen
-import algorithms as alg
-import configs.dnn_config as cfg
+import logging
 
-def load_knapsack_dataset_from_files(n_items: int, data_dir: str, max_n: int):
+from src.utils.generator import load_instance_from_file
+
+logger = logging.getLogger(__name__)
+
+def get_dataset_for_n(n_items: int, data_dir: str):
     """
-    Loads instance files, computes the optimal solution, and returns a
-    FULLY NORMALIZED and padded feature vector and the solution.
+    Loads all instances for a given n, normalizes them, and prepares them for the model.
     """
+    # --- THIS IS THE FIX ---
+    # Import cfg here, inside the function, only when it's needed.
+    from src.utils.config_loader import cfg
+    
     dataset = []
-    if n_items > max_n:
-        print(f"Error: n_items ({n_items}) exceeds the maximum allowed ({max_n}).")
+    hyperparams = cfg.ml.dnn.hyperparams
+    max_n = hyperparams.max_n
+    
+    if n_items != -1 and n_items > max_n: # Allow n_items=-1 as a special case for single file loading
+        logger.error(f"n_items ({n_items}) exceeds the maximum allowed ({max_n}).")
         return None
     
-    filename_pattern = f"instance_n{n_items}_*.csv"
-    test_suite_path = os.path.join(data_dir, filename_pattern)
-    instance_files = glob.glob(test_suite_path)
+    # If n_items is -1, it implies we are loading a single file, so we glob the whole directory.
+    # Otherwise, we use the specific pattern. This is a small hack for the 'solve' method.
+    filename_pattern = f"instance_n{n_items}_*.csv" if n_items != -1 else "*.csv"
+    search_path = os.path.join(data_dir, filename_pattern)
+    instance_files = glob.glob(search_path)
 
     if not instance_files:
-        print(f"Warning: No .csv files found for n={n_items} in '{data_dir}'.")
+        logger.warning(f"No .csv files found with pattern '{filename_pattern}' in '{data_dir}'.")
         return None
-        
-    target_feature_len = max_n * 4 + 1 
-        
+    
     for filepath in instance_files:
-        weights, values, capacity = gen.load_instance_from_file(filepath)
+        weights, values, capacity = load_instance_from_file(filepath)
         
-        weights_np = np.array(weights, dtype=np.float32)
-        values_np = np.array(values, dtype=np.float32)
-
         # --- START OF NORMALIZATION ---
+        weights_norm = np.array(weights, dtype=np.float32) / hyperparams.max_weight_norm
+        values_norm = np.array(values, dtype=np.float32) / hyperparams.max_value_norm
         
-        # 1. Normalize weights and values to be between [0, 1]
-        #    Assumes cfg.MAX_WEIGHT and cfg.MAX_VALUE are the upper bounds from generation.
-        weights_norm = weights_np / cfg.MAX_WEIGHT
-        values_norm = values_np / cfg.MAX_VALUE
-
-        # 2. Calculate Value Density using the NORMALIZED values
-        #    This keeps the density feature on a more controlled scale.
+        # Handle potential division by zero if weight is zero
         value_densities = values_norm / (weights_norm + 1e-6)
-
-        # 3. Calculate Weight-to-Capacity Ratio (this is already a ratio, so it's fine)
-        weight_to_capacity_ratios = weights_np / capacity
-
-        # 4. Normalize optimal value
-        optimal_value = alg.knapsack_gurobi(weights=weights, values=values, capacity=capacity)
-        normalized_optimal_value = np.float32(optimal_value / cfg.TARGET_SCALE_FACTOR)
         
-        # --- END OF NORMALIZATION ---
+        # Handle potential division by zero if capacity is zero
+        weight_to_capacity_ratios = np.array(weights, dtype=np.float32) / (capacity + 1e-6)
         
-        # Combine all NORMALIZED features into one vector
+        # Simplified capacity normalization
+        normalized_capacity = capacity / (hyperparams.max_n * cfg.data_gen.max_weight)
+
         feature_vector = np.concatenate([
             weights_norm, 
             values_norm,
             value_densities,
             weight_to_capacity_ratios,
-            [capacity / cfg.MAX_WEIGHT] # Normalized capacity
+            [normalized_capacity]
         ]).astype(np.float32)
 
-        padding_size = target_feature_len - len(feature_vector)
+        padding_size = hyperparams.input_size - len(feature_vector)
+        if padding_size < 0:
+            logger.warning(f"Feature vector for {filepath} is too long ({len(feature_vector)} > {hyperparams.input_size}). Truncating.")
+            feature_vector = feature_vector[:hyperparams.input_size]
+            padding_size = 0
+            
         padded_feature_vector = np.pad(feature_vector, (0, padding_size), 'constant')
-                
-        dataset.append((padded_feature_vector, normalized_optimal_value))
+        
+        # For training, we need the optimal value as a label
+        # We use a placeholder here; the 'train' method will compute it.
+        dataset.append({
+            "features": padded_feature_vector, 
+            "label": -1, # Will be calculated during training
+            "raw_instance": (weights, values, capacity)
+        })
         
     return dataset
 
 class KnapsackDataset(Dataset):
     """PyTorch Dataset for the knapsack problem."""
     def __init__(self, data):
-        self.features = [torch.tensor(item[0]) for item in data]
-        self.labels = [torch.tensor(item[1]).unsqueeze(0) for item in data]
+        self.features = [torch.tensor(item["features"]) for item in data]
+        self.labels = [torch.tensor([item["label"]]).float() for item in data]
 
     def __len__(self):
         return len(self.labels)
