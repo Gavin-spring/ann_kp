@@ -21,14 +21,13 @@ paths:
 # 2. 数据生成配置 (Data Generation Config)
 data_gen:
   correlation_type: 'uncorrelated'
-  n_range: [10, 501, 10] # YAML 中列表的写法
+  n_range: [10, 501, 10] # size N 从 10 到 500，every size has 10 samples
   max_weight: 100
   max_value: 100
   capacity_ratio: 0.5
 
 # 3. 传统求解器配置 (Classic Solvers Config)
 classic_solvers:
-  # 在YAML中我们只列出名字，Python代码会根据名字去查找对应的函数
   algorithms_to_test:
     - "Gurobi"
     - "2D DP"

@@ -55,7 +55,7 @@ Project Structure:
 │   └── results/            #    - 保存实验结果 (.csv)
 │
 ├── configs/                # ◀━ 2. 新建：统一管理所有配置文件
-│   ├── dnn_solver.yaml     #    - DNN模型的配置 (推荐用 .yaml 或 .toml)
+│   ├── dnn_solver.yaml     #    - DNN模型的配置
 │   ├── rnn_solver.yaml     #    - 未来RNN模型的配置
 │   └── classic_solvers.yaml#    - 传统算法的配置
 │

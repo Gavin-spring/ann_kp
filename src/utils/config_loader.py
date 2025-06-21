@@ -5,15 +5,22 @@ import torch
 from types import SimpleNamespace
 from typing import Dict, Any
 
-# --- Import solver functions here ---
-# NOTE: The following imports are commented out because the 'solvers' module
-# has not been refactored yet. They will be re-enabled in a later step.
-# from src.solvers.classic import gurobi_solver
+# --- Import solver CLASSes here ---
+from src.solvers.classic.dp_solver import DPSolver2D, DPSolver1D, DPValueSolver
+from src.solvers.classic.gurobi_solver import GurobiSolver
+from src.solvers.classic.heuristic_solvers import GreedySolver, BranchAndBoundSolver
+from src.solvers.ml.dnn_solver import DNNSolver
 
-# A registry to map algorithm names from YAML to actual Python functions.
-# ALGORITHM_REGISTRY = {
-#     "Gurobi": gurobi_solver.knapsack_gurobi,
-# }
+# The registry now maps a name to a Solver Class.
+ALGORITHM_REGISTRY = {
+    "2D DP": DPSolver2D,
+    "1D DP (Optimized)": DPSolver1D,
+    "1D DP (on value)": DPValueSolver,
+    "Gurobi": GurobiSolver,
+    "Greedy": GreedySolver,
+    "Branch and Bound": BranchAndBoundSolver,
+    "DNN": DNNSolver,
+}
 
 def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -44,16 +51,14 @@ def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
         config_dict['ml']['device'] = "cuda" if torch.cuda.is_available() else "cpu"
 
     # --- 4. Map Algorithm Names to Functions ---
-    # NOTE: This section is temporarily disabled. It is only needed by 'evaluate.py',
-    # not by 'generate_data.py'. We will re-enable it after refactoring the solvers.
-    # classic_cfg = config_dict['classic_solvers']
-    # try:
-    #     classic_cfg['algorithms_to_test'] = {
-    #         name: ALGORITHM_REGISTRY[name] for name in classic_cfg['algorithms_to_test']
-    #     }
-    #     classic_cfg['baseline_algorithm'] = ALGORITHM_REGISTRY[classic_cfg['baseline_algorithm']]
-    # except KeyError as e:
-    #     raise ValueError(f"Algorithm '{e.args[0]}' is defined in config.yaml but not found in ALGORITHM_REGISTRY in config_loader.py.") from e
+    classic_cfg = config_dict['classic_solvers']
+    try:
+        classic_cfg['algorithms_to_test'] = {
+            name: ALGORITHM_REGISTRY[name] for name in classic_cfg['algorithms_to_test']
+        }
+        classic_cfg['baseline_algorithm'] = ALGORITHM_REGISTRY[classic_cfg['baseline_algorithm']]
+    except KeyError as e:
+        raise ValueError(f"Algorithm '{e.args[0]}' is defined in config.yaml but not found in ALGORITHM_REGISTRY in config_loader.py.") from e
 
     return config_dict
 
