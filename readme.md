@@ -8,15 +8,41 @@ After running the scripts, the project will automatically generate the following
 
 ```text
 .
-├── test_cases/            # Contains the generated test cases (.csv files)
-├── results/               # Contains the raw benchmark data (.csv files)
-├── plots/                 # Contains the performance comparison plots (.png files)
-├── logs/                  # Contains detailed execution logs (.log files)
-├── algorithms.py          # Core algorithm implementations
-├── benchmark_runner.py    # Benchmark runner
-├── generate_test_suite.py # Test suite generator
-├── config.py              # Global configuration file
-└── ...                    # Other utility scripts
+Project Structure:
+├── results/
+│   └── (*.csv)
+├── plots/
+├── test/
+│  ├── test_algorithms.py
+├── test_cases/
+│   └── (*.csv)
+├── ann/
+│  ├── model_train_cases/
+│   │   └── (*.csv)
+│  ├── saved_models/
+│  ├── model_logs/
+│  ├── model_plots/
+│  ├── model_test_cases/
+│   │   └── (*.csv)
+│  ├── generate_model_testcases.py
+│  ├── model.py
+│  ├── train.py
+│  ├── evaluation.py
+│  ├── ann_solver.py
+│  ├── data_loader.py
+│  ├── dnn_config.py
+├── generate_test_suite.py
+├── config.py
+├── logger_config.py
+├── generator.py
+├── algorithms.py
+├── benchmark_runner.py
+├── git-multi-status.sh
+├── z-basic.ipynb
+├── pyproject.toml
+├── requirements.txt
+├── requirements-dev.txt
+├── readme.md
 ```
 
 ## How to Use
