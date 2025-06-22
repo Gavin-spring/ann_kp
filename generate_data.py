@@ -83,39 +83,39 @@ if __name__ == '__main__':
 
     # === Task 1: Generate the TRAINING set for ML models ===
     # This set is typically large, with many instances per 'n'.
-    # print("Running Task 1: Generate TRAINING set for ML models...")
-    # dnn_n_range = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
-    # create_dataset(
-    #     dataset_name="DNN-Training-Set",
-    #     output_dir=cfg.paths.data_training,
-    #     instance_params=shared_instance_params,
-    #     n_range=dnn_n_range,
-    #     num_instances=200 # e.g., 200 instances per size 'n'
-    # )
+    print("Running Task 1: Generate TRAINING set for ML models...")
+    dnn_n_range = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
+    create_dataset(
+        dataset_name="DNN-Training-Set",
+        output_dir=cfg.paths.data_training,
+        instance_params=shared_instance_params,
+        n_range=dnn_n_range,
+        num_instances=200 # e.g., 200 instances per size 'n'
+    )
 
     # === Task 2: Generate the VALIDATION set for ML models ===
     # This set is usually smaller than the training set.
-    print("Running Task 2: Generate VALIDATION set for ML models...")
-    dnn_n_range_val = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
-    create_dataset(
-        dataset_name="DNN-Validation-Set",
-        output_dir=cfg.paths.data_validation,
-        instance_params=shared_instance_params,
-        n_range=dnn_n_range_val,
-        num_instances=50 # e.g., 50 instances per size 'n'
-    )
+    # print("Running Task 2: Generate VALIDATION set for ML models...")
+    # dnn_n_range_val = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
+    # create_dataset(
+    #     dataset_name="DNN-Validation-Set",
+    #     output_dir=cfg.paths.data_validation,
+    #     instance_params=shared_instance_params,
+    #     n_range=dnn_n_range_val,
+    #     num_instances=50 # e.g., 50 instances per size 'n'
+    # )
     
     # === Task 3: Generate the common TESTING set for ALL solvers ===
     # This set is for final benchmarking. Typically has fewer instances per 'n' but may cover a wider range.
-    print("Running Task 3: Generate common TESTING set...")
-    testing_n_range = (cfg.data_gen.n_range[0], cfg.data_gen.n_range[1], cfg.data_gen.n_range[2])
-    create_dataset(
-        dataset_name="Final-Testing-Set",
-        output_dir=cfg.paths.data_testing,
-        instance_params=shared_instance_params,
-        n_range=testing_n_range,
-        num_instances=10 # e.g., 10 instances per size 'n' for robust testing
-    )
+    # print("Running Task 3: Generate common TESTING set...")
+    # testing_n_range = (cfg.data_gen.n_range[0], cfg.data_gen.n_range[1], cfg.data_gen.n_range[2])
+    # create_dataset(
+    #     dataset_name="Final-Testing-Set",
+    #     output_dir=cfg.paths.data_testing,
+    #     instance_params=shared_instance_params,
+    #     n_range=testing_n_range,
+    #     num_instances=10 # e.g., 10 instances per size 'n' for robust testing
+    # )
 
     # === Example Task 4: Generate a FIXED-SIZE dataset ===
     # This shows how to use the n_fixed parameter.
