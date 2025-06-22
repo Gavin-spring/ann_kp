@@ -1,5 +1,6 @@
 # Deperated files
 misc/
+data_old/
 
 # test data
 *.csv

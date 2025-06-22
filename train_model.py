@@ -1,62 +1,41 @@
-# # train_model.py
-# import logging
-# from src.utils.config_loader import cfg
-# from src.utils.logger import setup_logger
-# from src.solvers.ml.dnn_solver import DNNSolver
-
-# def main():
-#     """
-#     This script initializes and runs the training process for an ML solver.
-#     """
-#     setup_logger(run_name="dnn_training_session", log_dir=cfg.paths.logs)
-#     logger = logging.getLogger(__name__)
-
-#     logger.info("Initializing DNN Solver for training...")
-    
-#     # 1. Get the specific config for the DNN and "inject" it into the solver.
-#     dnn_config = cfg.ml.dnn
-#     device_str = cfg.ml.device
-#     solver = DNNSolver(config=dnn_config, device=device_str)
-    
-#     # 2. Get the dependencies the train method needs from the global config.
-#     baseline_solver_class = cfg.ml.baseline_algorithm
-#     training_data_dir = cfg.paths.data_training
-#     validation_data_dir = cfg.paths.data_validation
-    
-#     # 3. Call the train method with its dependencies.
-#     solver.train(
-#         training_data_dir=training_data_dir,
-#         validation_data_dir=validation_data_dir,
-#         baseline_solver_class=baseline_solver_class
-#     )
-    
-#     logger.info("Training finished.")
-
-# if __name__ == '__main__':
-#     main()
-
 # train_model.py
 import logging
+import os
 from src.utils.config_loader import cfg
 from src.utils.logger import setup_logger
 from src.solvers.ml.dnn_solver import DNNSolver
+from src.utils.run_utils import create_run_name
 
 def main():
     """
-    This script initializes and runs the training process for an ML solver.
+    This script initializes and runs the training process for an ML solver,
+    saving all artifacts into a unique, timestamped directory.
     """
-    setup_logger(run_name="dnn_training_session", log_dir=cfg.paths.logs)
-    logger = logging.getLogger(__name__)
+    # --- 1. Create a unique name and directory for this training run ---
+    run_name = create_run_name(cfg)
+    run_dir = os.path.join(cfg.paths.artifacts, "runs", "training", run_name)
+    os.makedirs(run_dir, exist_ok=True)
 
-    logger.info("Initializing DNN Solver for training...")
+    # Setup logger to save to the new run-specific directory
+    setup_logger(run_name="training_log", log_dir=run_dir)
+    logger = logging.getLogger(__name__)
     
-    # We still use dependency injection for the solver's own config and device
+    logger.info(f"--- Starting New Training Run: {run_name} ---")
+    logger.info(f"All artifacts for this run will be saved in: {run_dir}")
+
+    # --- 2. Initialize Solver ---
     solver = DNNSolver(config=cfg.ml.dnn, device=cfg.ml.device)
     
-    # The call to train is now extremely simple.
-    solver.train()
+    # --- 3. Define artifact paths and train ---
+    model_save_path = os.path.join(run_dir, "best_model.pth")
+    plot_save_path = os.path.join(run_dir, "loss_curve.png")
     
-    logger.info("Training finished.")
+    solver.train(
+        model_save_path=model_save_path,
+        plot_save_path=plot_save_path
+    )
+    
+    logger.info(f"--- Training Run {run_name} Finished. ---")
 
 if __name__ == '__main__':
     main()

@@ -45,7 +45,6 @@ def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
     Processes the raw config dict to add dynamic values and absolute paths.
     This function contains all logic that cannot be represented in a static YAML file.
     """
-    # ... (The logic inside this function remains the same as the last version)
     # --- 1. Define Project Root and Build Absolute Paths ---
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
     
@@ -59,12 +58,13 @@ def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
     if 'ml' in config_dict:
         dnn_gen_cfg = config_dict['ml']['dnn']['generation']
         dnn_hyper_cfg = config_dict['ml']['dnn']['hyperparams']
-        data_gen_cfg = config_dict['data_gen']
         
         max_n = dnn_gen_cfg['end_n']
         dnn_hyper_cfg['max_n'] = max_n
         dnn_hyper_cfg['input_size'] = max_n * dnn_hyper_cfg['input_size_factor'] + dnn_hyper_cfg['input_size_plus']
-        dnn_hyper_cfg['target_scale_factor'] = float(max_n * data_gen_cfg['max_value'] * dnn_hyper_cfg['target_scale_factor_multiplier'])
+        dnn_hyper_cfg['target_scale_factor'] = float(
+            max_n * dnn_gen_cfg['max_value'] * dnn_hyper_cfg['target_scale_factor_multiplier']
+            )
 
     # --- 3. Auto-detect Hardware Device ---
     if 'ml' in config_dict and config_dict['ml'].get('device') == 'auto':

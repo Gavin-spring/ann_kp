@@ -19,17 +19,18 @@ paths:
   data_testing: data/testing
   data_validation: data/validation
 
-# 2. Data Generation Config
+# 2. TESTING Data Generation Config
 data_gen:
   # See src/utils/generator.py for correlation options.
-  # e.g., 'uncorrelated', 'weakly_correlated', 'strongly_correlated'
+  # e.g., 'uncorrelated', 'weakly_correlated', 'strongly_correlated', 'subset_sum'
   correlation_type: 'uncorrelated'
-  # Defines problem sizes for the 'testing' set: (start_n, stop_n, step).
+  # Defines problem sizes for the 0-1 knapsack problem, mainly for TESTING: (start_n, stop_n, step).
   # The number of instances generated per size is defined in generate_data.py.
-  n_range: [10, 101, 10]
+  n_range: [10, 1101, 10] # slightly larger than the DNN training set to test extrapolation
   max_weight: 100
   max_value: 100
   capacity_ratio: 0.5
+  capacity_ratio_range: [0.1, 0.9]
 
 # 3. Classic Solvers Config
 classic_solvers:
@@ -52,27 +53,29 @@ ml:
   
   dnn:
     # Settings for generating the ML-specific training/validation datasets.
+    # MAX_N, input_size, target_scale are dynamically generated in config loader.
     generation:
       start_n: 5
-      end_n: 100 # match testing data range
+      end_n: 1000 # This is max_n
       step_n: 5
+      max_weight: 100
+      max_value: 100
+      capacity_ratio: 0.5
+      capacity_ratio_range: [0.1, 0.9]
+      correlation_type: 'uncorrelated'
 
     # Model architecture and normalization hyperparameters.
     hyperparams:
-      max_weight_norm: 100 # same as max_weight in data_gen
-      max_value_norm: 100 # same as max_value in data_gen
-      # MAX_N is calculated dynamically in the config loader based on generation.end_n.
-      input_size_factor: 4 # e.g., input_size = MAX_N * input_size_factor + input_size_plus
+      max_weight_norm: 100 # same as max_weight in dnn
+      max_value_norm: 100 # same as max_value in dnn      
+      input_size_factor: 5 # input_size = MAX_N * input_size_factor + input_size_plus
       input_size_plus: 1
-      target_scale_factor_multiplier: 1.0 # e.g., target_scale = MAX_N * max_value * this_multiplier
+      target_scale_factor_multiplier: 1.0 # target_scale = MAX_N * max_value * this_multiplier
 
     # Training loop settings.
     training:
-      # Total number of epochs to train on the entire pooled dataset.
-      total_epochs: 150
-      # The 'epochs_per_n' parameter is for the old curriculum learning style and is not
-      # used by the current DNNSolver.train method, but is kept for reference.
-      epochs_per_n: 10
+      total_epochs: 800 # Total number of epochs to train on the entire pooled dataset.
+      epochs_per_n: 10 # This is for curriculum learning and is not used by Pooled Data Training
       batch_size: 32
       learning_rate: 0.001
       weight_decay: 0.0001
