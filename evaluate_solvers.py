@@ -5,21 +5,42 @@ import sys
 import pandas as pd
 from tqdm import tqdm
 import numpy as np
+import argparse
 
 from src.utils.config_loader import cfg, ALGORITHM_REGISTRY
 from src.utils.logger import setup_logger
 from src.evaluation.plotting import plot_evaluation_errors, plot_evaluation_times
 from src.evaluation.reporting import save_results_to_csv
+from src.utils.run_utils import create_run_name
 
 def main():
     """
     This script evaluates all solvers, strictly ensures error metrics can be
     calculated, and then generates reports and plots.
     """
-    setup_logger(run_name="evaluation_session", log_dir=cfg.paths.logs)
+    # --- Setup Argument Parser ---
+    parser = argparse.ArgumentParser(description="Evaluate knapsack problem solvers.")
+    parser.add_argument(
+        "--model-path",
+        type=str,
+        default=None,
+        help="Path to a pre-trained .pth model file for the ML Solver to use for evaluation."
+    )
+    args = parser.parse_args()
+    
+    # --- 1. Create a unique name and directory for this evaluation run ---
+    run_name = create_run_name(cfg)
+    run_dir = os.path.join(cfg.paths.artifacts, "runs", "evaluation", run_name)
+    os.makedirs(run_dir, exist_ok=True)
+    
+    setup_logger(run_name="evaluation_session", log_dir=run_dir)
     logger = logging.getLogger(__name__)
+    
+    logger.info(f"--- Starting New Evaluation Run: {run_name} ---")
+    if args.model_path:
+        logger.info(f"Using specified DNN model: {args.model_path}")
 
-    # --- 1. Setup Solvers ---
+    # --- 2. Setup Solvers ---
     # We will test all solvers currently active in the registry.
     solvers_to_evaluate = ALGORITHM_REGISTRY
     if not solvers_to_evaluate:
@@ -27,7 +48,7 @@ def main():
         sys.exit(1)
     logger.info(f"Solvers to be evaluated: {list(solvers_to_evaluate.keys())}")
         
-    # --- 2. Data Loading ---
+    # --- 3. Data Loading ---
     test_data_dir = cfg.paths.data_testing
     if not os.path.exists(test_data_dir) or not os.listdir(test_data_dir):
         logger.error(f"Test data directory is empty or does not exist: {test_data_dir}")
@@ -36,12 +57,15 @@ def main():
     instance_files = [os.path.join(test_data_dir, f) for f in os.listdir(test_data_dir) if f.endswith('.csv')]
     raw_results = []
 
-    # --- 3. Run Evaluation Loop ---
+    # --- 4. Run Evaluation Loop ---
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
         try:
             if name == "DNN":
-                solver_instance = SolverClass(config=cfg.ml.dnn, device=cfg.ml.device)
+                if not args.model_path:
+                    logger.warning(f"Skipping DNN solver because no --model-path was provided.")
+                    continue
+                solver_instance = SolverClass(config=cfg.ml.dnn, device=cfg.ml.device, model_path=args.model_path)
             else:
                 solver_instance = SolverClass(config={})
             
@@ -58,7 +82,7 @@ def main():
         except Exception as e:
             logger.error(f"Solver '{name}' failed during evaluation. Error: {e}", exc_info=True)
 
-    # --- 4. Process Results and Calculate All Metrics ---
+    # --- 5. Process Results and Calculate All Metrics ---
     if not raw_results:
         logger.critical("CRITICAL: No results were generated from any solver. Exiting.")
         sys.exit(1)
@@ -111,19 +135,19 @@ def main():
     else:
         logger.warning("Skipping error metric calculation because DNN or baseline results are missing.")
 
-    # --- 5. Save Reports and Generate Plots ---
+    # --- 6. Save Reports and Generate Plots ---
     logger.info("--- Finalizing Results and Plots ---")
     
-    csv_path = os.path.join(cfg.paths.results, "evaluation_full_summary.csv")
+    csv_path = os.path.join(run_dir, "evaluation_full_summary.csv")
     save_results_to_csv(agg_df, csv_path)
 
     if 'rmse' in agg_df.columns:
-        plot_errors_path = os.path.join(cfg.paths.plots, "evaluation_errors_vs_n.png")
+        plot_errors_path = os.path.join(run_dir, "evaluation_errors_vs_n.png")
         plot_evaluation_errors(agg_df, plot_errors_path)
     else:
         logger.info("Skipping error plot generation as error metrics were not calculated.")
         
-    plot_times_path = os.path.join(cfg.paths.plots, "evaluation_times_vs_n.png")
+    plot_times_path = os.path.join(run_dir, "evaluation_times_vs_n.png")
     plot_evaluation_times(agg_df, plot_times_path)
 
     logger.info("--- Evaluation script finished successfully! ---")

@@ -9,6 +9,7 @@ from 'src/utils/generator.py'.
 
 import os
 import logging
+import random
 from tqdm import tqdm # Using tqdm for a nice progress bar
 
 # --- Import project modules ---
@@ -53,12 +54,14 @@ def create_dataset(
     with tqdm(total=total_tasks, desc=f"Generating {dataset_name}") as pbar:
         for n in range_of_n:
             for i in range(num_instances):
+                ratio_range = instance_params['capacity_ratio_range']
+                randomized_ratio = random.uniform(ratio_range[0], ratio_range[1])
                 items, capacity = gen.generate_knapsack_instance(
                     n=n,
                     correlation=instance_params['correlation'],
                     max_weight=instance_params['max_weight'],
                     max_value=instance_params['max_value'],
-                    capacity_ratio=instance_params['capacity_ratio']
+                    capacity_ratio=randomized_ratio
                 )
 
                 filename = os.path.join(output_dir, f"instance_n{n}_{instance_params['correlation']}_{i+1}.csv")
@@ -75,47 +78,51 @@ if __name__ == '__main__':
     
     # Shared parameters for instance generation, loaded from config
     shared_instance_params = {
-        'correlation': cfg.data_gen.correlation_type,
-        'max_weight': cfg.data_gen.max_weight,
-        'max_value': cfg.data_gen.max_value,
-        'capacity_ratio': cfg.data_gen.capacity_ratio,
+        'correlation': cfg.ml.dnn.generation.correlation_type,
+        'max_weight': cfg.ml.dnn.generation.max_weight,
+        'max_value': cfg.ml.dnn.generation.max_value,
+        'capacity_ratio_range': cfg.ml.dnn.generation.capacity_ratio_range,
     }
+    # Range of 'n' for DNN training and validation sets
+    dnn_n_range = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
 
     # === Task 1: Generate the TRAINING set for ML models ===
     # This set is typically large, with many instances per 'n'.
-    print("Running Task 1: Generate TRAINING set for ML models...")
-    dnn_n_range = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
+    print("Running Task 1: Generate TRAINING set for ML models...")    
     create_dataset(
-        dataset_name="DNN-Training-Set",
+        dataset_name="ML-Training-Set",
         output_dir=cfg.paths.data_training,
         instance_params=shared_instance_params,
         n_range=dnn_n_range,
-        num_instances=200 # e.g., 200 instances per size 'n'
+        num_instances=500 # e.g., 200 instances per size 'n'
     )
 
     # === Task 2: Generate the VALIDATION set for ML models ===
     # This set is usually smaller than the training set.
-    # print("Running Task 2: Generate VALIDATION set for ML models...")
-    # dnn_n_range_val = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
-    # create_dataset(
-    #     dataset_name="DNN-Validation-Set",
-    #     output_dir=cfg.paths.data_validation,
-    #     instance_params=shared_instance_params,
-    #     n_range=dnn_n_range_val,
-    #     num_instances=50 # e.g., 50 instances per size 'n'
-    # )
+    print("Running Task 2: Generate VALIDATION set for ML models...")
+    create_dataset(
+        dataset_name="ML-Validation-Set",
+        output_dir=cfg.paths.data_validation,
+        instance_params=shared_instance_params,
+        n_range=dnn_n_range,
+        num_instances=100 # e.g., 50 instances per size 'n'
+    )
     
     # === Task 3: Generate the common TESTING set for ALL solvers ===
     # This set is for final benchmarking. Typically has fewer instances per 'n' but may cover a wider range.
-    # print("Running Task 3: Generate common TESTING set...")
-    # testing_n_range = (cfg.data_gen.n_range[0], cfg.data_gen.n_range[1], cfg.data_gen.n_range[2])
-    # create_dataset(
-    #     dataset_name="Final-Testing-Set",
-    #     output_dir=cfg.paths.data_testing,
-    #     instance_params=shared_instance_params,
-    #     n_range=testing_n_range,
-    #     num_instances=10 # e.g., 10 instances per size 'n' for robust testing
-    # )
+    print("Running Task 3: Generate common TESTING set...")
+    create_dataset(
+        dataset_name="Final-Testing-Set",
+        output_dir=cfg.paths.data_testing,
+        instance_params={ # Using the general-purpose config
+            'capacity_ratio_range': cfg.data_gen.capacity_ratio_range,
+            'correlation': cfg.data_gen.correlation_type,
+            'max_weight': cfg.data_gen.max_weight,
+            'max_value': cfg.data_gen.max_value,
+        },
+        n_range=cfg.data_gen.n_range, # e.g., [10, 601, 10] to test extrapolation
+        num_instances=150 # e.g., 10 instances per size 'n' for robust testing
+    )
 
     # === Example Task 4: Generate a FIXED-SIZE dataset ===
     # This shows how to use the n_fixed parameter.

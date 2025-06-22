@@ -26,7 +26,10 @@ def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
         logger.error(f"Failed to load instance file {instance_path}: {e}")
         return None
 
+    # ML-specific configurations
+    gen_cfg = cfg.ml.dnn.generation
     hyperparams = cfg.ml.dnn.hyperparams
+    current_n = len(weights)
     
     # --- START OF NORMALIZATION (Identical to the logic in preprocess_data.py) ---
     weights_norm = np.array(weights, dtype=np.float32) / hyperparams.max_weight_norm
@@ -34,14 +37,16 @@ def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
     
     value_densities = values_norm / (weights_norm + 1e-6)
     weight_to_capacity_ratios = np.array(weights, dtype=np.float32) / (capacity + 1e-6)
+    capacity_ratio_feature = np.full((current_n,), fill_value=gen_cfg.capacity_ratio, dtype=np.float32)
     normalized_capacity = capacity / (hyperparams.max_n * cfg.data_gen.max_weight)
 
     feature_vector = np.concatenate([
-        weights_norm, 
-        values_norm,
-        value_densities,
-        weight_to_capacity_ratios,
-        [normalized_capacity]
+        weights_norm, # Normalized weights, length: max_n
+        values_norm, # Normalized values, length: max_n
+        value_densities, # Value densities, length: max_n
+        weight_to_capacity_ratios,  # Weight to capacity ratios, length: max_n
+        capacity_ratio_feature,  # Capacity ratio feature, length: max_n
+        [normalized_capacity]   # Normalized capacity, length: 1
     ]).astype(np.float32)
 
     # --- Padding ---
