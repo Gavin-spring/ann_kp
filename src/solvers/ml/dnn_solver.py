@@ -102,7 +102,7 @@ class DNNSolver(SolverInterface):
         train_cfg = self.config.training
         criterion = nn.MSELoss()
         optimizer = torch.optim.Adam(self.model.parameters(), lr=train_cfg.learning_rate, weight_decay=train_cfg.weight_decay)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10, factor=0.5, verbose=True)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=10, factor=0.5)
         return criterion, optimizer, scheduler
 
     def _prepare_dataloaders(self) -> Tuple[DataLoader | None, DataLoader | None]:

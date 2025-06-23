@@ -57,6 +57,12 @@ def main():
     instance_files = [os.path.join(test_data_dir, f) for f in os.listdir(test_data_dir) if f.endswith('.csv')]
     raw_results = []
 
+    # If 'DNN' is set to be evaluated, the model path argument becomes mandatory.
+    if "DNN" in solvers_to_evaluate and not args.model_path:
+        logger.critical("CRITICAL ERROR: The 'DNN' solver is active, but no --model-path was provided.")
+        logger.critical("Please specify the model path using: --model-path <path_to_your_model.pth>")
+        sys.exit(1) # Exit the script immediately to prevent wasting time.
+
     # --- 4. Run Evaluation Loop ---
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
