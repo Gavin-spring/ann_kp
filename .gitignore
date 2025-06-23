@@ -1,16 +1,24 @@
 # Deperated files
 misc/
 data_old/
+.deprecated/
 
-# test data
+# data
+data/
 *.csv
+data/**/*.csv
 
 # Python Caches
 __pycache__/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
 
 # Generated output files
 # plots/
 *.log
+*training_log_*.log
 
 # VSCode specific
 .vscode/
@@ -18,7 +26,13 @@ __pycache__/
 # Virtual environment
 venv/
 *.env
+.venv/
 
 # Shell scripts
 *.sh
 *.ps1
+
+# Build and distribution artifacts
+*.egg-info/
+build/
+dist/
