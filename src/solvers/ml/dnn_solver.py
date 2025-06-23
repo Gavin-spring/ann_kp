@@ -76,6 +76,10 @@ class DNNSolver(SolverInterface):
         history = []
         total_epochs = self.config.training.total_epochs
         
+        # Early stopping parameters
+        patience = 50 # How many epochs to wait for improvement before stopping
+        epochs_no_improve = 0
+        
         logger.info(f"Starting training for {total_epochs} epochs...")
         for epoch in range(total_epochs):
             train_loss = self._train_one_epoch(train_loader, criterion, optimizer)
@@ -91,6 +95,14 @@ class DNNSolver(SolverInterface):
                 best_val_loss = val_loss
                 torch.save(self.model.state_dict(), model_save_path)
                 logger.info(f"  -> New best model saved to {model_save_path} (Val Loss: {best_val_loss:.6f})")
+                epochs_no_improve = 0  # Reset counter
+            else:
+                epochs_no_improve += 1  # Increment counter
+
+            # Check if we should stop early
+            if epochs_no_improve >= patience:
+                logger.info(f"--- Early stopping triggered after {patience} epochs with no improvement. ---")
+                break # Exit the training loop
 
         # 4. Finalize and plot results
         self._plot_loss_curve(pd.DataFrame(history), plot_save_path)
