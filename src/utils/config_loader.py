@@ -27,12 +27,12 @@ except ImportError as e:
 try:
     ALGORITHM_REGISTRY = {
         "Gurobi": GurobiSolver,
-        # "2D DP": DPSolver2D,
-        # "1D DP (Optimized)": DPSolver1D,
+        # "2D DP": DPSolver2D,        
         # "1D DP (on value)": DPValueSolver,
-        # "Greedy": GreedySolver,
-        # "Branch and Bound": BranchAndBoundSolver,
+        "Greedy": GreedySolver,
         "DNN": DNNSolver,
+        "Branch and Bound": BranchAndBoundSolver,        
+        "1D DP (Optimized)": DPSolver1D,
     }
 except NameError:
     # This happens if one of the solver classes could not be imported.
