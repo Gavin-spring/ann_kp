@@ -3,12 +3,13 @@ import numpy as np
 import torch
 import os
 import logging
+from types import SimpleNamespace
 
 from src.utils.generator import load_instance_from_file
 
 logger = logging.getLogger(__name__)
 
-def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
+def extract_features_from_instance(instance_path: str, config: 'SimpleNamespace') -> torch.Tensor | None:
     """
     Loads a single instance file, normalizes its data, pads it, and returns
     a feature tensor ready for model inference.
@@ -19,7 +20,7 @@ def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
     Returns:
         torch.Tensor | None: A single feature tensor for the model, or None if an error occurs.
     """
-    from src.utils.config_loader import cfg
+    # from src.utils.config_loader import cfg
     try:
         weights, values, capacity = load_instance_from_file(instance_path)
     except Exception as e:
@@ -27,8 +28,8 @@ def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
         return None
 
     # ML-specific configurations
-    gen_cfg = cfg.ml.dnn.generation
-    hyperparams = cfg.ml.dnn.hyperparams
+    gen_cfg = config.generation
+    hyperparams = config.hyperparams
     current_n = len(weights)
     
     # --- START OF NORMALIZATION (Identical to the logic in preprocess_data.py) ---
@@ -38,7 +39,7 @@ def extract_features_from_instance(instance_path: str) -> torch.Tensor | None:
     value_densities = values_norm / (weights_norm + 1e-6)
     weight_to_capacity_ratios = np.array(weights, dtype=np.float32) / (capacity + 1e-6)
     capacity_ratio_feature = np.full((current_n,), fill_value=gen_cfg.capacity_ratio, dtype=np.float32)
-    normalized_capacity = capacity / (hyperparams.max_n * cfg.data_gen.max_weight)
+    normalized_capacity = capacity / (hyperparams.max_n * hyperparams.max_weight_norm)
 
     feature_vector = np.concatenate([
         weights_norm, # Normalized weights, length: max_n

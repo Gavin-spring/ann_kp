@@ -6,6 +6,9 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 import argparse
+import torch
+from types import SimpleNamespace
+import copy
 
 from src.utils.config_loader import cfg, ALGORITHM_REGISTRY
 from src.utils.logger import setup_logger
@@ -26,6 +29,12 @@ def main():
         default=None,
         help="Path to a pre-trained .pth model file for the ML Solver to use for evaluation."
     )
+    parser.add_argument(
+        "--training-max-n",
+        type=int,
+        default=None,
+        help="The 'max_n_for_architecture' value that was used when a model was trained."
+    )
     args = parser.parse_args()
     
     # --- 1. Create a unique name and directory for this evaluation run ---
@@ -42,7 +51,7 @@ def main():
 
     # --- 2. Setup Solvers ---
     # We will test all solvers currently active in the registry.
-    solvers_to_evaluate = ALGORITHM_REGISTRY
+    solvers_to_evaluate = ALGORITHM_REGISTRY.copy()  # Create a copy to avoid modifying the original registry.
     if not solvers_to_evaluate:
         logger.critical("No solvers are active in ALGORITHM_REGISTRY. Exiting.")
         sys.exit(1)
@@ -63,15 +72,71 @@ def main():
         logger.critical("Please specify the model path using: --model-path <path_to_your_model.pth>")
         sys.exit(1) # Exit the script immediately to prevent wasting time.
 
+    # a. Get the baseline solver
+    baseline_class = cfg.ml.baseline_algorithm
+    baseline_name = None
+    for name, solver_class in ALGORITHM_REGISTRY.items():
+        if solver_class == baseline_class:
+            baseline_name = name
+            break
+
+    # b. if a baseline solver is specified and preprocessed data exists, load it
+    preprocessed_test_path = os.path.join(cfg.paths.data, "processed_testing.pt")
+    if baseline_name and baseline_name in solvers_to_evaluate and os.path.exists(preprocessed_test_path):
+        logger.info(f"Attempting to load pre-calculated baseline results for '{baseline_name}'...")
+        try:
+            preloaded_data = torch.load(preprocessed_test_path)
+            
+            # c. transform the preloaded data into the expected format
+            for record in preloaded_data:
+                raw_results.append({
+                    "solver": baseline_name,
+                    "instance": record['instance'],
+                    "n": int(record['instance'].split('_n')[1].split('_')[0]),
+                    "value": record['optimal_value'],
+                    "time_seconds": record['solve_time'],
+                })
+            
+            # d. remove the baseline solver from the evaluation list
+            del solvers_to_evaluate[baseline_name]
+            logger.info(f"Successfully loaded {len(preloaded_data)} results for '{baseline_name}'. It will be skipped in the main loop.")
+
+        except Exception as e:
+            logger.warning(f"Could not load or parse pre-calculated baseline results from {preprocessed_test_path}. "
+                           f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
+
     # --- 4. Run Evaluation Loop ---
+    baseline_class = cfg.ml.baseline_algorithm
+    baseline_name = [name for name, solver_class in ALGORITHM_REGISTRY.items() if solver_class == baseline_class][0]
+
+    preprocessed_test_path = os.path.join(cfg.paths.data, "processed_testing.pt")
+
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
+        # If the solver is the baseline and preprocessed file exists, load from file instead of re-solving.
+        if name == baseline_name and os.path.exists(preprocessed_test_path):
+            logger.info(f"Loading pre-calculated baseline results from {preprocessed_test_path}")
+            preprocessed_data = torch.load(preprocessed_test_path)
         try:
             if name == "DNN":
                 if not args.model_path:
                     logger.warning(f"Skipping DNN solver because no --model-path was provided.")
                     continue
-                solver_instance = SolverClass(config=cfg.ml.dnn, device=cfg.ml.device, model_path=args.model_path)
+                # training_max_n is used to adjust the input size of the DNN model.
+                dnn_config = copy.deepcopy(cfg.ml.dnn) # create a copy to avoid modifying the original config
+
+                if args.training_max_n:
+                    logger.info(f"Overriding model input size using --training-max-n={args.training_max_n}")
+                    
+                    # adjust the input size based on the training_max_n
+                    old_input_size = (args.training_max_n * dnn_config.hyperparams.input_size_factor) + dnn_config.hyperparams.input_size_plus
+                    
+                    # update the input size in the config
+                    dnn_config.hyperparams.input_size = old_input_size
+                    logger.info(f"Model will be loaded with input_size: {old_input_size}")
+
+                # instantiate the solver with the DNN configuration
+                solver_instance = SolverClass(config=dnn_config, device=cfg.ml.device, model_path=args.model_path)
             else:
                 solver_instance = SolverClass(config={})
             

@@ -171,7 +171,7 @@ class DNNSolver(SolverInterface):
             raise RuntimeError("DNNSolver was not initialized with a model_path, cannot solve.")
             
         # The model is already loaded in __init__ and set to eval() mode.
-        features_tensor = extract_features_from_instance(instance_path)
+        features_tensor = extract_features_from_instance(instance_path, config=self.config)
         
         if features_tensor is None:
             return {"value": -1, "time": 0, "solution": []}
