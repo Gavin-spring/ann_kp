@@ -59,7 +59,7 @@ def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
         dnn_gen_cfg = config_dict['ml']['dnn']['generation']
         dnn_hyper_cfg = config_dict['ml']['dnn']['hyperparams']
         
-        max_n = dnn_gen_cfg['end_n']
+        max_n = dnn_hyper_cfg['max_n_for_architecture']
         dnn_hyper_cfg['max_n'] = max_n
         dnn_hyper_cfg['input_size'] = max_n * dnn_hyper_cfg['input_size_factor'] + dnn_hyper_cfg['input_size_plus']
         dnn_hyper_cfg['target_scale_factor'] = float(

@@ -30,8 +30,9 @@ def main():
 
     # --- Define directories to process ---
     data_sources = {
-        "training": cfg.paths.data_training,
-        "validation": cfg.paths.data_validation
+        # "training": cfg.paths.data_training,
+        # "validation": cfg.paths.data_validation,
+        "testing": cfg.paths.data_testing
     }
 
     for purpose, data_dir in data_sources.items():
@@ -46,7 +47,8 @@ def main():
         processed_data = []
         for instance_path in tqdm(instance_files, desc=f"Processing {purpose} data"):
             # 1. Get normalized features for the model using the new feature extractor
-            features_tensor = extract_features_from_instance(instance_path)
+            # features_tensor = extract_features_from_instance(instance_path)
+            features_tensor = extract_features_from_instance(instance_path, config=cfg.ml.dnn)
             if features_tensor is None:
                 logger.warning(f"Skipping instance {instance_path} due to feature extraction error.")
                 continue
@@ -62,8 +64,11 @@ def main():
 
             # 4. Append the feature tensor and label tensor to our list
             processed_data.append({
+                'instance': os.path.basename(instance_path),
                 'features': features_tensor,
-                'label': torch.tensor([normalized_label]).float()
+                'label': torch.tensor([normalized_label]).float(),
+                'optimal_value': optimal_result['value'], # add original optimal value
+                'solve_time': optimal_result.get('time', 0)
             })
 
         # 5. Save the entire list of processed data to a single, fast-loading file
