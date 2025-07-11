@@ -98,5 +98,5 @@ python Scripts/train_model.py
 
 ### Step 4: Evaluate Model Performance
 ```bash
-python Scripts/train_model.py
+python Scripts/evaluate_model.py
 ```
