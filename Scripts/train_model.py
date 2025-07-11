@@ -23,8 +23,15 @@ def main():
     logger.info(f"--- Starting New Training Run: {run_name} ---")
     logger.info(f"All artifacts for this run will be saved in: {run_dir}")
 
-    # --- 2. Initialize Solver ---
-    solver = DNNSolver(config=cfg.ml.dnn, device=cfg.ml.device)
+    # --- 2. Initialize Solver based on config ---
+    if cfg.ml.training_mode == "DNN":
+        from src.solvers.ml.dnn_solver import DNNSolver
+        solver = DNNSolver(config=cfg.ml.dnn, device=cfg.ml.device)
+    elif cfg.ml.training_mode == "RL":
+        from src.solvers.ml.rl_solver import RLSolver
+        solver = RLSolver(config=cfg.ml.rl, device=cfg.ml.device)
+    else:
+        raise ValueError(f"Unsupported training mode: {cfg.ml.training_mode}")
     
     # --- 3. Define artifact paths and train ---
     model_save_path = os.path.join(run_dir, "best_model.pth")

@@ -1,119 +1,230 @@
-# src\solvers\ml\rl_solver.py
-# -*- coding: utf-8 -*-
-
-# TODO: Future plan, after the validation of DNN model
-import sys
-import os
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-if PROJECT_ROOT not in sys.path:
-    sys.path.append(PROJECT_ROOT)
-
+# src/solvers/ml/rl_solver.py
 import torch
-import torch.nn as nn
 import torch.optim as optim
-from collections import deque
-import random
+from torch.utils.data import DataLoader
+from tqdm import tqdm
+import logging
+import os
+import time
 import numpy as np
 
-# (KnapsackANN class definition can remain the same as you have it)
-class KnapsackANN(nn.Module):
-    def __init__(self, input_size):
-        super(KnapsackANN, self).__init__()
-        self.layer1 = nn.Linear(input_size, 128)
-        self.layer2 = nn.Linear(128, 64)
-        self.layer3 = nn.Linear(64, 1)
+from src.solvers.interface import SolverInterface
+from src.utils.generator import load_instance_from_file
+from .data_loader import PreprocessedKnapsackDataset
 
-    def forward(self, x):
-        x = torch.relu(self.layer1(x))
-        x = torch.relu(self.layer2(x))
-        return self.layer3(x)
+try:
+    from .rl_model import PointerNetwork
+except ImportError:
+    print("Error: Please ensure the file 'rl_model.py' exists under 'src/solvers/ml/',")
+    print("and it contains the 'PointerNetwork' class.")
+    exit()
 
-class KnapsackEnvironment:
-    """Encapsulates the rules of the knapsack problem."""
-    def __init__(self, items, capacity):
-        self.items = items
-        self.capacity = capacity
-        self.num_items = len(items)
+logger = logging.getLogger(__name__)
 
-    def get_initial_state(self):
-        # State: (current_weight, frozenset_of_available_item_indices)
-        return (0, frozenset(range(self.num_items)))
+class RLSolver(SolverInterface):
+    """
+    A reinforcement learning-based solver for the knapsack problem using a pointer network.
+    Implements the existing project interface.
+    """
+    def __init__(self, config, device, model_path=None):
+        super().__init__(config)
+        self.name = "PointerNet RL"
+        self.device = device
 
-    def get_possible_actions(self, state):
-        current_weight, available_items = state
-        return [i for i in available_items if self.items[i]['weight'] + current_weight <= self.capacity]
-
-    def step(self, state, action):
-        # Executes a decision (action) and returns the new state
-        current_weight, available_items = state
-        item_to_add = self.items[action]
+        # 1. Initialize the model (Actor)
+        self.model = PointerNetwork(
+            embedding_dim=self.config.hyperparams.embedding_dim,
+            hidden_dim=self.config.hyperparams.hidden_dim,
+            max_decoding_len=self.config.hyperparams.max_n, # Max solution length is number of items
+            terminating_symbol=None, # Not needed for the knapsack problem
+            n_glimpses=self.config.hyperparams.n_glimpses,
+            tanh_exploration=self.config.hyperparams.tanh_exploration,
+            use_tanh=self.config.hyperparams.use_tanh,
+            beam_size=1, # Use greedy decoding during inference
+            use_cuda=True if self.device == 'cuda' else False
+        ).to(self.device)
         
-        new_weight = current_weight + item_to_add['weight']
-        new_available_items = available_items - {action}
-        new_value_gained = item_to_add['value']
+        # Load pretrained model if provided
+        if model_path:
+            if os.path.exists(model_path):
+                logger.info(f"Loading pre-trained RL model for evaluation: {model_path}")
+                self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+            else:
+                raise FileNotFoundError(f"Model file not found for RLSolver: {model_path}")
         
-        return (new_weight, new_available_items), new_value_gained
+        self.model.eval() # Set to evaluation mode by default
+        logger.info(f"{self.name} solver initialized on device {self.device}")
 
-class ANNSolver:
-    def __init__(self, capacity, learning_rate=0.001):
-        self.capacity = capacity
-        # We now have a dictionary of models, one for each problem size 'n'
-        self.models = {}
-        self.optimizers = {}
-        self.data_pool = deque(maxlen=20000)
-        self.loss_fn = nn.MSELoss()
-        self.learning_rate = learning_rate
-        # Check if a CUDA-enabled GPU is available, otherwise fall back to CPU
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        print(f"Using device: {self.device}")
-        
-
-
-    def _get_or_create_model(self, num_items):
-        if num_items not in self.models:
-            print(f"Initializing a new model for n={num_items}")
-            self.models[num_items] = KnapsackANN(input_size=num_items)
-            self.optimizers[num_items] = optim.Adam(self.models[num_items].parameters(), lr=self.learning_rate)
-        return self.models[num_items], self.optimizers[num_items]
-
-    # ... ( _state_to_tensor, _generate_episode, _learn_from_batch would be refactored
-    #      to use the KnapsackEnvironment and to work with models from the self.models dict)
-
-    def train_with_curriculum(self, all_items, max_n, episodes_per_n=200, batch_size=64):
+    def train(self, model_save_path: str, plot_save_path: str):
         """
-        Main training loop that implements curriculum learning, inspired by Xu et al.
+        Full training pipeline for the RL model.
         """
-        for n in range(3, max_n + 1): # Start from small problems (e.g., 3 items)
-            print(f"\n--- Training for problem size n={n} ---")
-            
-            # Get the model for the current size
-            current_model, current_optimizer = self._get_or_create_model(n)
-            
-            # Create an environment for this problem size
-            current_items = {i: all_items[i] for i in range(n)}
-            env = KnapsackEnvironment(current_items, self.capacity)
+        logger.info(f"--- Starting Reinforcement Learning Training for {self.name} ---")
+        
+        # 1. Setup optimizer
+        optimizer = optim.Adam(self.model.parameters(), lr=self.config.training.learning_rate)
+        # You can also add a learning rate scheduler here
 
-            epsilon = 1.0
-            epsilon_decay = 0.99
-            epsilon_min = 0.05
+        # 2. Prepare data loader
+        # RL does not require precomputed labels, but we can reuse preprocessed features for speed
+        # For simplicity, we assume raw data is loaded directly
+        from src.utils.config_loader import cfg # Local import
+        train_dir = cfg.paths.data_training
+        val_dir = cfg.paths.data_validation
+        
+        # Define dataset class inline for simplicity
+        class RawKnapsackDataset(torch.utils.data.Dataset):
+            def __init__(self, data_dir):
+                self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
+            def __len__(self):
+                return len(self.files)
+            def __getitem__(self, idx):
+                instance_path = self.files[idx]
+                weights, values, capacity = load_instance_from_file(instance_path)
+                # Return as dictionary for easier handling
+                return {'weights': torch.tensor(weights, dtype=torch.float32),
+                        'values': torch.tensor(values, dtype=torch.float32),
+                        'capacity': torch.tensor(capacity, dtype=torch.float32)}
+
+        train_dataset = RawKnapsackDataset(train_dir)
+        train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True)
+
+        # 3. Training loop (adapted from pemami4911/trainer.py)
+        best_val_reward = -float('inf')
+        baseline = torch.zeros(1, device=self.device) # Exponential moving average baseline
+        beta = 0.8 # Baseline smoothing factor
+
+        for epoch in range(self.config.training.total_epochs):
+            self.model.train()
+            total_reward = 0.0
             
-            for episode in range(episodes_per_n):
-                # The episode generation would now use the environment 'env'
-                # It would also use a cascade of previously trained models to make better decisions
-                # (This part is complex, similar to FT_train_N_TSP.py)
-                # For simplicity here, we just show the structure.
+            for batch_data in tqdm(train_loader, desc=f"Epoch {epoch+1}/{self.config.training.total_epochs}"):
+                # Move batch data to target device
+                weights = batch_data['weights'].to(self.device)
+                values = batch_data['values'].to(self.device)
+                # capacity = batch_data['capacity'].to(self.device) # Used in reward calculation
+
+                # Reshape input into shape expected by model: (batch, input_dim, seq_len)
+                # Here input_dim = 2, representing (weight, value)
+                inputs = torch.stack([weights, values], dim=1)
+
+                # Forward pass
+                probs, action_idxs = self.model(inputs) # PointerNetwork returns log probabilities and action indices
+
+                # Calculate rewards
+                rewards = self._calculate_reward(action_idxs, batch_data)
+                rewards = rewards.to(self.device)
+
+                # Update baseline
+                if baseline.sum() == 0: # First iteration
+                    baseline = rewards.mean()
+                else:
+                    baseline = baseline * beta + (1. - beta) * rewards.mean()
+
+                # Compute advantage
+                advantage = rewards - baseline.detach() # detach is crucial
+
+                # Compute REINFORCE loss
+                log_probs = 0
+                for prob in probs:
+                    log_probs += torch.log(prob)
                 
-                # A simplified training step:
-                # 1. Generate an episode using the current model `current_model` and `env`.
-                #    (This logic would be in a refactored _generate_episode)
-                #
-                # 2. Add the experience to the data_pool.
-                #
-                # 3. Sample a batch from data_pool and train `current_model`.
-                #    (This logic would be in a refactored _learn_from_batch)
+                loss = -(log_probs * advantage).mean()
 
-                epsilon = max(epsilon_min, epsilon * epsilon_decay)
-                if episode % 50 == 0:
-                    print(f"  n={n}, Episode {episode}, Epsilon={epsilon:.3f}")
+                # Update model
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-        print("\n--- Curriculum training complete! ---")
+                total_reward += rewards.mean().item()
+
+            avg_epoch_reward = total_reward / len(train_loader)
+            logger.info(f"Epoch {epoch+1}, Avg Reward: {avg_epoch_reward:.4f}")
+
+            # Simple validation and saving logic
+            if avg_epoch_reward > best_val_reward:
+                best_val_reward = avg_epoch_reward
+                torch.save(self.model.state_dict(), model_save_path)
+                logger.info(f"  -> New best model saved to {model_save_path} (Avg Reward: {best_val_reward:.4f})")
+
+    def _calculate_reward(self, selected_indices, instance_batch):
+        """
+        Given the item selection sequence output by the model, compute the total value as the reward.
+        This function handles batched input.
+        """
+        batch_size = selected_indices[0].size(0)
+        batch_rewards = []
+
+        for i in range(batch_size):
+            capacity = instance_batch['capacity'][i].item()
+            weights = instance_batch['weights'][i]
+            values = instance_batch['values'][i]
+
+            current_weight = 0.0
+            current_value = 0.0
+            
+            # Convert output indices to Python list
+            item_priority_list = [idx[i].item() for idx in selected_indices]
+            
+            packed_items = set() # Prevent duplicate selections
+            
+            for item_idx in item_priority_list:
+                if item_idx in packed_items:
+                    continue # Skip already added items
+                
+                if current_weight + weights[item_idx] <= capacity:
+                    current_weight += weights[item_idx]
+                    current_value += values[item_idx]
+                    packed_items.add(item_idx)
+            
+            batch_rewards.append(current_value)
+
+        return torch.tensor(batch_rewards, dtype=torch.float32)
+
+    def solve(self, instance_path: str):
+        """
+        Solve a single knapsack problem instance using the trained RL model.
+        """
+        self.model.eval() # Ensure model is in evaluation mode
+        
+        # 1. Load and prepare data
+        weights, values, capacity = load_instance_from_file(instance_path)
+        weights_t = torch.tensor(weights, dtype=torch.float32).unsqueeze(0) # Add batch dimension
+        values_t = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
+        
+        input_tensor = torch.stack([weights_t, values_t], dim=1).to(self.device)
+
+        # 2. Model inference (using greedy decoding)
+        start_time = time.perf_counter()
+        with torch.no_grad():
+            # Assume model returns both log probabilities and action indices
+            _, action_idxs = self.model(input_tensor) 
+        end_time = time.perf_counter()
+        
+        # 3. Compute final solution
+        # `_calculate_reward` can be reused, it returns a tensor of rewards
+        instance_data = {'weights': weights_t, 'values': values_t, 'capacity': torch.tensor([capacity])}
+        final_value = self._calculate_reward(action_idxs, instance_data).item()
+        
+        # Extract the list of item indices
+        item_indices = [idx[0].item() for idx in action_idxs]
+        solution_mask = [0] * len(weights)
+        
+        # Determine final packing based on selection order
+        final_weight = 0
+        final_packed_indices = set()
+        for idx in item_indices:
+            if idx in final_packed_indices:
+                continue
+            if final_weight + weights[idx] <= capacity:
+                final_weight += weights[idx]
+                final_packed_indices.add(idx)
+        
+        for idx in final_packed_indices:
+            solution_mask[idx] = 1
+
+        return {
+            "value": final_value,
+            "time": end_time - start_time,
+            "solution": solution_mask
+        }
