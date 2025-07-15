@@ -1,11 +1,15 @@
 # train_model.py
 import logging
 import os
+import torch
 # import argparse
 from src.utils.config_loader import cfg
 from src.utils.logger import setup_logger
 # from src.solvers.ml.dnn_solver import DNNSolver
 from src.utils.run_utils import create_run_name
+
+# allow PyTorch to use higher precision for matrix multiplications
+torch.set_float32_matmul_precision('high')
 
 def main():
     """

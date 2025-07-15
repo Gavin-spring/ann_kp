@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/tiny_training
+  data_training: data/training
   data_testing: data/tiny_testing
-  data_validation: data/tiny_validation
+  data_validation: data/validation
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -45,13 +45,14 @@ classic_solvers:
 
 # 4. Machine Learning Config
 ml:
+  training_mode: "RL" # Options: "DNN", "RL"
+
   # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
   device: "auto"
 
   # The algorithm used as the ground truth for calculating ML model errors.
   baseline_algorithm: "Gurobi"
 
-  training_mode: "RL" # Options: "DNN", "RL"
   approximation_solvers:
     "DNN": "dnn"
     "PointerNet RL": "rl"
@@ -99,7 +100,7 @@ ml:
     # Training loop settings.
     training:
       total_epochs: 3
-      batch_size: 8
+      batch_size: 64
       learning_rate: 0.001
       # For learning rate decay scheduler
       lr_decay_step: 500
@@ -110,3 +111,6 @@ ml:
 
       # For the exponential moving average baseline
       baseline_beta: 0.8
+
+    testing:
+      batch_size: 32
