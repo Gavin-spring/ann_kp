@@ -24,10 +24,16 @@ def main():
     # --- Setup Argument Parser ---
     parser = argparse.ArgumentParser(description="Evaluate knapsack problem solvers.")
     parser.add_argument(
-        "--model-path",
+        "--dnn-model-path",
         type=str,
         default=None,
-        help="Path to a pre-trained .pth model file for the ML Solver to use for evaluation."
+        help="Path to a pre-trained .pth model file for the DNNSolver."
+    )
+    parser.add_argument(
+        "--rl-model-path",
+        type=str,
+        default=None,
+        help="Path to a pre-trained .pth model file for the RLSolver."
     )
     parser.add_argument(
         "--training-max-n",
@@ -118,9 +124,10 @@ def main():
             logger.info(f"Loading pre-calculated baseline results from {preprocessed_test_path}")
             preprocessed_data = torch.load(preprocessed_test_path)
         try:
+            solver_instance = None # Initialize to None
             if name == "DNN":
-                if not args.model_path:
-                    logger.warning(f"Skipping DNN solver because no --model-path was provided.")
+                if not args.dnn_model_path:
+                    logger.warning(f"Skipping DNN solver because no --dnn-model-path was provided.")
                     continue
                 # training_max_n is used to adjust the input size of the DNN model.
                 dnn_config = copy.deepcopy(cfg.ml.dnn) # create a copy to avoid modifying the original config
@@ -137,9 +144,21 @@ def main():
 
                 # instantiate the solver with the DNN configuration
                 solver_instance = SolverClass(config=dnn_config, device=cfg.ml.device, model_path=args.model_path)
+
+            elif name == "PointerNet RL":
+                if not args.rl_model_path:
+                    logger.warning(f"Skipping PointerNet RL solver because no --rl-model-path was provided.")
+                    continue
+                # Instantiate RLSolver with its specific config and model path
+                rl_config = cfg.ml.rl 
+                solver_instance = SolverClass(config=rl_config, device=cfg.ml.device, model_path=args.rl_model_path)
+            
             else:
                 solver_instance = SolverClass(config={})
-            
+
+            if solver_instance is None:
+                continue # Skip if solver wasn't instantiated
+
             for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
                 result = solver_instance.solve(instance_file)
                 # Add instance filename as a unique identifier

@@ -91,10 +91,19 @@ ml:
       n_glimpses: 1
       tanh_exploration: 10
       use_tanh: true
-      max_n: 1000
+      max_n: 50 # This is the maximum size of the knapsack problem for RL training.
       
     # Training loop settings.
     training:
-      total_epochs: 100
-      batch_size: 128
-      learning_rate: 0.0001
+      total_epochs: 5
+      batch_size: 8
+      learning_rate: 0.001
+      # For learning rate decay scheduler
+      lr_decay_step: 500
+      lr_decay_rate: 0.96
+
+      # For gradient clipping
+      max_grad_norm: 2.0
+
+      # For the exponential moving average baseline
+      baseline_beta: 0.8

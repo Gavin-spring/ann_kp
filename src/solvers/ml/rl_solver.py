@@ -7,6 +7,10 @@ import logging
 import os
 import time
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from typing import Tuple
 
 from src.solvers.interface import SolverInterface
 from src.utils.generator import load_instance_from_file
@@ -36,12 +40,11 @@ class RLSolver(SolverInterface):
             embedding_dim=self.config.hyperparams.embedding_dim,
             hidden_dim=self.config.hyperparams.hidden_dim,
             max_decoding_len=self.config.hyperparams.max_n, # Max solution length is number of items
-            terminating_symbol=None, # Not needed for the knapsack problem
             n_glimpses=self.config.hyperparams.n_glimpses,
             tanh_exploration=self.config.hyperparams.tanh_exploration,
             use_tanh=self.config.hyperparams.use_tanh,
-            beam_size=1, # Use greedy decoding during inference
-            use_cuda=True if self.device == 'cuda' else False
+            use_cuda=True if self.device == 'cuda' else False,
+            input_dim=2 # Two inputs: weights and values
         ).to(self.device)
         
         # Load pretrained model if provided
@@ -55,97 +58,261 @@ class RLSolver(SolverInterface):
         self.model.eval() # Set to evaluation mode by default
         logger.info(f"{self.name} solver initialized on device {self.device}")
 
-    def train(self, model_save_path: str, plot_save_path: str):
+    # --- Main Orchestration Method ---
+    def train(self, model_save_path: str, plot_save_path: str, max_n_for_training: int = None):
         """
-        Full training pipeline for the RL model.
+        Orchestrates the entire training process, now passing the scheduler
+        to the epoch training function.
         """
-        logger.info(f"--- Starting Reinforcement Learning Training for {self.name} ---")
+        logger.info(f"--- Starting RL Training for {self.name} ---")
         
-        # 1. Setup optimizer
-        optimizer = optim.Adam(self.model.parameters(), lr=self.config.training.learning_rate)
-        # You can also add a learning rate scheduler here
+        # 1. Setup training components
+        optimizer, scheduler = self._setup_training() # Now receives the scheduler
 
-        # 2. Prepare data loader
-        # RL does not require precomputed labels, but we can reuse preprocessed features for speed
-        # For simplicity, we assume raw data is loaded directly
-        from src.utils.config_loader import cfg # Local import
-        train_dir = cfg.paths.data_training
-        val_dir = cfg.paths.data_validation
+        # 2. Prepare data loaders
+        train_loader, val_loader = self._prepare_dataloaders(max_n_for_training)
+        if not train_loader or not val_loader:
+            return
+
+        # 3. Main training loop
+        best_val_reward = -float('inf')
+        history = []
+        total_epochs = self.config.training.total_epochs
         
-        # Define dataset class inline for simplicity
+        logger.info(f"Starting training for {total_epochs} epochs...")
+        for epoch in range(total_epochs):
+            # Pass the scheduler to the training function
+            train_reward, final_baseline = self._train_one_epoch(
+                train_loader, optimizer, scheduler
+            )
+            
+            val_reward = self._validate_one_epoch(val_loader)
+            
+            history.append({
+                'epoch': epoch + 1, 
+                'train_reward': train_reward, 
+                'val_reward': val_reward,
+                'baseline': final_baseline.item()
+            })
+            
+            # Note: scheduler.step() is now called inside _train_one_epoch after each batch,
+            # so we don't call it here. If using ReduceLROnPlateau, you would call it here:
+            # scheduler.step(val_reward)
+            
+            logger.info(f"Epoch {epoch+1}/{total_epochs}, Train Reward: {train_reward:.4f}, Val Reward: {val_reward:.4f}, Baseline: {final_baseline.item():.4f}")
+
+            if val_reward > best_val_reward:
+                best_val_reward = val_reward
+                torch.save(self.model.state_dict(), model_save_path)
+                logger.info(f"  -> New best model saved to {model_save_path} (Val Reward: {best_val_reward:.4f})")
+        
+        # 4. Finalize and plot results
+        self._plot_reward_curve(pd.DataFrame(history), plot_save_path)
+        logger.info(f"--- Finished Training. Best validation reward: {best_val_reward:.4f} ---")
+
+    # --- Helper Methods ---
+    def _setup_training(self):
+        """
+        Initializes and returns the optimizer and the learning rate scheduler
+        by reading parameters from the config.
+        """
+        train_cfg = self.config.training
+        optimizer = torch.optim.Adam(self.model.parameters(), lr=train_cfg.learning_rate)
+        
+        # Create a learning rate scheduler based on the config
+        # This scheduler decreases the LR by a factor of 'lr_decay_rate'
+        # every 'lr_decay_step' steps.
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(
+            optimizer,
+            milestones=list(range(
+                train_cfg.lr_decay_step,
+                train_cfg.lr_decay_step * 1000, # A large upper bound for milestones
+                train_cfg.lr_decay_step
+            )),
+            gamma=train_cfg.lr_decay_rate
+        )
+        
+        logger.info("Optimizer and LR Scheduler have been set up.")
+        return optimizer, scheduler
+
+    def _prepare_dataloaders(self, max_n_for_training: int = None):
+        """Loads raw data and prepares PyTorch DataLoaders."""
+        from src.utils.config_loader import cfg
+        from src.utils.generator import load_instance_from_file
+
+        # --- Temporary Dataset class to handle raw files ---
         class RawKnapsackDataset(torch.utils.data.Dataset):
-            def __init__(self, data_dir):
-                self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
+            def __init__(self, data_dir, max_n, max_n_filter=None):
+                self.max_n = max_n
+                all_files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
+
+                if max_n_filter is not None:
+                    self.files = []
+                    logger.info(f"Filtering dataset in '{data_dir}' to n <= {max_n_filter}...")
+                    for f_path in all_files:
+                        try:
+                            # Extract n-value from filename
+                            filename = os.path.basename(f_path)
+                            n_value = int(filename.split('_n')[1].split('_')[0])
+                            if n_value <= max_n_filter:
+                                self.files.append(f_path)
+                        except (IndexError, ValueError):
+                            # If filename format is unexpected, skip this file
+                            logger.warning(f"Could not parse n-value from filename: {filename}. Skipping.")
+                    logger.info(f"Filtered {len(all_files)} files down to {len(self.files)} files.")
+                else:
+                    self.files = all_files
+
             def __len__(self):
                 return len(self.files)
+
             def __getitem__(self, idx):
                 instance_path = self.files[idx]
                 weights, values, capacity = load_instance_from_file(instance_path)
-                # Return as dictionary for easier handling
-                return {'weights': torch.tensor(weights, dtype=torch.float32),
-                        'values': torch.tensor(values, dtype=torch.float32),
-                        'capacity': torch.tensor(capacity, dtype=torch.float32)}
+                
+                # Pad weights and values to max_n
+                padded_weights = np.zeros(self.max_n, dtype=np.float32)
+                padded_values = np.zeros(self.max_n, dtype=np.float32)
+                
+                current_n = len(weights)
+                padded_weights[:current_n] = weights
+                padded_values[:current_n] = values
 
-        train_dataset = RawKnapsackDataset(train_dir)
-        train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True)
+                return {
+                    'weights': torch.tensor(padded_weights, dtype=torch.float32),
+                    'values': torch.tensor(padded_values, dtype=torch.float32),
+                    'capacity': torch.tensor(capacity, dtype=torch.float32),
+                    'n': torch.tensor(current_n, dtype=torch.int32)
+                }
+        
+        try:
+            train_dir = cfg.paths.data_training
+            val_dir = cfg.paths.data_validation
+            max_n_arch = self.config.hyperparams.max_n # This is the model architecture size (e.g., 1000)
 
-        # 3. Training loop (adapted from pemami4911/trainer.py)
-        best_val_reward = -float('inf')
-        baseline = torch.zeros(1, device=self.device) # Exponential moving average baseline
-        beta = 0.8 # Baseline smoothing factor
+            # 5. Prepare datasets and dataloaders
+            train_dataset = RawKnapsackDataset(train_dir, max_n_arch, max_n_for_training)
+            val_dataset = RawKnapsackDataset(val_dir, max_n_arch, max_n_for_training)
 
-        for epoch in range(self.config.training.total_epochs):
-            self.model.train()
-            total_reward = 0.0
+            train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True)
+            val_loader = DataLoader(val_dataset, batch_size=self.config.training.batch_size)
+            return train_loader, val_loader
+        except Exception as e:
+            logger.error(f"Failed to prepare dataloaders for RL training. Error: {e}", exc_info=True)
+            return None, None
+
+    def _train_one_epoch(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, torch.Tensor]:
+        """
+        Executes a single training epoch for the RL model,
+        now including gradient clipping and scheduler stepping.
+        """
+        self.model.train() # Set model to training mode
+        self.model.decoder.decode_type = 'stochastic'
+
+        total_epoch_reward = 0.0
+        # Use baseline_beta from the config
+        beta = self.config.training.baseline_beta
+        # Initialize baseline on the correct device
+        baseline = torch.zeros(1, device=self.device)
+
+        for i, batch_data in enumerate(tqdm(data_loader, desc="Training", leave=False)):
             
-            for batch_data in tqdm(train_loader, desc=f"Epoch {epoch+1}/{self.config.training.total_epochs}"):
-                # Move batch data to target device
+            weights = batch_data['weights'].to(self.device)
+            values = batch_data['values'].to(self.device)
+            capacity = batch_data['capacity'].to(self.device)
+            
+            inputs = torch.stack([weights, values], dim=1)
+            inputs_for_model = inputs.permute(0, 2, 1) # Shape: (batch_size, feature_num, max_n)
+
+            probs_list, action_idxs = self.model(inputs_for_model, capacity)
+
+            rewards = self._calculate_reward(action_idxs, batch_data)
+            rewards = rewards.to(self.device)
+
+            if i == 0 and baseline.sum() == 0:
+                baseline = rewards.mean()
+            else:
+                baseline = baseline * beta + (1. - beta) * rewards.mean()
+            
+            advantage = rewards - baseline.detach()
+
+            log_probs_of_actions = 0
+            for step, prob_dist in enumerate(probs_list):
+                action_idx_at_step = action_idxs[step]
+                log_prob = torch.log(prob_dist.gather(1, action_idx_at_step.unsqueeze(1)).squeeze(1))
+                # Handle potential -inf from log(0) for numerical stability
+                log_prob[log_prob < -1000] = 0.0 
+                log_probs_of_actions += log_prob
+            
+            loss = -(log_probs_of_actions * advantage).mean()
+
+            optimizer.zero_grad()
+            loss.backward()
+
+            # --- APPLY GRADIENT CLIPPING ---
+            # Use the max_grad_norm value from the config
+            torch.nn.utils.clip_grad_norm_(
+                self.model.parameters(),
+                self.config.training.max_grad_norm
+            )
+            
+            optimizer.step()
+
+            # --- STEP THE LEARNING RATE SCHEDULER ---
+            scheduler.step()
+            
+            total_epoch_reward += rewards.mean().item()
+        
+        return total_epoch_reward / len(data_loader), baseline
+
+    def _validate_one_epoch(self, data_loader: DataLoader) -> float:
+        """Executes a single validation epoch."""
+        self.model.eval() # Set model to evaluation mode
+        self.model.decoder.decode_type = 'greedy' # Use greedy decoding for validation
+
+        total_val_reward = 0.0
+        with torch.no_grad():
+            for batch_data in tqdm(data_loader, desc="Validating", leave=False): # I've added tqdm here for a progress bar
                 weights = batch_data['weights'].to(self.device)
                 values = batch_data['values'].to(self.device)
-                # capacity = batch_data['capacity'].to(self.device) # Used in reward calculation
-
-                # Reshape input into shape expected by model: (batch, input_dim, seq_len)
-                # Here input_dim = 2, representing (weight, value)
-                inputs = torch.stack([weights, values], dim=1)
-
-                # Forward pass
-                probs, action_idxs = self.model(inputs) # PointerNetwork returns log probabilities and action indices
-
-                # Calculate rewards
-                rewards = self._calculate_reward(action_idxs, batch_data)
-                rewards = rewards.to(self.device)
-
-                # Update baseline
-                if baseline.sum() == 0: # First iteration
-                    baseline = rewards.mean()
-                else:
-                    baseline = baseline * beta + (1. - beta) * rewards.mean()
-
-                # Compute advantage
-                advantage = rewards - baseline.detach() # detach is crucial
-
-                # Compute REINFORCE loss
-                log_probs = 0
-                for prob in probs:
-                    log_probs += torch.log(prob)
+                # 1. 从批次数据中获取 capacity
+                capacity = batch_data['capacity'].to(self.device)
                 
-                loss = -(log_probs * advantage).mean()
+                inputs = torch.stack([weights, values], dim=1)
+                # This permute should be consistent with the one in training
+                inputs_for_model = inputs.permute(0, 2, 1) 
+                
+                # 2. 在调用模型时传入 capacity
+                _ , action_idxs = self.model(inputs_for_model, capacity)
 
-                # Update model
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
+                rewards = self._calculate_reward(action_idxs, batch_data)
+                total_val_reward += rewards.mean().item()
+                
+        return total_val_reward / len(data_loader)
+        
+    def _plot_reward_curve(self, history_df: pd.DataFrame, save_path: str):
+        """Helper function to plot and save the reward curve."""
+        if history_df.empty:
+            logger.warning("No training history to plot.")
+            return
 
-                total_reward += rewards.mean().item()
-
-            avg_epoch_reward = total_reward / len(train_loader)
-            logger.info(f"Epoch {epoch+1}, Avg Reward: {avg_epoch_reward:.4f}")
-
-            # Simple validation and saving logic
-            if avg_epoch_reward > best_val_reward:
-                best_val_reward = avg_epoch_reward
-                torch.save(self.model.state_dict(), model_save_path)
-                logger.info(f"  -> New best model saved to {model_save_path} (Avg Reward: {best_val_reward:.4f})")
+        plt.style.use('seaborn-v0_8-whitegrid')
+        plt.figure(figsize=(15, 7))
+        
+        sns.lineplot(data=history_df, x='epoch', y='train_reward', label='Training Average Reward')
+        sns.lineplot(data=history_df, x='epoch', y='val_reward', label='Validation Average Reward')
+        # Add a line for the baseline value
+        if 'baseline' in history_df.columns:
+            sns.lineplot(data=history_df, x='epoch', y='baseline', label='Reward Baseline (EMA)', linestyle='--', color='gray')
+        
+        plt.title('Training & Validation Reward Curve', fontsize=16)
+        plt.xlabel('Epoch', fontsize=12)
+        plt.ylabel('Average Reward (Total Value)', fontsize=12)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        logger.info(f"Reward curve plot saved to {save_path}")
 
     def _calculate_reward(self, selected_indices, instance_batch):
         """
@@ -191,14 +358,16 @@ class RLSolver(SolverInterface):
         weights, values, capacity = load_instance_from_file(instance_path)
         weights_t = torch.tensor(weights, dtype=torch.float32).unsqueeze(0) # Add batch dimension
         values_t = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
-        
-        input_tensor = torch.stack([weights_t, values_t], dim=1).to(self.device)
+        capacity_t = torch.tensor([capacity], dtype=torch.float32).to(self.device)
+
+        input_tensor_original_shape = torch.stack([weights_t, values_t], dim=1).to(self.device)
+        input_tensor = input_tensor_original_shape.permute(0, 2, 1) # Shape: (1, feature_num, max_n)
 
         # 2. Model inference (using greedy decoding)
         start_time = time.perf_counter()
         with torch.no_grad():
             # Assume model returns both log probabilities and action indices
-            _, action_idxs = self.model(input_tensor) 
+            _, action_idxs = self.model(input_tensor, capacity_t) 
         end_time = time.perf_counter()
         
         # 3. Compute final solution
