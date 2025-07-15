@@ -52,12 +52,16 @@ def main():
     logger = logging.getLogger(__name__)
     
     logger.info(f"--- Starting New Evaluation Run: {run_name} ---")
-    if args.model_path:
-        logger.info(f"Using specified DNN model: {args.model_path}")
+    # FIX 1: Check for dnn_model_path specifically
+    if args.dnn_model_path:
+        logger.info(f"Using specified DNN model: {args.dnn_model_path}")
+    # Add a log for the RL model path as well
+    if args.rl_model_path:
+        logger.info(f"Using specified RL model: {args.rl_model_path}")
 
     # --- 2. Setup Solvers ---
     # We will test all solvers currently active in the registry.
-    solvers_to_evaluate = ALGORITHM_REGISTRY.copy()  # Create a copy to avoid modifying the original registry.
+    solvers_to_evaluate = ALGORITHM_REGISTRY.copy()
     if not solvers_to_evaluate:
         logger.critical("No solvers are active in ALGORITHM_REGISTRY. Exiting.")
         sys.exit(1)
@@ -72,11 +76,12 @@ def main():
     instance_files = [os.path.join(test_data_dir, f) for f in os.listdir(test_data_dir) if f.endswith('.csv')]
     raw_results = []
 
-    # If 'DNN' is set to be evaluated, the model path argument becomes mandatory.
-    if "DNN" in solvers_to_evaluate and not args.model_path:
-        logger.critical("CRITICAL ERROR: The 'DNN' solver is active, but no --model-path was provided.")
-        logger.critical("Please specify the model path using: --model-path <path_to_your_model.pth>")
-        sys.exit(1) # Exit the script immediately to prevent wasting time.
+    # FIX 2: Check for dnn_model_path, not model_path
+    if "DNN" in solvers_to_evaluate and not args.dnn_model_path:
+        logger.critical("CRITICAL ERROR: The 'DNN' solver is active, but no --dnn-model-path was provided.")
+        # Update the help message to be correct
+        logger.critical("Please specify the model path using: --dnn-model-path <path_to_your_model.pth>")
+        sys.exit(1)
 
     # a. Get the baseline solver
     baseline_class = cfg.ml.baseline_algorithm
@@ -112,56 +117,46 @@ def main():
                            f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
 
     # --- 4. Run Evaluation Loop ---
-    baseline_class = cfg.ml.baseline_algorithm
-    baseline_name = [name for name, solver_class in ALGORITHM_REGISTRY.items() if solver_class == baseline_class][0]
-
-    preprocessed_test_path = os.path.join(cfg.paths.data, "processed_testing.pt")
-
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
-        # If the solver is the baseline and preprocessed file exists, load from file instead of re-solving.
-        if name == baseline_name and os.path.exists(preprocessed_test_path):
-            logger.info(f"Loading pre-calculated baseline results from {preprocessed_test_path}")
-            preprocessed_data = torch.load(preprocessed_test_path)
         try:
-            solver_instance = None # Initialize to None
-            if name == "DNN":
-                if not args.dnn_model_path:
-                    logger.warning(f"Skipping DNN solver because no --dnn-model-path was provided.")
+            solver_instance = None
+            
+            # check if the solver is a machine learning(approximation) model
+            if name in vars(cfg.ml.approximation_solvers):
+                # 1. obtain the exact config key for the solver
+                config_key = getattr(cfg.ml.approximation_solvers, name)
+                
+                # 2. obtain the model path from the command line arguments
+                model_path_arg = getattr(args, f"{config_key}_model_path")
+                
+                if not model_path_arg:
+                    logger.warning(f"Skipping {name} solver because --{config_key}-model-path was not provided.")
                     continue
-                # training_max_n is used to adjust the input size of the DNN model.
-                dnn_config = copy.deepcopy(cfg.ml.dnn) # create a copy to avoid modifying the original config
 
-                if args.training_max_n:
+                # 3. load the configuration for the solver
+                config = getattr(cfg.ml, config_key)
+                solver_config = copy.deepcopy(config)
+
+                # 4. --training-max-n is only relevant for DNN
+                if name == "DNN" and args.training_max_n:
                     logger.info(f"Overriding model input size using --training-max-n={args.training_max_n}")
-                    
-                    # adjust the input size based on the training_max_n
-                    old_input_size = (args.training_max_n * dnn_config.hyperparams.input_size_factor) + dnn_config.hyperparams.input_size_plus
-                    
-                    # update the input size in the config
-                    dnn_config.hyperparams.input_size = old_input_size
+                    old_input_size = (args.training_max_n * solver_config.hyperparams.input_size_factor) + solver_config.hyperparams.input_size_plus
+                    solver_config.hyperparams.input_size = old_input_size
                     logger.info(f"Model will be loaded with input_size: {old_input_size}")
-
-                # instantiate the solver with the DNN configuration
-                solver_instance = SolverClass(config=dnn_config, device=cfg.ml.device, model_path=args.model_path)
-
-            elif name == "PointerNet RL":
-                if not args.rl_model_path:
-                    logger.warning(f"Skipping PointerNet RL solver because no --rl-model-path was provided.")
-                    continue
-                # Instantiate RLSolver with its specific config and model path
-                rl_config = cfg.ml.rl 
-                solver_instance = SolverClass(config=rl_config, device=cfg.ml.device, model_path=args.rl_model_path)
+                
+                # 5. create the solver instance
+                solver_instance = SolverClass(config=solver_config, device=cfg.ml.device, model_path=model_path_arg)
             
             else:
+                # For non-ML solvers, we can instantiate them directly
                 solver_instance = SolverClass(config={})
 
             if solver_instance is None:
-                continue # Skip if solver wasn't instantiated
+                continue
 
             for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
                 result = solver_instance.solve(instance_file)
-                # Add instance filename as a unique identifier
                 raw_results.append({
                     "solver": name,
                     "instance": os.path.basename(instance_file),
@@ -179,64 +174,84 @@ def main():
         
     results_df = pd.DataFrame(raw_results)
     
-    # a. General aggregation for average time and value
     agg_df = results_df.groupby(['solver', 'n']).agg(
         avg_value=('value', 'mean'),
         avg_time_ms=('time_seconds', lambda x: x.mean() * 1000)
     ).reset_index()
 
-    # b. Strict check and detailed error calculation
     baseline_class = cfg.ml.baseline_algorithm
     baseline_name = None
     for name, solver_class in ALGORITHM_REGISTRY.items():
         if solver_class == baseline_class:
             baseline_name = name
             break
-            
-    if baseline_name and "DNN" in results_df['solver'].unique() and baseline_name in results_df['solver'].unique():
-        logger.info(f"Calculating DNN error metrics against baseline '{baseline_name}'...")
+
+    # Check if the approximation solver is in the results
+    ml_solvers_in_results = set(vars(cfg.ml.approximation_solvers).keys()) & set(results_df['solver'].unique())
+
+    if baseline_name and ml_solvers_in_results:
+        # calculate error metrics first
+        all_error_dfs = []
         
-        # Pivot the raw results to align DNN and baseline values for each instance
+        # error pivot table
         error_pivot_df = results_df.pivot_table(
             index=['n', 'instance'], 
             columns='solver', 
             values='value'
         ).reset_index()
-        
-        if "DNN" in error_pivot_df.columns and baseline_name in error_pivot_df.columns:
-            error_pivot_df.dropna(subset=["DNN", baseline_name], inplace=True)
-            
-            # Calculate per-instance errors first
-            error_pivot_df['absolute_error'] = (error_pivot_df[baseline_name] - error_pivot_df['DNN']).abs()
-            error_pivot_df['relative_error'] = (error_pivot_df['absolute_error'] / error_pivot_df[baseline_name].abs().replace(0, 1e-9)).fillna(0)
-            error_pivot_df['squared_error'] = error_pivot_df['absolute_error'] ** 2
-            
-            # Then, group by 'n' to get the final MAE, MRE, and RMSE metrics
-            error_summary_df = error_pivot_df.groupby('n').agg(
-                mae=('absolute_error', 'mean'),
-                mre=('relative_error', lambda x: x.mean() * 100),
-                rmse=('squared_error', lambda x: np.sqrt(x.mean()))
-            ).reset_index()
 
-            # Merge the calculated error metrics back into the main aggregated DataFrame
-            agg_df = pd.merge(agg_df, error_summary_df, on='n', how='left')
-        else:
-            logger.warning("Could not calculate all error metrics due to incomplete data after pivoting.")
+        for ml_solver_name in ml_solvers_in_results:
+            logger.info(f"Calculating {ml_solver_name} error metrics against baseline '{baseline_name}'...")
+            
+            if ml_solver_name in error_pivot_df.columns and baseline_name in error_pivot_df.columns:
+                # create a temporary DataFrame for error calculations
+                temp_df = error_pivot_df.copy()
+                temp_df.dropna(subset=[ml_solver_name, baseline_name], inplace=True)
+                
+                temp_df['absolute_error'] = (temp_df[baseline_name] - temp_df[ml_solver_name]).abs()
+                temp_df['relative_error'] = (temp_df['absolute_error'] / temp_df[baseline_name].abs().replace(0, 1e-9)).fillna(0)
+                temp_df['squared_error'] = temp_df['absolute_error'] ** 2
+                
+                error_summary_df = temp_df.groupby('n').agg(
+                    mae=('absolute_error', 'mean'),
+                    mre=('relative_error', lambda x: x.mean() * 100),
+                    rmse=('squared_error', lambda x: np.sqrt(x.mean()))
+                ).reset_index()
+                
+                # rename columns to include solver name
+                error_summary_df = error_summary_df.add_prefix(f"{ml_solver_name}_")
+                error_summary_df.rename(columns={f"{ml_solver_name}_n": "n"}, inplace=True)
+                
+                all_error_dfs.append(error_summary_df)
+            else:
+                logger.warning(f"Could not calculate error metrics for {ml_solver_name} due to incomplete data.")
+
+        # merge all error DataFrames into the main aggregation DataFrame
+        if all_error_dfs:
+            for error_df in all_error_dfs:
+                agg_df = pd.merge(agg_df, error_df, on='n', how='left')
+
     else:
-        logger.warning("Skipping error metric calculation because DNN or baseline results are missing.")
+        logger.warning("Skipping error metric calculation because baseline or ML solver results are missing.")
 
     # --- 6. Save Reports and Generate Plots ---
     logger.info("--- Finalizing Results and Plots ---")
-    
+
     csv_path = os.path.join(run_dir, "evaluation_full_summary.csv")
     save_results_to_csv(agg_df, csv_path)
 
-    if 'rmse' in agg_df.columns:
+    # 1. list of approximation solvers that have error metrics
+    solvers_with_errors = [s for s in ml_solvers_in_results if f"{s}_rmse" in agg_df.columns]
+
+    # 2. if there are solvers with errors, generate error plots
+    if solvers_with_errors:
+        logger.info(f"Generating error plots for solvers: {solvers_with_errors}")
         plot_errors_path = os.path.join(run_dir, "evaluation_errors_vs_n.png")
-        plot_evaluation_errors(agg_df, plot_errors_path)
+        # 3. plot the errors
+        plot_evaluation_errors(agg_df, plot_errors_path, solvers_with_errors)
     else:
-        logger.info("Skipping error plot generation as error metrics were not calculated.")
-        
+        logger.info("Skipping error plot generation as no valid error metrics were calculated.")
+
     plot_times_path = os.path.join(run_dir, "evaluation_times_vs_n.png")
     plot_evaluation_times(agg_df, plot_times_path)
 
