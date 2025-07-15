@@ -52,6 +52,9 @@ ml:
   baseline_algorithm: "Gurobi"
 
   training_mode: "RL" # Options: "DNN", "RL"
+  approximation_solvers:
+    "DNN": "dnn"
+    "PointerNet RL": "rl"
   
   dnn:
     # Settings for generating the ML-specific training/validation datasets.
