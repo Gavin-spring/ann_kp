@@ -55,20 +55,20 @@ ml:
   approximation_solvers:
     "DNN": "dnn"
     "PointerNet RL": "rl"
-  
-  dnn:
-    # Settings for generating the ML-specific training/validation datasets.
-    # MAX_N, input_size, target_scale are dynamically generated in config loader.
-    generation:
-      start_n: 5
-      end_n: 1000 # This is max_n
-      step_n: 5
-      max_weight: 100
-      max_value: 100
-      capacity_ratio: 0.5
-      capacity_ratio_range: [0.1, 0.9]
-      correlation_type: 'uncorrelated'
 
+  # Settings for generating the ML-specific training/validation datasets.
+  # MAX_N, input_size, target_scale are dynamically generated in config loader.
+  generation:
+    start_n: 5
+    end_n: 1000 # This is max_n
+    step_n: 5
+    max_weight: 100
+    max_value: 100
+    capacity_ratio: 0.5
+    capacity_ratio_range: [0.1, 0.9]
+    correlation_type: 'uncorrelated'
+
+  dnn:
     # Model architecture and normalization hyperparameters.
     hyperparams:
       max_n_for_architecture: 800 # update to match the max testing size
@@ -98,7 +98,7 @@ ml:
       
     # Training loop settings.
     training:
-      total_epochs: 5
+      total_epochs: 3
       batch_size: 8
       learning_rate: 0.001
       # For learning rate decay scheduler

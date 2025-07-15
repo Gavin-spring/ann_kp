@@ -78,61 +78,65 @@ if __name__ == '__main__':
     
     # Shared parameters for instance generation, loaded from config
     shared_instance_params = {
-        'correlation': cfg.ml.dnn.generation.correlation_type,
-        'max_weight': cfg.ml.dnn.generation.max_weight,
-        'max_value': cfg.ml.dnn.generation.max_value,
-        'capacity_ratio_range': cfg.ml.dnn.generation.capacity_ratio_range,
+        'correlation': cfg.ml.generation.correlation_type,
+        'max_weight': cfg.ml.generation.max_weight,
+        'max_value': cfg.ml.generation.max_value,
+        'capacity_ratio_range': cfg.ml.generation.capacity_ratio_range,
     }
-    # Range of 'n' for DNN training and validation sets
-    dnn_n_range = (cfg.ml.dnn.generation.start_n, cfg.ml.dnn.generation.end_n, cfg.ml.dnn.generation.step_n)
+    # Range of 'n' for training and validation sets
+    model_n_range = (cfg.ml.generation.start_n, cfg.ml.generation.end_n, cfg.ml.generation.step_n)
 
-    # === Task 1: Generate the TRAINING set for ML models ===
-    # This set is typically large, with many instances per 'n'.
-    print("Running Task 1: Generate TRAINING set for ML models...")    
-    create_dataset(
-        dataset_name="ML-Training-Set",
-        output_dir=cfg.paths.data_training,
-        instance_params=shared_instance_params,
-        n_range=dnn_n_range,
-        num_instances=500 # e.g., 200 instances per size 'n'
-    )
+    # # === Task 1: Generate the TRAINING set for ML models ===
+    # # This set is typically large, with many instances per 'n'.
+    # print("Running Task 1: Generate TRAINING set for ML models...")    
+    # create_dataset(
+    #     dataset_name="ML-Training-Set",
+    #     output_dir=cfg.paths.data_training,
+    #     instance_params=shared_instance_params,
+    #     n_range=model_n_range,
+    #     num_instances=500 # e.g., 200 instances per size 'n'
+    # )
 
-    # === Task 2: Generate the VALIDATION set for ML models ===
-    # This set is usually smaller than the training set.
-    print("Running Task 2: Generate VALIDATION set for ML models...")
-    create_dataset(
-        dataset_name="ML-Validation-Set",
-        output_dir=cfg.paths.data_validation,
-        instance_params=shared_instance_params,
-        n_range=dnn_n_range,
-        num_instances=100 # e.g., 50 instances per size 'n'
-    )
+    # # === Task 2: Generate the VALIDATION set for ML models ===
+    # # This set is usually smaller than the training set.
+    # print("Running Task 2: Generate VALIDATION set for ML models...")
+    # create_dataset(
+    #     dataset_name="ML-Validation-Set",
+    #     output_dir=cfg.paths.data_validation,
+    #     instance_params=shared_instance_params,
+    #     n_range=model_n_range,
+    #     num_instances=100 # e.g., 50 instances per size 'n'
+    # )
     
-    # === Task 3: Generate the common TESTING set for ALL solvers ===
-    # This set is for final benchmarking. Typically has fewer instances per 'n' but may cover a wider range.
-    print("Running Task 3: Generate common TESTING set...")
+    # # === Task 3: Generate the common TESTING set for ALL solvers ===
+    # # This set is for final benchmarking. Typically has fewer instances per 'n' but may cover a wider range.
+    # print("Running Task 3: Generate common TESTING set...")
+    # create_dataset(
+    #     dataset_name="Final-Testing-Set",
+    #     output_dir=cfg.paths.data_testing,
+    #     instance_params={ # Using the general-purpose config
+    #         'capacity_ratio_range': cfg.data_gen.capacity_ratio_range,
+    #         'correlation': cfg.data_gen.correlation_type,
+    #         'max_weight': cfg.data_gen.max_weight,
+    #         'max_value': cfg.data_gen.max_value,
+    #     },
+    #     n_range=cfg.data_gen.n_range, # e.g., [10, 601, 10] to test extrapolation
+    #     num_instances=150 # e.g., 10 instances per size 'n' for robust testing
+    # )
+
+    # === Task for Quick Debugging ===
+    print("Running Task: Generate a tiny DEBUG set...")
     create_dataset(
-        dataset_name="Final-Testing-Set",
-        output_dir=cfg.paths.data_testing,
-        instance_params={ # Using the general-purpose config
+        dataset_name="ML-Debug-Set",
+        output_dir="data/debug",
+        instance_params={
             'capacity_ratio_range': cfg.data_gen.capacity_ratio_range,
             'correlation': cfg.data_gen.correlation_type,
             'max_weight': cfg.data_gen.max_weight,
             'max_value': cfg.data_gen.max_value,
         },
-        n_range=cfg.data_gen.n_range, # e.g., [10, 601, 10] to test extrapolation
-        num_instances=150 # e.g., 10 instances per size 'n' for robust testing
+        n_range=(5, 50, 5), # Smaller range for quick debugging
+        num_instances=10    # Fewer instances for faster testing
     )
-
-    # === Example Task 4: Generate a FIXED-SIZE dataset ===
-    # This shows how to use the n_fixed parameter.
-    # print("Running Example Task 4: Generate a FIXED-SIZE dataset...")
-    # create_dataset(
-    #     dataset_name="Fixed-Size-n500-Set",
-    #     output_dir=cfg.paths.data_testing, # Or any other appropriate directory
-    #     instance_params=shared_instance_params,
-    #     n_fixed=500,
-    #     num_instances=100 # Generate 100 instances of size n=500
-    # )
 
     print("\nAll selected data generation tasks are complete.")
