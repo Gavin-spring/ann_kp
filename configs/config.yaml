@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/training
-  data_testing: data/testing
-  data_validation: data/validation
+  data_training: data/tiny_training
+  data_testing: data/tiny_testing
+  data_validation: data/tiny_validation
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -60,7 +60,7 @@ ml:
   # MAX_N, input_size, target_scale are dynamically generated in config loader.
   generation:
     start_n: 5
-    end_n: 1000 # This is max_n
+    end_n: 50 # This is max_n
     step_n: 5
     max_weight: 100
     max_value: 100

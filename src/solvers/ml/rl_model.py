@@ -138,7 +138,7 @@ class Decoder(nn.Module):
         logits[mask] = -1e9
         return logits
 
-    def forward(self, decoder_input, embedded_inputs, hidden, context, capacity):
+    def forward(self, decoder_input, embedded_inputs, hidden, context, capacity, attention_mask):
         """
         The main forward pass for the decoder.
         Args:
@@ -147,54 +147,55 @@ class Decoder(nn.Module):
             hidden: Initial hidden state from encoder. Tuple (h_0, c_0)
             context: Encoder outputs for attention. Shape: [seq_len, batch_size, hidden_dim]
             capacity: The knapsack capacity. Shape: [batch_size]
+            attention_mask: The padding mask. Shape: [batch_size, seq_len]
         """
-        
         # --- Prepare capacity embedding once before the loop ---
         # Reshape capacity from (batch_size) to (batch_size, 1) for the linear layer
         capacity_unsqueezed = capacity.unsqueeze(1)
         capacity_embedded = self.capacity_embedder(capacity_unsqueezed)
 
-        # Setup for the decoding loop
+        # Setup for the decoding loop dynamically
         batch_size = context.size(1)
         seq_len = context.size(0)
         
-        outputs = []      # Stores probabilities at each step
-        selections = []   # Stores selected indices at each step
-        mask = torch.zeros(batch_size, seq_len, dtype=torch.bool, device=context.device)
+        outputs = []
+        selections = []
+        # Initialize a mask to track selected items
+        selection_mask = torch.zeros(batch_size, seq_len, dtype=torch.bool, device=context.device)
 
-        for _ in range(self.max_length):
-            # 1. Update decoder state with the previous selection
+        # --- Iterate for the maximum decoding length ---
+        for _ in range(seq_len):
             hx, cx = self.lstm_cell(decoder_input, hidden)
-            hidden = (hx, cx) # New hidden state for the next iteration
-
-            # --- Create the Augmented, Capacity-Aware Query ---
+            hidden = (hx, cx)
             # Concatenate the current decoder state with the capacity embedding
             augmented_query = torch.cat([hx, capacity_embedded], dim=1)
             # Project the augmented query to the correct dimension for attention
             projected_query = self.query_projection(augmented_query)
 
-            # 2. Glimpse Mechanism (uses the capacity-aware query)
-            # The query for the glimpse is the projected_query
+            # Glimpse Mechanism (uses the capacity-aware query)
             g_l = projected_query 
             for _ in range(self.n_glimpses):
                 _, glimpse_logits = self.glimpse(g_l, context)
-                # Note: We don't mask the glimpse so it can look at all items for context
+                # Glimpse logits are masked to prevent attention on padding
+                glimpse_logits.masked_fill_(~attention_mask, -1e9)
                 glimpse_weights = self.sm(glimpse_logits)
-                # The glimpse is a weighted sum of the context vectors
                 g_l = torch.bmm(context.permute(1, 2, 0), glimpse_weights.unsqueeze(2)).squeeze(2)
 
-            # 3. Final Pointer (also uses the capacity-aware query)
-            # We augment the final glimpse output with capacity info again for a final check
+            # Final Pointer (also uses the capacity-aware query)
             final_augmented_query = torch.cat([g_l, capacity_embedded], dim=1)
             final_projected_query = self.query_projection(final_augmented_query)
 
             _, pointer_logits = self.pointer(final_projected_query, context)
             
-            # Apply mask to prevent re-selecting already chosen items
-            masked_logits = self.apply_mask_to_logits(pointer_logits, mask)
-            probs = self.sm(masked_logits)
+            # Apply two masks to pointer logits:
+            # a) First, apply the attention mask to prevent attention on padding
+            pointer_logits.masked_fill_(~attention_mask, -1e9)
             
-            # 4. Select the next item based on the decoding strategy
+            # b) Then, apply the selection mask to prevent re-selection of items
+            masked_logits = self.apply_mask_to_logits(pointer_logits, selection_mask)            
+            probs = self.sm(masked_logits)
+
+            # Select the next item based on the decoding strategy
             if self.decode_type == "stochastic":
                 idxs = self.decode_stochastic(probs)
             elif self.decode_type == "greedy":
@@ -202,15 +203,14 @@ class Decoder(nn.Module):
             else:
                 raise ValueError(f"Unknown decode_type: {self.decode_type}")
 
-            # 5. Prepare for the next decoding step
-            # Get the embedding of the newly selected item
+            # Prepare for the next decoding step
             decoder_input = embedded_inputs.gather(0, idxs.view(1, -1, 1).expand(1, -1, self.embedding_dim)).squeeze(0)
             
             outputs.append(probs)
             selections.append(idxs)
             
             # Update the mask for the next iteration
-            mask = mask.scatter(1, idxs.unsqueeze(1), True)
+            selection_mask = selection_mask.scatter(1, idxs.unsqueeze(1), True)
             
         return outputs, selections
 
@@ -258,7 +258,7 @@ class PointerNetwork(nn.Module):
         self.decoder_in_0.data.uniform_(-(1. / math.sqrt(embedding_dim)),
                                        1. / math.sqrt(embedding_dim))
             
-    def forward(self, inputs, capacity):
+    def forward(self, inputs, capacity, attention_mask):
         """
         Propagate inputs through the network.
         Args:
@@ -301,7 +301,8 @@ class PointerNetwork(nn.Module):
                                                 embedded_inputs_for_encoder, # Pass permuted version
                                                 decoder_init_state,
                                                 context,
-                                                capacity)
+                                                capacity,
+                                                attention_mask)
 
         # 7. Stack the lists of outputs into tensors
         # probs = torch.stack(probs_list, dim=1)

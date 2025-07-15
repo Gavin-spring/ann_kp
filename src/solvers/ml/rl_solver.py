@@ -2,6 +2,7 @@
 import torch
 import torch.optim as optim
 from torch.utils.data import DataLoader
+import torch.nn.functional as F
 from tqdm import tqdm
 import logging
 import os
@@ -24,6 +25,53 @@ except ImportError:
     exit()
 
 logger = logging.getLogger(__name__)
+
+def knapsack_collate_fn(batch):
+    """
+    Self defined batch collate function for knapsack problem.
+    This function handles padding of weights and values, and creates attention masks.
+    """
+    # 1. extract weights, values, capacity, and n from the batch
+    weights_list = [item['weights'] for item in batch]
+    values_list = [item['values'] for item in batch]
+    capacity_list = [item['capacity'] for item in batch]
+    n_list = [item['n'] for item in batch]
+
+    # 2. get the maximum length of weights in the batch
+    max_len = max(len(w) for w in weights_list)
+
+    padded_weights = []
+    padded_values = []
+    attention_masks = []
+
+    # 3. pad and create attention masks in batch
+    for i in range(len(batch)):
+        w = weights_list[i]
+        v = values_list[i]
+        current_len = len(w)
+        
+        # Calculate padding length
+        padding_len = max_len - current_len
+
+        # use F.pad to pad(right side) the weights and values``
+        # format: F.pad(input, (pad_left, pad_right), mode, value)
+        padded_w = F.pad(w, (0, padding_len), 'constant', 0)
+        padded_v = F.pad(v, (0, padding_len), 'constant', 0)
+        padded_weights.append(padded_w)
+        padded_values.append(padded_v)
+
+        # create attention mask(1s for actual data, 0s for padding)
+        mask = torch.cat([torch.ones(current_len), torch.zeros(padding_len)])
+        attention_masks.append(mask)
+
+    # 4. convert lists to tensors
+    return {
+        'weights': torch.stack(padded_weights),
+        'values': torch.stack(padded_values),
+        'capacity': torch.stack(capacity_list),
+        'n': torch.stack(n_list),
+        'attention_mask': torch.stack(attention_masks).bool() # Convert to boolean tensor
+    }
 
 class RLSolver(SolverInterface):
     """
@@ -59,7 +107,7 @@ class RLSolver(SolverInterface):
         logger.info(f"{self.name} solver initialized on device {self.device}")
 
     # --- Main Orchestration Method ---
-    def train(self, model_save_path: str, plot_save_path: str, max_n_for_training: int = None):
+    def train(self, model_save_path: str, plot_save_path: str):
         """
         Orchestrates the entire training process, now passing the scheduler
         to the epoch training function.
@@ -70,7 +118,7 @@ class RLSolver(SolverInterface):
         optimizer, scheduler = self._setup_training() # Now receives the scheduler
 
         # 2. Prepare data loaders
-        train_loader, val_loader = self._prepare_dataloaders(max_n_for_training)
+        train_loader, val_loader = self._prepare_dataloaders()
         if not train_loader or not val_loader:
             return
 
@@ -135,33 +183,15 @@ class RLSolver(SolverInterface):
         logger.info("Optimizer and LR Scheduler have been set up.")
         return optimizer, scheduler
 
-    def _prepare_dataloaders(self, max_n_for_training: int = None):
-        """Loads raw data and prepares PyTorch DataLoaders."""
+    def _prepare_dataloaders(self):
+        """Loads raw data and prepares PyTorch DataLoaders using a collate_fn."""
         from src.utils.config_loader import cfg
         from src.utils.generator import load_instance_from_file
 
-        # --- Temporary Dataset class to handle raw files ---
+        # --- embedded collate function to load raw data ---
         class RawKnapsackDataset(torch.utils.data.Dataset):
-            def __init__(self, data_dir, max_n, max_n_filter=None):
-                self.max_n = max_n
-                all_files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
-
-                if max_n_filter is not None:
-                    self.files = []
-                    logger.info(f"Filtering dataset in '{data_dir}' to n <= {max_n_filter}...")
-                    for f_path in all_files:
-                        try:
-                            # Extract n-value from filename
-                            filename = os.path.basename(f_path)
-                            n_value = int(filename.split('_n')[1].split('_')[0])
-                            if n_value <= max_n_filter:
-                                self.files.append(f_path)
-                        except (IndexError, ValueError):
-                            # If filename format is unexpected, skip this file
-                            logger.warning(f"Could not parse n-value from filename: {filename}. Skipping.")
-                    logger.info(f"Filtered {len(all_files)} files down to {len(self.files)} files.")
-                else:
-                    self.files = all_files
+            def __init__(self, data_dir):
+                self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
 
             def __len__(self):
                 return len(self.files)
@@ -170,32 +200,25 @@ class RLSolver(SolverInterface):
                 instance_path = self.files[idx]
                 weights, values, capacity = load_instance_from_file(instance_path)
                 
-                # Pad weights and values to max_n
-                padded_weights = np.zeros(self.max_n, dtype=np.float32)
-                padded_values = np.zeros(self.max_n, dtype=np.float32)
-                
-                current_n = len(weights)
-                padded_weights[:current_n] = weights
-                padded_values[:current_n] = values
-
+                # return raw data without padding
                 return {
-                    'weights': torch.tensor(padded_weights, dtype=torch.float32),
-                    'values': torch.tensor(padded_values, dtype=torch.float32),
+                    'weights': torch.tensor(weights, dtype=torch.float32),
+                    'values': torch.tensor(values, dtype=torch.float32),
                     'capacity': torch.tensor(capacity, dtype=torch.float32),
-                    'n': torch.tensor(current_n, dtype=torch.int32)
+                    'n': torch.tensor(len(weights), dtype=torch.int32)
                 }
         
         try:
             train_dir = cfg.paths.data_training
             val_dir = cfg.paths.data_validation
-            max_n_arch = self.config.hyperparams.max_n # This is the model architecture size (e.g., 1000)
 
-            # 5. Prepare datasets and dataloaders
-            train_dataset = RawKnapsackDataset(train_dir, max_n_arch, max_n_for_training)
-            val_dataset = RawKnapsackDataset(val_dir, max_n_arch, max_n_for_training)
-
-            train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True)
-            val_loader = DataLoader(val_dataset, batch_size=self.config.training.batch_size)
+            train_dataset = RawKnapsackDataset(train_dir)
+            val_dataset = RawKnapsackDataset(val_dir)
+            
+            # --- Use the knapsack_collate_fn defined above ---
+            train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True, collate_fn=knapsack_collate_fn)
+            val_loader = DataLoader(val_dataset, batch_size=self.config.training.batch_size, collate_fn=knapsack_collate_fn)
+            
             return train_loader, val_loader
         except Exception as e:
             logger.error(f"Failed to prepare dataloaders for RL training. Error: {e}", exc_info=True)
@@ -220,11 +243,12 @@ class RLSolver(SolverInterface):
             weights = batch_data['weights'].to(self.device)
             values = batch_data['values'].to(self.device)
             capacity = batch_data['capacity'].to(self.device)
+            attention_mask = batch_data['attention_mask'].to(self.device)
             
             inputs = torch.stack([weights, values], dim=1)
             inputs_for_model = inputs.permute(0, 2, 1) # Shape: (batch_size, feature_num, max_n)
 
-            probs_list, action_idxs = self.model(inputs_for_model, capacity)
+            probs_list, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
 
             rewards = self._calculate_reward(action_idxs, batch_data)
             rewards = rewards.to(self.device)
@@ -275,15 +299,14 @@ class RLSolver(SolverInterface):
             for batch_data in tqdm(data_loader, desc="Validating", leave=False): # I've added tqdm here for a progress bar
                 weights = batch_data['weights'].to(self.device)
                 values = batch_data['values'].to(self.device)
-                # 1. 从批次数据中获取 capacity
                 capacity = batch_data['capacity'].to(self.device)
+                attention_mask = batch_data['attention_mask'].to(self.device)
                 
                 inputs = torch.stack([weights, values], dim=1)
                 # This permute should be consistent with the one in training
                 inputs_for_model = inputs.permute(0, 2, 1) 
                 
-                # 2. 在调用模型时传入 capacity
-                _ , action_idxs = self.model(inputs_for_model, capacity)
+                _ , action_idxs = self.model(inputs_for_model, capacity, attention_mask)                
 
                 rewards = self._calculate_reward(action_idxs, batch_data)
                 total_val_reward += rewards.mean().item()
@@ -356,21 +379,30 @@ class RLSolver(SolverInterface):
         
         # 1. Load and prepare data
         weights, values, capacity = load_instance_from_file(instance_path)
+        n_items = len(weights)
+
+        # Create tensors with a batch dimension of 1
         weights_t = torch.tensor(weights, dtype=torch.float32).unsqueeze(0) # Add batch dimension
         values_t = torch.tensor(values, dtype=torch.float32).unsqueeze(0)
         capacity_t = torch.tensor([capacity], dtype=torch.float32).to(self.device)
 
+        # Prepare input tensor consistent with training (shape: [1, n, 2])
         input_tensor_original_shape = torch.stack([weights_t, values_t], dim=1).to(self.device)
         input_tensor = input_tensor_original_shape.permute(0, 2, 1) # Shape: (1, feature_num, max_n)
 
-        # 2. Model inference (using greedy decoding)
+        # 2. create attention_mask
+        # For a single instance, there is no padding, so the mask is all True.
+        # Shape should be [batch_size, seq_len], which is [1, n_items] here.
+        attention_mask = torch.ones(1, n_items, dtype=torch.bool, device=self.device)
+
+        # 3. Model inference (using greedy decoding)
         start_time = time.perf_counter()
         with torch.no_grad():
             # Assume model returns both log probabilities and action indices
-            _, action_idxs = self.model(input_tensor, capacity_t) 
+            _, action_idxs = self.model(input_tensor, capacity_t, attention_mask) 
         end_time = time.perf_counter()
         
-        # 3. Compute final solution
+        # 4. Compute final solution
         # `_calculate_reward` can be reused, it returns a tensor of rewards
         instance_data = {'weights': weights_t, 'values': values_t, 'capacity': torch.tensor([capacity])}
         final_value = self._calculate_reward(action_idxs, instance_data).item()

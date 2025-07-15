@@ -124,19 +124,37 @@ if __name__ == '__main__':
     #     num_instances=150 # e.g., 10 instances per size 'n' for robust testing
     # )
 
-    # === Task for Quick Debugging ===
-    print("Running Task: Generate a tiny DEBUG set...")
+    # === Task for Quick Process Testing ===
+    print("Running Task: Generate a tiny TRAINING set...")
     create_dataset(
-        dataset_name="ML-Debug-Set",
-        output_dir="data/debug",
+        dataset_name="ML-Training-Tiny-Set",
+        output_dir="data/tiny_training",
+        instance_params=shared_instance_params,
+        n_range=model_n_range,
+        num_instances=10   # Fewer instances for faster testing
+    )
+    
+    print("Running Task: Generate a tiny VALIDATION set...")
+    create_dataset(
+        dataset_name="ML-Validation-Tiny-Set",
+        output_dir="data/tiny_validation",
+        instance_params=shared_instance_params,
+        n_range=model_n_range,
+        num_instances=3   # Fewer instances for faster testing
+    )
+
+    print("Running Task: Generate a tiny TESTING set...")
+    create_dataset(
+        dataset_name="Tiny-Testing-Set",
+        output_dir="data/tiny_testing",
         instance_params={
             'capacity_ratio_range': cfg.data_gen.capacity_ratio_range,
             'correlation': cfg.data_gen.correlation_type,
             'max_weight': cfg.data_gen.max_weight,
             'max_value': cfg.data_gen.max_value,
         },
-        n_range=(5, 50, 5), # Smaller range for quick debugging
-        num_instances=10    # Fewer instances for faster testing
+        n_range=(10, 100, 5),  # Smaller range for faster testing
+        num_instances=5 # Fewer instances for faster testing
     )
 
     print("\nAll selected data generation tasks are complete.")

@@ -1,7 +1,7 @@
 # train_model.py
 import logging
 import os
-import argparse
+# import argparse
 from src.utils.config_loader import cfg
 from src.utils.logger import setup_logger
 # from src.solvers.ml.dnn_solver import DNNSolver
@@ -12,15 +12,6 @@ def main():
     This script initializes and runs the training process for an ML solver,
     saving all artifacts into a unique, timestamped directory.
     """
-    # --- 0. Parse command-line arguments ---
-    parser = argparse.ArgumentParser(description="Train a machine learning model for the knapsack problem.")
-    parser.add_argument(
-        "--max-n-for-training",
-        type=int,
-        default=None,
-        help="Optional: Limit training and validation to instances where n is less than or equal to this value."
-    )
-    args = parser.parse_args()
     # --- 1. Create a unique name and directory for this training run ---
     run_name = create_run_name(cfg)
     run_dir = os.path.join(cfg.paths.artifacts, "runs", "training", run_name)
@@ -50,7 +41,6 @@ def main():
     solver.train(
         model_save_path=model_save_path,
         plot_save_path=plot_save_path,
-        max_n_for_training=args.max_n_for_training
     )
     
     logger.info(f"--- Training Run {run_name} Finished. ---")
