@@ -36,6 +36,7 @@ def knapsack_collate_fn(batch):
     values_list = [item['values'] for item in batch]
     capacity_list = [item['capacity'] for item in batch]
     n_list = [item['n'] for item in batch]
+    filenames = [item['filename'] for item in batch]
 
     # 2. get the maximum length of weights in the batch
     max_len = max(len(w) for w in weights_list)
@@ -70,8 +71,29 @@ def knapsack_collate_fn(batch):
         'values': torch.stack(padded_values),
         'capacity': torch.stack(capacity_list),
         'n': torch.stack(n_list),
-        'attention_mask': torch.stack(attention_masks).bool() # Convert to boolean tensor
+        'attention_mask': torch.stack(attention_masks).bool(), # Convert to boolean tensor
+        'filenames': filenames
     }
+
+class RawKnapsackDataset(torch.utils.data.Dataset):
+    def __init__(self, data_dir):
+        self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
+
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        instance_path = self.files[idx]
+        weights, values, capacity = load_instance_from_file(instance_path)
+        
+        # return raw data without padding
+        return {
+            'weights': torch.tensor(weights, dtype=torch.float32),
+            'values': torch.tensor(values, dtype=torch.float32),
+            'capacity': torch.tensor(capacity, dtype=torch.float32),
+            'n': torch.tensor(len(weights), dtype=torch.int32),
+            'filename': os.path.basename(instance_path)
+        }
 
 class RLSolver(SolverInterface):
     """
@@ -94,7 +116,14 @@ class RLSolver(SolverInterface):
             use_cuda=True if self.device == 'cuda' else False,
             input_dim=2 # Two inputs: weights and values
         ).to(self.device)
-        
+
+        # Compile the model for potential speed-up
+        try:
+            self.model = torch.compile(self.model)
+            logger.info("Successfully compiled the model with torch.compile() for potential speed-up.")
+        except Exception as e:
+            logger.warning(f"Model compilation failed, proceeding without it. Reason: {e}")
+
         # Load pretrained model if provided
         if model_path:
             if os.path.exists(model_path):
@@ -188,26 +217,7 @@ class RLSolver(SolverInterface):
         from src.utils.config_loader import cfg
         from src.utils.generator import load_instance_from_file
 
-        # --- embedded collate function to load raw data ---
-        class RawKnapsackDataset(torch.utils.data.Dataset):
-            def __init__(self, data_dir):
-                self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
-
-            def __len__(self):
-                return len(self.files)
-
-            def __getitem__(self, idx):
-                instance_path = self.files[idx]
-                weights, values, capacity = load_instance_from_file(instance_path)
-                
-                # return raw data without padding
-                return {
-                    'weights': torch.tensor(weights, dtype=torch.float32),
-                    'values': torch.tensor(values, dtype=torch.float32),
-                    'capacity': torch.tensor(capacity, dtype=torch.float32),
-                    'n': torch.tensor(len(weights), dtype=torch.int32)
-                }
-        
+        logger.info("Preparing data loaders for RL training...")
         try:
             train_dir = cfg.paths.data_training
             val_dir = cfg.paths.data_validation
@@ -429,3 +439,68 @@ class RLSolver(SolverInterface):
             "time": end_time - start_time,
             "solution": solution_mask
         }
+
+    def solve_batch(self, batch_data):
+        """
+        Solves a batch of knapsack instances at once.
+        """
+        self.model.eval()
+        self.model.decoder.decode_type = 'greedy'
+
+        # 1. move batch data to device
+        weights = batch_data['weights'].to(self.device)
+        values = batch_data['values'].to(self.device)
+        capacity = batch_data['capacity'].to(self.device)
+        attention_mask = batch_data['attention_mask'].to(self.device)
+        
+        batch_size = weights.size(0)
+
+        # prepare inputs for the model
+        inputs_stacked = torch.stack([weights, values], dim=1)
+        inputs_for_model = inputs_stacked.permute(0, 2, 1)
+
+        # 2. perform model inference for the entire batch
+        start_time = time.perf_counter()
+        with torch.no_grad():
+            _, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
+        end_time = time.perf_counter()
+
+        # Calculate average time per instance
+        avg_time_per_instance = (end_time - start_time) / batch_size
+
+        # 3. Calculate rewards for the batch
+        rewards = self._calculate_reward(action_idxs, batch_data)
+
+        # 4. Prepare the final results for each instance in the batch
+        batch_results = []
+        for i in range(batch_size):
+            # get raw instance data for the i-th instance
+            original_n = batch_data['n'][i].item()
+            instance_weights = batch_data['weights'][i][:original_n].tolist()
+            
+            # extract solution indices from action_idxs
+            item_indices = [idx[i].item() for idx in action_idxs]
+            solution_mask = [0] * original_n
+            
+            final_weight = 0
+            final_packed_indices = set()
+            for idx in item_indices:
+                # check if idx is within the original n
+                if idx >= original_n:
+                    continue
+                if idx in final_packed_indices:
+                    continue
+                if final_weight + instance_weights[idx] <= batch_data['capacity'][i].item():
+                    final_weight += instance_weights[idx]
+                    final_packed_indices.add(idx)
+            
+            for idx in final_packed_indices:
+                solution_mask[idx] = 1
+
+            batch_results.append({
+                "value": rewards[i].item(),
+                "time": avg_time_per_instance,
+                "solution": solution_mask
+            })
+        
+        return batch_results

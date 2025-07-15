@@ -9,12 +9,14 @@ import argparse
 import torch
 from types import SimpleNamespace
 import copy
+from torch.utils.data import DataLoader
 
 from src.utils.config_loader import cfg, ALGORITHM_REGISTRY
 from src.utils.logger import setup_logger
 from src.evaluation.plotting import plot_evaluation_errors, plot_evaluation_times
 from src.evaluation.reporting import save_results_to_csv
 from src.utils.run_utils import create_run_name
+from src.solvers.ml.rl_solver import knapsack_collate_fn
 
 def main():
     """
@@ -76,7 +78,7 @@ def main():
     instance_files = [os.path.join(test_data_dir, f) for f in os.listdir(test_data_dir) if f.endswith('.csv')]
     raw_results = []
 
-    # FIX 2: Check for dnn_model_path, not model_path
+    # Check for dnn_model_path, not model_path
     if "DNN" in solvers_to_evaluate and not args.dnn_model_path:
         logger.critical("CRITICAL ERROR: The 'DNN' solver is active, but no --dnn-model-path was provided.")
         # Update the help message to be correct
@@ -117,55 +119,77 @@ def main():
                            f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
 
     # --- 4. Run Evaluation Loop ---
+    training_mode = config.ml.training_mode
+    evaluation_batch_size = cfg.ml.rl.testing.batch_size if training_mode == "RL" else 1
+    
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
+        
+        # a. instantiate the solver with the correct configuration
         try:
             solver_instance = None
-            
-            # check if the solver is a machine learning(approximation) model
             if name in vars(cfg.ml.approximation_solvers):
-                # 1. obtain the exact config key for the solver
                 config_key = getattr(cfg.ml.approximation_solvers, name)
-                
-                # 2. obtain the model path from the command line arguments
                 model_path_arg = getattr(args, f"{config_key}_model_path")
-                
                 if not model_path_arg:
-                    logger.warning(f"Skipping {name} solver because --{config_key}-model-path was not provided.")
+                    logger.warning(f"Skipping {name} because --{config_key}-model_path was not provided.")
                     continue
-
-                # 3. load the configuration for the solver
                 config = getattr(cfg.ml, config_key)
-                solver_config = copy.deepcopy(config)
-
-                # 4. --training-max-n is only relevant for DNN
-                if name == "DNN" and args.training_max_n:
-                    logger.info(f"Overriding model input size using --training-max-n={args.training_max_n}")
-                    old_input_size = (args.training_max_n * solver_config.hyperparams.input_size_factor) + solver_config.hyperparams.input_size_plus
-                    solver_config.hyperparams.input_size = old_input_size
-                    logger.info(f"Model will be loaded with input_size: {old_input_size}")
-                
-                # 5. create the solver instance
-                solver_instance = SolverClass(config=solver_config, device=cfg.ml.device, model_path=model_path_arg)
-            
+                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg)
             else:
-                # For non-ML solvers, we can instantiate them directly
                 solver_instance = SolverClass(config={})
-
-            if solver_instance is None:
-                continue
-
-            for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
-                result = solver_instance.solve(instance_file)
-                raw_results.append({
-                    "solver": name,
-                    "instance": os.path.basename(instance_file),
-                    "n": int(os.path.basename(instance_file).split('_n')[1].split('_')[0]),
-                    "value": result.get("value", -1),
-                    "time_seconds": result.get("time", -1),
-                })
         except Exception as e:
-            logger.error(f"Solver '{name}' failed during evaluation. Error: {e}", exc_info=True)
+            logger.error(f"Failed to instantiate solver {name}. Error: {e}", exc_info=True)
+            continue
+        
+        # b. choose the evaluation method based on the solver type
+        if name in vars(cfg.ml.approximation_solvers):
+            # --- apply the new batched evaluation logic for ML solvers ---
+            logger.info(f"Using batched evaluation for {name} with batch size {evaluation_batch_size}.")
+            
+            # 1. Prepare the DataLoader for batched evaluation
+            from src.solvers.ml.rl_solver import RawKnapsackDataset
+            test_dataset = RawKnapsackDataset(test_data_dir)
+            test_loader = DataLoader(
+                test_dataset, 
+                batch_size=evaluation_batch_size, 
+                collate_fn=knapsack_collate_fn
+            )
+
+            # 2. Evaluate the solver in batches
+            try:
+                for batch_data in tqdm(test_loader, desc=f"Solving with {name} (Batched)"):
+                    batch_results = solver_instance.solve_batch(batch_data)
+
+                    for i, result in enumerate(batch_results):
+                        instance_n = batch_data['n'][i].item()
+                        # Ensure the instance name is correctly extracted
+                        instance_name = batch_data['filenames'][i]
+                        raw_results.append({
+                            "solver": name,
+                            "instance": instance_name,
+                            "n": instance_n,
+                            "value": result.get("value", -1),
+                            "time_seconds": result.get("time", -1),
+                        })
+            except Exception as e:
+                logger.error(f"Solver '{name}' failed during batched evaluation. Error: {e}", exc_info=True)
+
+        else:
+            # --- apply the single instance evaluation logic for non-ML solvers ---
+            logger.info(f"Using single instance evaluation for {name}.")
+            try:
+                for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
+                    result = solver_instance.solve(instance_file)
+                    raw_results.append({
+                        "solver": name,
+                        "instance": os.path.basename(instance_file),
+                        "n": int(os.path.basename(instance_file).split('_n')[1].split('_')[0]),
+                        "value": result.get("value", -1),
+                        "time_seconds": result.get("time", -1),
+                    })
+            except Exception as e:
+                logger.error(f"Solver '{name}' failed during single instance evaluation. Error: {e}", exc_info=True)
 
     # --- 5. Process Results and Calculate All Metrics ---
     if not raw_results:
