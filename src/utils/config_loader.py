@@ -58,15 +58,16 @@ def _post_process_config(config_dict: Dict[str, Any]) -> Dict[str, Any]:
 
     # --- 2. Dynamic Calculation of ML Hyperparameters ---
     if 'ml' in config_dict:
-        dnn_gen_cfg = config_dict['ml']['dnn']['generation']
+        ml_gen_cfg = config_dict['ml']['generation'] 
         dnn_hyper_cfg = config_dict['ml']['dnn']['hyperparams']
         
+        # Calculate dynamic DNN hyperparameters using the shared generation config
         max_n = dnn_hyper_cfg['max_n_for_architecture']
         dnn_hyper_cfg['max_n'] = max_n
         dnn_hyper_cfg['input_size'] = max_n * dnn_hyper_cfg['input_size_factor'] + dnn_hyper_cfg['input_size_plus']
         dnn_hyper_cfg['target_scale_factor'] = float(
-            max_n * dnn_gen_cfg['max_value'] * dnn_hyper_cfg['target_scale_factor_multiplier']
-            )
+            max_n * ml_gen_cfg['max_value'] * dnn_hyper_cfg['target_scale_factor_multiplier']
+        )
 
     # --- 3. Auto-detect Hardware Device ---
     if 'ml' in config_dict and config_dict['ml'].get('device') == 'auto':
