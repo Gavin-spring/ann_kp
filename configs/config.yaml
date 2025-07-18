@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/training
+  data_training: data/tiny_training
   data_testing: data/tiny_testing
-  data_validation: data/validation
+  data_validation: data/tiny_validation
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -100,7 +100,7 @@ ml:
     # Training loop settings.
     training:
       total_epochs: 3
-      batch_size: 64
+      batch_size: 32
       learning_rate: 0.001
       # For learning rate decay scheduler
       lr_decay_step: 500

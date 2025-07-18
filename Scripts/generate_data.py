@@ -70,7 +70,7 @@ def create_dataset(
 
     logger.info(f"--- Dataset generation '{dataset_name}' complete. Files saved in '{output_dir}'. ---")
 
-if __name__ == '__main__':
+def main():
     # --- Configure logger ONCE for this script run ---
     setup_logger(run_name="data_generation", log_dir=cfg.paths.logs)
 
@@ -158,3 +158,6 @@ if __name__ == '__main__':
     )
 
     print("\nAll selected data generation tasks are complete.")
+
+if __name__ == '__main__':
+    main()
