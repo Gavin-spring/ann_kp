@@ -15,6 +15,7 @@
 *.gitattributes text
 
 *.ipynb text eol=lf
+*.py eol=lf
 
 *.png binary
 *.jpg binary
