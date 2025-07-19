@@ -9,7 +9,7 @@ from src.utils.generator import load_instance_from_file
 
 logger = logging.getLogger(__name__)
 
-def extract_features_from_instance(instance_path: str, config: 'SimpleNamespace') -> torch.Tensor | None:
+def extract_features_from_instance(instance_path: str, dnn_config: 'SimpleNamespace', generation_config: 'SimpleNamespace') -> torch.Tensor | None:
     """
     Loads a single instance file, normalizes its data, pads it, and returns
     a feature tensor ready for model inference.
@@ -28,8 +28,8 @@ def extract_features_from_instance(instance_path: str, config: 'SimpleNamespace'
         return None
 
     # ML-specific configurations
-    gen_cfg = config.generation
-    hyperparams = config.hyperparams
+    gen_cfg = generation_config
+    hyperparams = dnn_config.hyperparams
     current_n = len(weights)
     
     # --- START OF NORMALIZATION (Identical to the logic in preprocess_data.py) ---

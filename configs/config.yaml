@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/tiny_training
-  data_testing: data/tiny_testing
-  data_validation: data/tiny_validation
+  data_training: data/mid_training
+  data_testing: data/mid_testing
+  data_validation: data/mid_validation
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -90,17 +90,17 @@ ml:
   rl:
     # Model architecture and normalization hyperparameters (ref pemami4911/trainer.py argparse)
     hyperparams:
-      embedding_dim: 128
-      hidden_dim: 128
+      embedding_dim: 96
+      hidden_dim: 96
       n_glimpses: 1
       tanh_exploration: 10
       use_tanh: true
-      max_n: 50 # This is the maximum size of the knapsack problem for RL training.
+      max_n: 200 # larger(training data is still depends on dataset) or equal to the scale of the datasets
       
     # Training loop settings.
     training:
-      total_epochs: 3
-      batch_size: 32
+      total_epochs: 50
+      batch_size: 128
       learning_rate: 0.001
       # For learning rate decay scheduler
       lr_decay_step: 500

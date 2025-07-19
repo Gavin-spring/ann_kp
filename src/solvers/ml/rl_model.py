@@ -135,8 +135,11 @@ class Decoder(nn.Module):
             return logits # No mask on the first step
         
         # Set logits of masked (already selected) items to a large negative number
-        logits[mask] = -1e9
-        return logits
+        # out-of-place, so we don't modify the original logits tensor.
+        # torch.where(condition, value_if_true, value_if_false)
+        # where the mask equals true is where we want to apply the large negative value.
+        masked_logits = torch.where(mask, torch.tensor(-1e9, dtype=logits.dtype, device=logits.device), logits)
+        return masked_logits
 
     def forward(self, decoder_input, embedded_inputs, hidden, context, capacity, attention_mask):
         """
@@ -177,7 +180,9 @@ class Decoder(nn.Module):
             for _ in range(self.n_glimpses):
                 _, glimpse_logits = self.glimpse(g_l, context)
                 # Glimpse logits are masked to prevent attention on padding
-                glimpse_logits.masked_fill_(~attention_mask, -1e9)
+                # out-of-place operation, compiler friendly
+                glimpse_logits = torch.where(~attention_mask, torch.tensor(-1e9, dtype=glimpse_logits.dtype, device=glimpse_logits.device), glimpse_logits)
+
                 glimpse_weights = self.sm(glimpse_logits)
                 g_l = torch.bmm(context.permute(1, 2, 0), glimpse_weights.unsqueeze(2)).squeeze(2)
 
@@ -189,11 +194,28 @@ class Decoder(nn.Module):
             
             # Apply two masks to pointer logits:
             # a) First, apply the attention mask to prevent attention on padding
-            pointer_logits.masked_fill_(~attention_mask, -1e9)
-            
+            # out-of-place operation, compiler friendly
+            pointer_logits = torch.where(~attention_mask, torch.tensor(-1e9, dtype=pointer_logits.dtype, device=pointer_logits.device), pointer_logits)
+
             # b) Then, apply the selection mask to prevent re-selection of items
-            masked_logits = self.apply_mask_to_logits(pointer_logits, selection_mask)            
-            probs = self.sm(masked_logits)
+            masked_logits = self.apply_mask_to_logits(pointer_logits, selection_mask)
+            
+            # before Softmax, transform logits forcefully to float to keep stable values
+            # very large or very small logits can be inf or zero and be nan after softmax
+            # torch.multinomial: Assertion 'probability tensor contains either inf, nan or element < 0' failed.
+            stable_logits = masked_logits.float()
+            probs = self.sm(stable_logits)
+
+            # find rows with all NaN probabilities in the batch
+            nan_rows = torch.isnan(probs).all(dim=1)
+            if torch.any(nan_rows):
+                # replace NaN rows with uniform probabilities
+                # avoid breakdown in multinomial, and have reasonable small influence on final results
+                num_valid_items = attention_mask.sum(dim=1).float()
+                uniform_probs = attention_mask.float() / num_valid_items.unsqueeze(1).clamp(min=1)
+                # out-of-place operation, do not modify the original probs tensor when gradient computation
+                probs = torch.where(nan_rows.unsqueeze(1), uniform_probs, probs)
+
 
             # Select the next item based on the decoding strategy
             if self.decode_type == "stochastic":
@@ -216,7 +238,10 @@ class Decoder(nn.Module):
 
     def decode_stochastic(self, probs):
         """Sample from the probability distribution."""
-        return torch.multinomial(probs, 1).squeeze(1)
+        # To keep data stablility when AMP and torch compile
+        # before torch.multinomial, forecefully convert probabilities tensor to float
+        stable_probs = probs.float()
+        return torch.multinomial(stable_probs, 1).squeeze(1)
 
     def decode_greedy(self, probs):
         """Select the item with the highest probability."""

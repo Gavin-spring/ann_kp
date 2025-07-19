@@ -18,6 +18,9 @@ from src.evaluation.reporting import save_results_to_csv
 from src.utils.run_utils import create_run_name
 from src.solvers.ml.rl_solver import knapsack_collate_fn
 
+# allow PyTorch to use higher precision for matrix multiplications
+torch.set_float32_matmul_precision('high')
+
 def main():
     """
     This script evaluates all solvers, strictly ensures error metrics can be
@@ -41,7 +44,7 @@ def main():
         "--training-max-n",
         type=int,
         default=None,
-        help="The 'max_n_for_architecture' value that was used when a model was trained."
+        help="The 'max_n_for_architecture' value that was used when a dnn model was trained."
     )
     args = parser.parse_args()
     
@@ -119,7 +122,7 @@ def main():
                            f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
 
     # --- 4. Run Evaluation Loop ---
-    training_mode = config.ml.training_mode
+    training_mode = cfg.ml.training_mode
     evaluation_batch_size = cfg.ml.rl.testing.batch_size if training_mode == "RL" else 1
     
     for name, SolverClass in solvers_to_evaluate.items():
@@ -135,7 +138,7 @@ def main():
                     logger.warning(f"Skipping {name} because --{config_key}-model_path was not provided.")
                     continue
                 config = getattr(cfg.ml, config_key)
-                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg)
+                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False) # Compiling when evaluating is slow
             else:
                 solver_instance = SolverClass(config={})
         except Exception as e:
