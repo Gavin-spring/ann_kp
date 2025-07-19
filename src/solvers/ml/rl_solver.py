@@ -100,7 +100,7 @@ class RLSolver(SolverInterface):
     A reinforcement learning-based solver for the knapsack problem using a pointer network.
     Implements the existing project interface.
     """
-    def __init__(self, config, device, model_path=None):
+    def __init__(self, config, device, model_path=None, compile_model=True):
         super().__init__(config)
         self.name = "PointerNet RL"
         self.device = device
@@ -118,17 +118,27 @@ class RLSolver(SolverInterface):
         ).to(self.device)
 
         # Compile the model for potential speed-up
-        try:
-            self.model = torch.compile(self.model)
-            logger.info("Successfully compiled the model with torch.compile() for potential speed-up.")
-        except Exception as e:
-            logger.warning(f"Model compilation failed, proceeding without it. Reason: {e}")
+        if compile_model:
+            try:
+                self.model = torch.compile(self.model)
+                logger.info("Successfully compiled the model with torch.compile() for potential speed-up.")
+            except Exception as e:
+                logger.warning(f"Model compilation failed, proceeding without it. Reason: {e}")
 
         # Load pretrained model if provided
         if model_path:
             if os.path.exists(model_path):
                 logger.info(f"Loading pre-trained RL model for evaluation: {model_path}")
-                self.model.load_state_dict(torch.load(model_path, map_location=self.device))
+                
+                # Check if the state_dict contains '_orig_mod.' prefix
+                # This is a common prefix when using torch.compile
+                state_dict = torch.load(model_path, map_location=self.device)
+                if any(key.startswith('_orig_mod.') for key in state_dict.keys()):
+                    logger.info("Found compiled model state_dict, stripping '_orig_mod.' prefix...")
+                    new_state_dict = {key.replace('_orig_mod.', ''): value for key, value in state_dict.items()}
+                    self.model.load_state_dict(new_state_dict)
+                else:
+                    self.model.load_state_dict(state_dict)
             else:
                 raise FileNotFoundError(f"Model file not found for RLSolver: {model_path}")
         
@@ -248,6 +258,14 @@ class RLSolver(SolverInterface):
         # Initialize baseline on the correct device
         baseline = torch.zeros(1, device=self.device)
 
+        # 1. Use a GradScaler for mixed precision training
+        # AMP (Automatic Mixed Precision) taking adventages of Tensor Cores is a feature in PyTorch that allows you to use lower precision (float16) for training,
+        # For NVIDIA GPU（RTX 20XX），Tensor Cores dealing with float16 as multiple times faster than float32, and can train larger models.
+        # For Pointer Networks and Transformer models, Computationally intensive operations (such as matrix multiplication nn.Linear, torch.bmm) 
+        # are typically stable and efficient under float16, and they account for more than 95% of the model's computation time. 
+        # Numerically sensitive operations  (such as softmax, log in loss functions, or activation functions with large input ranges) are only a minority . 
+
+        scaler = torch.amp.GradScaler()
         for i, batch_data in enumerate(tqdm(data_loader, desc="Training", leave=False)):
             
             weights = batch_data['weights'].to(self.device)
@@ -255,33 +273,39 @@ class RLSolver(SolverInterface):
             capacity = batch_data['capacity'].to(self.device)
             attention_mask = batch_data['attention_mask'].to(self.device)
             
-            inputs = torch.stack([weights, values], dim=1)
+            inputs = torch.stack([weights, values], dim=1)            
             inputs_for_model = inputs.permute(0, 2, 1) # Shape: (batch_size, feature_num, max_n)
-
-            probs_list, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
-
-            rewards = self._calculate_reward(action_idxs, batch_data)
-            rewards = rewards.to(self.device)
-
-            if i == 0 and baseline.sum() == 0:
-                baseline = rewards.mean()
-            else:
-                baseline = baseline * beta + (1. - beta) * rewards.mean()
             
-            advantage = rewards - baseline.detach()
-
-            log_probs_of_actions = 0
-            for step, prob_dist in enumerate(probs_list):
-                action_idx_at_step = action_idxs[step]
-                log_prob = torch.log(prob_dist.gather(1, action_idx_at_step.unsqueeze(1)).squeeze(1))
-                # Handle potential -inf from log(0) for numerical stability
-                log_prob[log_prob < -1000] = 0.0 
-                log_probs_of_actions += log_prob
-            
-            loss = -(log_probs_of_actions * advantage).mean()
-
             optimizer.zero_grad()
-            loss.backward()
+            
+            # 2. Perform forward pass with mixed precision
+            with torch.amp.autocast(device_type='cuda'):
+                probs_list, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
+                rewards = self._calculate_reward(action_idxs, batch_data).to(self.device)
+
+                # 3. Calculate the baseline using an exponential moving average
+                if i == 0 and baseline.sum() == 0:
+                    baseline = rewards.mean()
+                else:
+                    baseline = baseline * beta + (1. - beta) * rewards.mean()
+                    
+                # 4. Calculate the advantage
+                advantage = rewards - baseline.detach()
+
+                # Calculate the loss
+                log_probs_of_actions = 0
+                for prob_dist, action_idx in zip(probs_list, action_idxs):
+                    log_prob = torch.log(prob_dist.gather(1, action_idx.unsqueeze(1)).squeeze(1))
+                    log_prob[log_prob < -1000] = 0.0
+                    log_probs_of_actions += log_prob
+
+                loss = -(log_probs_of_actions * advantage).mean()
+
+            # 5. Scale the loss for mixed precision
+            scaler.scale(loss).backward()
+
+            # optimizer.zero_grad() # used when not using AMP
+            # loss.backward() # used when not using AMP
 
             # --- APPLY GRADIENT CLIPPING ---
             # Use the max_grad_norm value from the config
@@ -289,12 +313,14 @@ class RLSolver(SolverInterface):
                 self.model.parameters(),
                 self.config.training.max_grad_norm
             )
-            
-            optimizer.step()
+
+            # optimizer.step() # used when not using AMP
 
             # --- STEP THE LEARNING RATE SCHEDULER ---
+            scaler.step(optimizer)
+            scaler.update()
+
             scheduler.step()
-            
             total_epoch_reward += rewards.mean().item()
         
         return total_epoch_reward / len(data_loader), baseline

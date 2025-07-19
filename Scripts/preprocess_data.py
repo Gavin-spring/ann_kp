@@ -14,9 +14,19 @@ from src.solvers.ml.feature_extractor import extract_features_from_instance
 def main():
     """
     Pre-processes the raw instance data into training-ready tensors.
+    - 'baseline' mode: Solves instances with a baseline solver for evaluation ground truth.
+    - 'dnn' mode: Extracts features and labels specifically for DNN training.
     """
     # --- Argument parsing ---
     parser = argparse.ArgumentParser(description="Preprocess knapsack problem datasets.")
+    parser.add_argument(
+        '--mode',
+        type=str,
+        required=True,
+        choices=['baseline', 'dnn'],
+        help="Specify the preprocessing mode: 'baseline' for ground truth, 'dnn' for model features."
+    )
+    
     parser.add_argument(
         '--dataset',
         type=str,
@@ -25,6 +35,7 @@ def main():
         choices=['training', 'validation', 'testing', 'all'],
         help="Specify the dataset(s) to preprocess. Options: 'training', 'validation', 'testing', 'all'."
     )
+
     parser.add_argument(
         '--limit',
         type=int,
@@ -98,40 +109,52 @@ def main():
             logger.info(f"Processing a maximum of {args.limit} instances per 'n'. Total files to process: {len(final_files_to_process)}.")
 
         processed_data = []
-        for instance_path in tqdm(final_files_to_process, desc=f"Processing {purpose} data"):
-            # 1. Get normalized features for the model using the new feature extractor
-            features_tensor = extract_features_from_instance(instance_path, config=cfg.ml.dnn)
-            if features_tensor is None:
-                logger.warning(f"Skipping instance {instance_path} due to feature extraction error.")
-                continue
-
-            # 2. Get the optimal solution (label) by running the baseline solver on the same path
+        # 5. Process each instance file based on the mode
+        for instance_path in tqdm(final_files_to_process, desc=f"Processing {purpose} data ({args.mode})"):
+            # A. all modes require the baseline solver to get the optimal value
             optimal_result = baseline_solver.solve(instance_path)
             if optimal_result.get('value', -1) == -1:
                 logger.warning(f"Skipping instance {instance_path} due to baseline solver error.")
                 continue
-            
-            # 3. Normalize the label
-            normalized_label = optimal_result['value'] / cfg.ml.dnn.hyperparams.target_scale_factor
 
-            # 4. Append the feature tensor and label tensor to our list
-            processed_data.append({
-                'instance': os.path.basename(instance_path),
-                'features': features_tensor,
-                'label': torch.tensor([normalized_label]).float(),
-                'optimal_value': optimal_result['value'], # add original optimal value
-                'solve_time': optimal_result.get('time', 0)
-            })
+            # B. Different modes handle the data differently
+            if args.mode == 'baseline':
+                # baseline mode only needs the basic optimal value and solve time
+                processed_data.append({
+                    'instance': os.path.basename(instance_path),
+                    'optimal_value': optimal_result['value'],
+                    'solve_time': optimal_result.get('time', 0)
+                })
 
-        # 5. Save the entire list of processed data to a single, fast-loading file
+            elif args.mode == 'dnn':
+                # dnn mode requires feature extraction
+                features_tensor = extract_features_from_instance(
+                    instance_path, 
+                    dnn_config=cfg.ml.dnn, 
+                    generation_config=cfg.ml.generation
+                )
+                if features_tensor is None:
+                    logger.warning(f"Skipping instance {instance_path} due to feature extraction error.")
+                    continue
+                
+                normalized_label = optimal_result['value'] / cfg.ml.dnn.hyperparams.target_scale_factor
+                
+                processed_data.append({
+                    'instance': os.path.basename(instance_path),
+                    'features': features_tensor,
+                    'label': torch.tensor([normalized_label]).float(),
+                    'optimal_value': optimal_result['value'],
+                    'solve_time': optimal_result.get('time', 0)
+                })
+
+        # 6. Save the processed data
         if processed_data:
-            output_path = os.path.join(cfg.paths.data, f"processed_{purpose}.pt")
+            output_path = os.path.join(cfg.paths.data, f"processed_{args.mode}_{purpose}.pt")
             torch.save(processed_data, output_path)
             logger.info(f"Successfully pre-processed {len(processed_data)} instances.")
-            logger.info(f"Training-ready dataset saved to: {output_path}")
+            logger.info(f"'{args.mode}' data for '{purpose}' saved to: {output_path}")
         else:
-            logger.warning(f"No data was processed for '{purpose}' set.")
-
+            logger.warning(f"No data was processed for '{purpose}' set in mode '{args.mode}'.")
 
     logger.info("--- Preprocessing complete! ---")
 
