@@ -109,7 +109,7 @@ class RLSolver(SolverInterface):
         self.model = PointerNetwork(
             embedding_dim=self.config.hyperparams.embedding_dim,
             hidden_dim=self.config.hyperparams.hidden_dim,
-            max_decoding_len=self.config.hyperparams.max_n, # Max solution length is number of items
+            # max_decoding_len=self.config.hyperparams.max_n, # Max solution length is number of items
             n_glimpses=self.config.hyperparams.n_glimpses,
             tanh_exploration=self.config.hyperparams.tanh_exploration,
             use_tanh=self.config.hyperparams.use_tanh,
@@ -165,7 +165,12 @@ class RLSolver(SolverInterface):
         best_val_reward = -float('inf')
         history = []
         total_epochs = self.config.training.total_epochs
-        
+
+        # Early stopping parameters
+        patience = 20  # How many epochs to wait for improvement before stopping.
+                    # Can be made a config parameter.
+        epochs_no_improve = 0
+    
         logger.info(f"Starting training for {total_epochs} epochs...")
         for epoch in range(total_epochs):
             # Pass the scheduler to the training function
@@ -181,18 +186,22 @@ class RLSolver(SolverInterface):
                 'val_reward': val_reward,
                 'baseline': final_baseline.item()
             })
-            
-            # Note: scheduler.step() is now called inside _train_one_epoch after each batch,
-            # so we don't call it here. If using ReduceLROnPlateau, you would call it here:
-            # scheduler.step(val_reward)
-            
+
             logger.info(f"Epoch {epoch+1}/{total_epochs}, Train Reward: {train_reward:.4f}, Val Reward: {val_reward:.4f}, Baseline: {final_baseline.item():.4f}")
 
             if val_reward > best_val_reward:
                 best_val_reward = val_reward
                 torch.save(self.model.state_dict(), model_save_path)
                 logger.info(f"  -> New best model saved to {model_save_path} (Val Reward: {best_val_reward:.4f})")
-        
+                epochs_no_improve = 0  # Reset counter on improvement
+            else:
+                epochs_no_improve += 1  # Increment counter if no improvement
+
+            # Check if we should stop early
+            if epochs_no_improve >= patience:
+                logger.info(f"--- Early stopping triggered after {patience} epochs with no improvement. ---")
+                break  # Exit the training loop
+
         # 4. Finalize and plot results
         self._plot_reward_curve(pd.DataFrame(history), plot_save_path)
         logger.info(f"--- Finished Training. Best validation reward: {best_val_reward:.4f} ---")

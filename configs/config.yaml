@@ -90,16 +90,16 @@ ml:
   rl:
     # Model architecture and normalization hyperparameters (ref pemami4911/trainer.py argparse)
     hyperparams:
-      embedding_dim: 96
-      hidden_dim: 96
-      n_glimpses: 1
-      tanh_exploration: 10
+      embedding_dim: 128
+      hidden_dim: 128
+      n_glimpses: 2
+      tanh_exploration: 30
       use_tanh: true
-      max_n: 200 # larger(training data is still depends on dataset) or equal to the scale of the datasets
+      max_n: 150 # larger(training data is still depends on dataset) or equal to the scale of the datasets
       
     # Training loop settings.
     training:
-      total_epochs: 50
+      total_epochs: 150
       batch_size: 128
       learning_rate: 0.001
       # For learning rate decay scheduler
@@ -113,4 +113,4 @@ ml:
       baseline_beta: 0.8
 
     testing:
-      batch_size: 32
+      batch_size: 64

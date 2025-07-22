@@ -18,7 +18,7 @@ class Encoder(nn.Module):
         self.hidden_dim = hidden_dim
         self.lstm = nn.LSTM(embedding_dim, hidden_dim)
         self.use_cuda = use_cuda
-        self.enc_init_state = self.init_hidden(hidden_dim)
+        self.enc_init_state = self.init_hidden(hidden_dim) # this is not used in the forward pass, but can be
 
     def forward(self, x, hidden):
         output, hidden = self.lstm(x, hidden)
@@ -30,16 +30,10 @@ class Encoder(nn.Module):
         if self.use_cuda:
             enc_init_hx = enc_init_hx.cuda()
 
-        #enc_init_hx.data.uniform_(-(1. / math.sqrt(hidden_dim)),
-        #        1. / math.sqrt(hidden_dim))
-
         enc_init_cx = Variable(torch.zeros(hidden_dim), requires_grad=False)
         if self.use_cuda:
             enc_init_cx = enc_init_cx.cuda()
 
-        #enc_init_cx = nn.Parameter(enc_init_cx)
-        #enc_init_cx.data.uniform_(-(1. / math.sqrt(hidden_dim)),
-        #        1. / math.sqrt(hidden_dim))
         return (enc_init_hx, enc_init_cx)
 
 class Attention(nn.Module):
@@ -93,7 +87,7 @@ class Decoder(nn.Module):
     def __init__(self,
                  embedding_dim: int,
                  hidden_dim: int,
-                 max_length: int,
+                #  max_length: int,
                  tanh_exploration: float,
                  use_tanh: bool,
                  n_glimpses: int = 1,
@@ -102,7 +96,7 @@ class Decoder(nn.Module):
         
         self.embedding_dim = embedding_dim
         self.hidden_dim = hidden_dim
-        self.max_length = max_length
+        # self.max_length = max_length
         self.use_cuda = use_cuda
         self.n_glimpses = n_glimpses
         
@@ -248,12 +242,11 @@ class Decoder(nn.Module):
         return torch.argmax(probs, dim=1)
 
 class PointerNetwork(nn.Module):
-    """The pointer network, which is the core seq2seq 
-    model"""
+    """The pointer network, which is the core seq2seq model"""
     def __init__(self, 
             embedding_dim,
             hidden_dim,
-            max_decoding_len,
+            # max_decoding_len,
             n_glimpses,
             tanh_exploration,
             use_tanh,
@@ -272,7 +265,7 @@ class PointerNetwork(nn.Module):
         self.decoder = Decoder(
                 embedding_dim,
                 hidden_dim,
-                max_length=max_decoding_len,
+                # max_length=max_decoding_len,
                 tanh_exploration=tanh_exploration,
                 use_tanh=use_tanh,
                 n_glimpses=n_glimpses,
