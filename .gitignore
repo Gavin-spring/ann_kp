@@ -36,3 +36,6 @@ venv/
 *.egg-info/
 build/
 dist/
+
+latex/
+latex/out/

@@ -85,7 +85,7 @@ def main():
     }
     # Range of 'n' for training and validation sets
     # model_n_range = (cfg.ml.generation.start_n, cfg.ml.generation.end_n, cfg.ml.generation.step_n)
-    medium_n_range = (5, 200, 5) 
+    medium_n_range = (5, 150, 5) 
 
     # ==========================================================
     # # === Tasks for Large Scale Training & Testing ===
@@ -173,7 +173,7 @@ def main():
         output_dir=cfg.paths.data_training, # change in config.yaml
         instance_params=shared_instance_params,
         n_range=medium_n_range,
-        num_instances=50 # moderate number of instances
+        num_instances=150 # moderate number of instances
     )
 
     # === Validation Sets for ML Models ===
@@ -182,7 +182,7 @@ def main():
         output_dir=cfg.paths.data_validation,
         instance_params=shared_instance_params,
         n_range=medium_n_range,
-        num_instances=10 # fewer instances for validation
+        num_instances=30 # fewer instances for validation
     )
 
     # === Testing Set for ML Solvers ===
@@ -190,8 +190,8 @@ def main():
         dataset_name="Final-Testing-Set",
         output_dir=cfg.paths.data_testing,
         instance_params=shared_instance_params,
-        n_range=(5, 500, 10), # more diverse range for testing
-        num_instances=20 # not too many instances, but enough for testing
+        n_range=(5, 300, 10), # more diverse range for testing
+        num_instances=60 # not too many instances, but enough for testing
     )
 
     print("\nAll selected data generation tasks are complete.")
