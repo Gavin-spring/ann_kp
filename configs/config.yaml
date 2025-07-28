@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/mid_training
+  data_training: data/sanity_training
+  data_validation: data/sanity_validation
   data_testing: data/mid_testing
-  data_validation: data/mid_validation
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -99,9 +99,9 @@ ml:
       
     # Training loop settings.
     training:
-      total_epochs: 150
-      batch_size: 128
-      learning_rate: 0.001
+      total_epochs: 300
+      batch_size: 32
+      learning_rate: 0.0001
       # For learning rate decay scheduler
       lr_decay_step: 500
       lr_decay_rate: 0.96
@@ -109,8 +109,17 @@ ml:
       # For gradient clipping
       max_grad_norm: 2.0
 
-      # For the exponential moving average baseline
-      baseline_beta: 0.8
+      # For REINFORCE, not used when using Critic
+      # exponential moving average baseline
+      # baseline_beta: 0.8
+
+      # For PPO
+      ppo_epochs: 4          # K, 每次采集数据后，网络优化的轮数
+      gamma: 0.99            # 折扣因子 (在当前问题中作用不大，但保留是个好习惯)
+      gae_lambda: 0.95       # GAE的lambda参数 (同样，在当前问题中作用不大)
+      clip_param: 0.2        # PPO的裁剪参数 epsilon
+      value_loss_coef: 0.5   # c1, Critic损失的权重
+      entropy_coef: 0        # c2, 熵奖励的权重，鼓励探索
 
     testing:
       batch_size: 64

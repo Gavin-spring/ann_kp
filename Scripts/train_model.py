@@ -34,18 +34,19 @@ def main():
         solver = DNNSolver(config=cfg.ml.dnn, device=cfg.ml.device)
     elif cfg.ml.training_mode == "RL":
         from src.solvers.ml.rl_solver import RLSolver
-        solver = RLSolver(config=cfg.ml.rl, device=cfg.ml.device)
+        solver = RLSolver(config=cfg.ml.rl, device=cfg.ml.device, compile_model=False)
     else:
         raise ValueError(f"Unsupported training mode: {cfg.ml.training_mode}")
     
     # --- 3. Define artifact paths and train ---
-    model_save_path = os.path.join(run_dir, "best_model.pth")
-    plot_save_path = os.path.join(run_dir, "loss_curve.png")
+    artifact_paths = {
+        "model": os.path.join(run_dir, "best_model.pth"),
+        "reward_plot": os.path.join(run_dir, "reward_curve.png"),
+        "loss_plot": os.path.join(run_dir, "loss_curves.png"),
+        "entropy_plot": os.path.join(run_dir, "entropy_curve.png")
+    }
     
-    solver.train(
-        model_save_path=model_save_path,
-        plot_save_path=plot_save_path,
-    )
+    solver.train(artifact_paths=artifact_paths)
     
     logger.info(f"--- Training Run {run_name} Finished. ---")
 

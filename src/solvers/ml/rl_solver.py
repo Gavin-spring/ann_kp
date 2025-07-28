@@ -76,8 +76,10 @@ def knapsack_collate_fn(batch):
     }
 
 class RawKnapsackDataset(torch.utils.data.Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, max_weight, max_value):
         self.files = [os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith('.csv')]
+        self.max_weight = max_weight
+        self.max_value = max_value
 
     def __len__(self):
         return len(self.files)
@@ -85,12 +87,27 @@ class RawKnapsackDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         instance_path = self.files[idx]
         weights, values, capacity = load_instance_from_file(instance_path)
-        
+
+        # --- Sort items by value-to-weight ratio ---
+        # Convert weights and values to tensors
+        weights_t = torch.tensor(weights, dtype=torch.float32)
+        values_t = torch.tensor(values, dtype=torch.float32)
+
+        v_w_ratio = values_t / (weights_t + 1e-9)  # Add a small epsilon to avoid division by zero
+        sorted_indices = torch.argsort(v_w_ratio, descending=True)
+        sorted_weights = weights_t[sorted_indices]
+        sorted_values = values_t[sorted_indices]
+
+        # --- Normalize weights, values and capacity ---
+        norm_weights = sorted_weights / self.max_weight
+        norm_values = sorted_values / self.max_value
+        norm_capacity = torch.tensor(capacity, dtype=torch.float32) / self.max_weight
+
         # return raw data without padding
         return {
-            'weights': torch.tensor(weights, dtype=torch.float32),
-            'values': torch.tensor(values, dtype=torch.float32),
-            'capacity': torch.tensor(capacity, dtype=torch.float32),
+            'weights': norm_weights,
+            'values': norm_values,
+            'capacity': norm_capacity,
             'n': torch.tensor(len(weights), dtype=torch.int32),
             'filename': os.path.basename(instance_path)
         }
@@ -107,12 +124,7 @@ class RLSolver(SolverInterface):
 
         # 1. Initialize the model (Actor)
         self.model = PointerNetwork(
-            embedding_dim=self.config.hyperparams.embedding_dim,
-            hidden_dim=self.config.hyperparams.hidden_dim,
-            # max_decoding_len=self.config.hyperparams.max_n, # Max solution length is number of items
-            n_glimpses=self.config.hyperparams.n_glimpses,
-            tanh_exploration=self.config.hyperparams.tanh_exploration,
-            use_tanh=self.config.hyperparams.use_tanh,
+            config=self.config,
             use_cuda=True if self.device == 'cuda' else False,
             input_dim=2 # Two inputs: weights and values
         ).to(self.device)
@@ -146,15 +158,20 @@ class RLSolver(SolverInterface):
         logger.info(f"{self.name} solver initialized on device {self.device}")
 
     # --- Main Orchestration Method ---
-    def train(self, model_save_path: str, plot_save_path: str):
+    def train(self, artifact_paths: dict):
         """
         Orchestrates the entire training process, now passing the scheduler
         to the epoch training function.
         """
         logger.info(f"--- Starting RL Training for {self.name} ---")
         
+        model_save_path = artifact_paths['model']
+        reward_plot_path = artifact_paths['reward_plot']
+        loss_plot_path = artifact_paths['loss_plot']
+        entropy_plot_path = artifact_paths['entropy_plot']
+        
         # 1. Setup training components
-        optimizer, scheduler = self._setup_training() # Now receives the scheduler
+        optimizer, scheduler = self._setup_training() # receives the scheduler
 
         # 2. Prepare data loaders
         train_loader, val_loader = self._prepare_dataloaders()
@@ -173,8 +190,8 @@ class RLSolver(SolverInterface):
     
         logger.info(f"Starting training for {total_epochs} epochs...")
         for epoch in range(total_epochs):
-            # Pass the scheduler to the training function
-            train_reward, final_baseline = self._train_one_epoch(
+            # --- start training ---
+            train_reward, critic_loss, actor_loss, entropy = self._train_one_epoch_PPO(
                 train_loader, optimizer, scheduler
             )
             
@@ -184,10 +201,13 @@ class RLSolver(SolverInterface):
                 'epoch': epoch + 1, 
                 'train_reward': train_reward, 
                 'val_reward': val_reward,
-                'baseline': final_baseline.item()
+                'critic_loss': critic_loss,
+                'actor_loss': actor_loss, # for ppo
+                'entropy': entropy # for ppo
             })
 
-            logger.info(f"Epoch {epoch+1}/{total_epochs}, Train Reward: {train_reward:.4f}, Val Reward: {val_reward:.4f}, Baseline: {final_baseline.item():.4f}")
+            logger.info(f"Epoch {epoch+1}/{total_epochs}, Train Reward: {train_reward:.4f}, Val Reward: {val_reward:.4f}, " \
+            f"Critic Loss: {critic_loss:.4f}, Entropy: {entropy:.4f}")
 
             if val_reward > best_val_reward:
                 best_val_reward = val_reward
@@ -203,7 +223,11 @@ class RLSolver(SolverInterface):
                 break  # Exit the training loop
 
         # 4. Finalize and plot results
-        self._plot_reward_curve(pd.DataFrame(history), plot_save_path)
+        history_df = pd.DataFrame(history)
+        self._plot_reward_curve(history_df, reward_plot_path)
+        self._plot_loss_curves(history_df, loss_plot_path)
+        self._plot_entropy_curve(history_df, entropy_plot_path)
+
         logger.info(f"--- Finished Training. Best validation reward: {best_val_reward:.4f} ---")
 
     # --- Helper Methods ---
@@ -234,15 +258,17 @@ class RLSolver(SolverInterface):
     def _prepare_dataloaders(self):
         """Loads raw data and prepares PyTorch DataLoaders using a collate_fn."""
         from src.utils.config_loader import cfg
-        from src.utils.generator import load_instance_from_file
 
         logger.info("Preparing data loaders for RL training...")
         try:
             train_dir = cfg.paths.data_training
             val_dir = cfg.paths.data_validation
 
-            train_dataset = RawKnapsackDataset(train_dir)
-            val_dataset = RawKnapsackDataset(val_dir)
+            max_weight = cfg.ml.generation.max_weight
+            max_value = cfg.ml.generation.max_value
+
+            train_dataset = RawKnapsackDataset(train_dir, max_weight, max_value)
+            val_dataset = RawKnapsackDataset(val_dir, max_weight, max_value)
             
             # --- Use the knapsack_collate_fn defined above ---
             train_loader = DataLoader(train_dataset, batch_size=self.config.training.batch_size, shuffle=True, collate_fn=knapsack_collate_fn)
@@ -334,6 +360,104 @@ class RLSolver(SolverInterface):
         
         return total_epoch_reward / len(data_loader), baseline
 
+    def _train_one_epoch_PPO(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, torch.Tensor]:
+        self.model.train()
+
+        # --- 1. 从self.config加载超参数 ---
+        ppo_cfg = self.config.training
+        ppo_epochs = ppo_cfg.ppo_epochs
+        gamma = ppo_cfg.gamma
+        gae_lambda = ppo_cfg.gae_lambda
+        clip_param = ppo_cfg.clip_param
+        value_loss_coef = ppo_cfg.value_loss_coef
+        entropy_coef = ppo_cfg.entropy_coef
+
+        # 在每个epoch开始时，我们只处理一个batch的数据作为一次完整的PPO迭代
+        for batch_data in tqdm(data_loader, desc="PPO Iteration", leave=False):
+            
+            # --- 2. 经验采集 (Rollout) ---
+            # 使用当前的策略(θ_old)与环境交互，采集一批经验数据
+            with torch.no_grad():
+                # 将数据移动到设备
+                weights = batch_data['weights'].to(self.device)
+                values = batch_data['values'].to(self.device)
+                capacity = batch_data['capacity'].to(self.device)
+                attention_mask = batch_data['attention_mask'].to(self.device)
+                inputs = torch.stack([weights, values], dim=1).permute(0, 2, 1)
+
+                # 模型前向传播，获得动作、概率、和状态价值
+                self.model.decoder.decode_type = 'stochastic'
+                # 注意：您的模型现在返回三个值
+                probs_list, action_idxs, state_values = self.model(inputs, capacity, attention_mask)
+
+                # 计算旧策略下，采取这些动作的对数概率
+                log_probs_of_actions_old = 0
+                for prob_dist, action_idx in zip(probs_list, action_idxs):
+                    prob_of_action = prob_dist.gather(1, action_idx.unsqueeze(1)).squeeze(1)
+                    log_probs_of_actions_old += torch.log(prob_of_action + 1e-9) # 防止log(0)错误
+                
+                # 计算整个回合的奖励 (Gt)
+                rewards = self._calculate_reward(action_idxs, batch_data).to(self.device)
+
+            # --- 3. 计算优势函数 (通用GAE实现) ---
+            # 您的场景: T步决策，只有第T步才有奖励R，其余奖励为0
+            num_steps = len(action_idxs)
+            advantages = torch.zeros_like(rewards)
+            last_gae_lam = 0
+            
+            # 我们只有一个最终奖励，所以V(s_T) = R, V(s_{T+1}) = 0
+            # 最后一个时间步的TD误差: delta_T = R_T + gamma * 0 - V(s_T) = R - V(s_T)
+            # 注意: state_values 是 V(s_0)，不是 V(s_T)。
+            # 对于这种“延迟奖励”问题，一个简单有效的处理方式仍然是:
+            advantages = rewards - state_values.detach()
+            # 回报目标 (Returns-to-go)
+            returns = advantages + state_values.detach()
+            returns = (returns - returns.mean()) / (returns.std() + 1e-8)
+            assert not torch.isnan(returns).any() and not torch.isnan(advantages).any(), "NaN detected in returns or advantages"
+            # 归一化优势函数
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+            
+            # --- 4. 优化阶段 (K个Epoch的更新) ---
+            # 使用采集到的这批数据，重复训练网络K次
+            for _ in range(ppo_epochs):
+                # 模型再次前向传播，以获取当前策略下的输出
+                self.model.decoder.decode_type = 'stochastic'
+                new_probs_list, _, new_state_values = self.model(inputs, capacity, attention_mask)
+                
+                # 计算新策略下的对数概率和熵
+                log_probs_of_actions_new = 0
+                entropy = 0
+                for prob_dist, action_idx in zip(new_probs_list, action_idxs):
+                    prob_of_action = prob_dist.gather(1, action_idx.unsqueeze(1)).squeeze(1)
+                    log_probs_of_actions_new += torch.log(prob_of_action + 1e-9)
+                    entropy -= (prob_dist * torch.log(prob_dist.clamp(min=1e-9))).sum(dim=1)
+                
+                # --- 计算PPO损失 ---
+                # 1. 概率比
+                ratio = torch.exp(log_probs_of_actions_new - log_probs_of_actions_old)
+                assert not torch.isnan(ratio).any() and not torch.isinf(ratio).any(), "NaN or Inf detected in ratio"
+                
+                # 2. Actor损失 (L_CLIP)
+                surr1 = ratio * advantages
+                surr2 = torch.clamp(ratio, 1.0 - clip_param, 1.0 + clip_param) * advantages
+                actor_loss = -torch.min(surr1, surr2).mean()
+
+                # 3. Critic损失 (L_VF)
+                critic_loss = F.mse_loss(new_state_values, returns)
+                
+                # 4. 总损失
+                loss = actor_loss + value_loss_coef * critic_loss - entropy_coef * entropy.mean()
+                assert not torch.isnan(loss).any(), "NaN detected in final loss"
+
+                # --- 梯度更新 ---
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), self.config.training.max_grad_norm)
+                optimizer.step()
+        
+        # 返回一些日志信息
+        return rewards.mean().item(), critic_loss.item(), actor_loss.item(), entropy.mean().item()
+
     def _validate_one_epoch(self, data_loader: DataLoader) -> float:
         """Executes a single validation epoch."""
         self.model.eval() # Set model to evaluation mode
@@ -351,7 +475,7 @@ class RLSolver(SolverInterface):
                 # This permute should be consistent with the one in training
                 inputs_for_model = inputs.permute(0, 2, 1) 
                 
-                _ , action_idxs = self.model(inputs_for_model, capacity, attention_mask)                
+                _ , action_idxs, _ = self.model(inputs_for_model, capacity, attention_mask)                
 
                 rewards = self._calculate_reward(action_idxs, batch_data)
                 total_val_reward += rewards.mean().item()
@@ -382,7 +506,53 @@ class RLSolver(SolverInterface):
         plt.close()
         logger.info(f"Reward curve plot saved to {save_path}")
 
-    def _calculate_reward(self, selected_indices, instance_batch):
+    def _plot_loss_curves(self, history_df: pd.DataFrame, save_path: str):
+        """Helper function to plot and save the actor and critic loss curves."""
+        if history_df.empty or 'critic_loss' not in history_df.columns:
+            logger.warning("No loss history to plot.")
+            return
+
+        plt.style.use('seaborn-v0_8-whitegrid')
+        plt.figure(figsize=(15, 7))
+        
+        # Plot Critic Loss
+        sns.lineplot(data=history_df, x='epoch', y='critic_loss', label='Critic Loss (Value Function)')
+        
+        # Check if actor_loss is available and plot it
+        if 'actor_loss' in history_df.columns:
+            # We can use a secondary y-axis if the scales are very different, but for now we'll plot on the same one.
+            sns.lineplot(data=history_df, x='epoch', y='actor_loss', label='Actor Loss (Policy)')
+        
+        plt.title('Training Loss Curves', fontsize=16)
+        plt.xlabel('Epoch', fontsize=12)
+        plt.ylabel('Loss Value', fontsize=12)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        logger.info(f"Loss curves plot saved to {save_path}")
+
+    def _plot_entropy_curve(self, history_df: pd.DataFrame, save_path: str):
+        """Helper function to plot and save the policy entropy curve."""
+        if history_df.empty or 'entropy' not in history_df.columns:
+            logger.warning("No entropy history to plot.")
+            return
+
+        plt.style.use('seaborn-v0_8-whitegrid')
+        plt.figure(figsize=(15, 7))
+        
+        sns.lineplot(data=history_df, x='epoch', y='entropy', label='Policy Entropy')
+        
+        plt.title('Policy Entropy During Training', fontsize=16)
+        plt.xlabel('Epoch', fontsize=12)
+        plt.ylabel('Entropy', fontsize=12)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=300)
+        plt.close()
+        logger.info(f"Entropy curve plot saved to {save_path}")
+
+    def _calculate_reward_unpack(self, selected_indices, instance_batch):
         """
         Given the item selection sequence output by the model, compute the total value as the reward.
         This function handles batched input.
@@ -416,6 +586,28 @@ class RLSolver(SolverInterface):
 
         return torch.tensor(batch_rewards, dtype=torch.float32)
 
+    def _calculate_reward(self, selected_indices, instance_batch):
+        """
+        Given the item selection sequence output by the model, compute the total value as the reward.
+        """
+        batch_size = selected_indices[0].size(0)
+        batch_total_value = torch.zeros(batch_size, device=self.device)
+        
+        # extract values from the whole instance batch
+        # Attention：instance_batch['values'] is padded, so it has shape [batch_size, max_n]
+        values_padded = instance_batch['values'].to(self.device)
+
+        # Iterate over each action step in the batch
+        for action_step in selected_indices:
+            # action_step shape: [batch_size]
+            # gather from values_padded to get the values corresponding to the selected indices
+            # action_step.unsqueeze(1) -> [batch_size, 1]
+            chosen_values = values_padded.gather(1, action_step.unsqueeze(1)).squeeze(1)
+
+            batch_total_value += chosen_values
+
+        return batch_total_value
+
     def solve(self, instance_path: str):
         """
         Solve a single knapsack problem instance using the trained RL model.
@@ -444,7 +636,7 @@ class RLSolver(SolverInterface):
         start_time = time.perf_counter()
         with torch.no_grad():
             # Assume model returns both log probabilities and action indices
-            _, action_idxs = self.model(input_tensor, capacity_t, attention_mask) 
+            _, action_idxs, _ = self.model(input_tensor, capacity_t, attention_mask) 
         end_time = time.perf_counter()
         
         # 4. Compute final solution
@@ -497,7 +689,7 @@ class RLSolver(SolverInterface):
         # 2. perform model inference for the entire batch
         start_time = time.perf_counter()
         with torch.no_grad():
-            _, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
+            _, action_idxs, _ = self.model(inputs_for_model, capacity, attention_mask)
         end_time = time.perf_counter()
 
         # Calculate average time per instance

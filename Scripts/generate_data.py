@@ -85,7 +85,6 @@ def main():
     }
     # Range of 'n' for training and validation sets
     # model_n_range = (cfg.ml.generation.start_n, cfg.ml.generation.end_n, cfg.ml.generation.step_n)
-    medium_n_range = (5, 150, 5) 
 
     # ==========================================================
     # # === Tasks for Large Scale Training & Testing ===
@@ -131,12 +130,13 @@ def main():
     # ==========================================================
     # # === Tasks for Quick Process Testing ===
     # ==========================================================
+    # tiny_n_range = (5, 50, 5)  # Smaller range for quick testing
     # print("Running Task: Generate a tiny TRAINING set...")
     # create_dataset(
     #     dataset_name="ML-Training-Tiny-Set",
     #     output_dir="data/tiny_training",
     #     instance_params=shared_instance_params,
-    #     n_range=model_n_range,
+    #     n_range=tiny_n_range,
     #     num_instances=10   # Fewer instances for faster testing
     # )
     
@@ -145,7 +145,7 @@ def main():
     #     dataset_name="ML-Validation-Tiny-Set",
     #     output_dir="data/tiny_validation",
     #     instance_params=shared_instance_params,
-    #     n_range=model_n_range,
+    #     n_range=tiny_n_range,
     #     num_instances=3   # Fewer instances for faster testing
     # )
 
@@ -153,12 +153,7 @@ def main():
     # create_dataset(
     #     dataset_name="Tiny-Testing-Set",
     #     output_dir="data/tiny_testing",
-    #     instance_params={
-    #         'capacity_ratio_range': cfg.data_gen.capacity_ratio_range,
-    #         'correlation': cfg.data_gen.correlation_type,
-    #         'max_weight': cfg.data_gen.max_weight,
-    #         'max_value': cfg.data_gen.max_value,
-    #     },
+    #     instance_params=shared_instance_params,
     #     n_range=(10, 100, 5),  # Smaller range for faster testing
     #     num_instances=5 # Fewer instances for faster testing
     # )
@@ -166,32 +161,56 @@ def main():
     # ==========================================================
     # ===  Medium-Scale Dataset Tasks ===
     # ==========================================================
+    # medium_n_range = (5, 150, 5)
+    # print("Running Task: Generate medium-scale datasets for ML models...")
+    # # === Training Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="ML-Training-Medium",
+    #     output_dir=cfg.paths.data_training, # change in config.yaml
+    #     instance_params=shared_instance_params,
+    #     n_range=medium_n_range,
+    #     num_instances=100 # moderate number of instances
+    # )
+
+    # # === Validation Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="ML-Validation-Medium",
+    #     output_dir=cfg.paths.data_validation,
+    #     instance_params=shared_instance_params,
+    #     n_range=medium_n_range,
+    #     num_instances=30 # fewer instances for validation
+    # )
+
+    # # === Testing Set for ML Solvers ===
+    # create_dataset(
+    #     dataset_name="Final-Testing-Set",
+    #     output_dir=cfg.paths.data_testing,
+    #     instance_params=shared_instance_params,
+    #     n_range=(5, 300, 10), # more diverse range for testing
+    #     num_instances=50 # not too many instances, but enough for testing
+    # )
+    
+    # ==========================================================
+    # ===  Sanity Check ===
+    # ==========================================================
+    sanity_n_range = (20, 21, 1)
     print("Running Task: Generate medium-scale datasets for ML models...")
     # === Training Sets for ML Models ===
     create_dataset(
-        dataset_name="ML-Training-Medium",
+        dataset_name="SanityCheck-n20-Training",
         output_dir=cfg.paths.data_training, # change in config.yaml
         instance_params=shared_instance_params,
-        n_range=medium_n_range,
-        num_instances=150 # moderate number of instances
+        n_range=sanity_n_range,
+        num_instances=100
     )
 
     # === Validation Sets for ML Models ===
     create_dataset(
-        dataset_name="ML-Validation-Medium",
+        dataset_name="SanityCheck-n20-Validation",
         output_dir=cfg.paths.data_validation,
         instance_params=shared_instance_params,
-        n_range=medium_n_range,
-        num_instances=30 # fewer instances for validation
-    )
-
-    # === Testing Set for ML Solvers ===
-    create_dataset(
-        dataset_name="Final-Testing-Set",
-        output_dir=cfg.paths.data_testing,
-        instance_params=shared_instance_params,
-        n_range=(5, 300, 10), # more diverse range for testing
-        num_instances=60 # not too many instances, but enough for testing
+        n_range=sanity_n_range,
+        num_instances=30
     )
 
     print("\nAll selected data generation tasks are complete.")
