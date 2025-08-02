@@ -193,24 +193,35 @@ def main():
     # ==========================================================
     # ===  Sanity Check ===
     # ==========================================================
-    sanity_n_range = (20, 21, 1)
+    sanity_n_range = (20, 20, 1)
+    # start, stop, step = sanity_n_range
+    # n_values = list(range(start, stop, step))
     print("Running Task: Generate medium-scale datasets for ML models...")
-    # === Training Sets for ML Models ===
-    create_dataset(
-        dataset_name="SanityCheck-n20-Training",
-        output_dir=cfg.paths.data_training, # change in config.yaml
-        instance_params=shared_instance_params,
-        n_range=sanity_n_range,
-        num_instances=100
-    )
+    # # === Training Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="SanityCheck-n20-Training",
+    #     output_dir=cfg.paths.data_training, # change in config.yaml
+    #     instance_params=shared_instance_params,
+    #     n_range=sanity_n_range,
+    #     num_instances=100
+    # )
 
-    # === Validation Sets for ML Models ===
+    # # === Validation Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="SanityCheck-n20-Validation",
+    #     output_dir=cfg.paths.data_validation,
+    #     instance_params=shared_instance_params,
+    #     n_range=sanity_n_range,
+    #     num_instances=30
+    # )
+
+    # === Testing Sets for ML Models ===
     create_dataset(
-        dataset_name="SanityCheck-n20-Validation",
-        output_dir=cfg.paths.data_validation,
+        dataset_name="SanityCheck-n20-Testing",
+        output_dir=cfg.paths.data_testing,
         instance_params=shared_instance_params,
         n_range=sanity_n_range,
-        num_instances=30
+        num_instances=50
     )
 
     print("\nAll selected data generation tasks are complete.")

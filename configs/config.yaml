@@ -17,7 +17,7 @@ paths:
   # Subdirectories for data
   data_training: data/sanity_training
   data_validation: data/sanity_validation
-  data_testing: data/mid_testing
+  data_testing: data/sanity_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -95,7 +95,7 @@ ml:
       n_glimpses: 2
       tanh_exploration: 30
       use_tanh: true
-      max_n: 150 # larger(training data is still depends on dataset) or equal to the scale of the datasets
+      max_n: 20 # This is the maximum size of the knapsack problem for RL training.
       
     # Training loop settings.
     training:
