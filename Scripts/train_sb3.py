@@ -95,10 +95,11 @@ def main():
         learning_rate=lr_schedule,
         n_steps=2048,
         batch_size=64,
-        n_epochs=10,
+        n_epochs=20,
         gamma=cfg.ml.rl.training.gamma,
         gae_lambda=cfg.ml.rl.training.gae_lambda,
         clip_range=cfg.ml.rl.training.clip_param,
+        vf_coef=1.0
     )
     
     model.policy = torch.compile(model.policy) # triton compile the model for performance

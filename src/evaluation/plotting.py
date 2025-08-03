@@ -127,7 +127,7 @@ def plot_results(df: pd.DataFrame, save_dir: str):
         sns.stripplot(data=df, x='n', y='ppo_value', ax=axes[0], jitter=True, label='PPO Agent')
         if 'baseline_value' in df.columns:
             sns.stripplot(data=df, x='n', y='baseline_value', ax=axes[0], 
-              marker='x', s=100, color='darkorange', linewidth=2, 
+              marker='x', s=10, color='darkorange', linewidth=1.2, 
               label='Baseline (Optimal)', zorder=3)
 
     axes[0].set_title('PPO Agent Performance vs. Problem Size')
@@ -143,7 +143,7 @@ def plot_results(df: pd.DataFrame, save_dir: str):
         sns.stripplot(data=df, x='n', y='ppo_time', ax=axes[1], jitter=True, color='r', label='PPO Agent')
         if 'baseline_time' in df.columns:
             sns.stripplot(data=df, x='n', y='baseline_time', ax=axes[1], 
-              marker='x', s=100, color='darkorange', linewidth=2, 
+              marker='x', s=10, color='darkorange', linewidth=1.2, 
               label='Baseline (Optimal)', zorder=3)
     
     axes[1].set_ylabel('Time (seconds)')

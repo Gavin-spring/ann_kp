@@ -41,26 +41,47 @@ class KnapsackEncoder(BaseFeaturesExtractor):
 class PointerDecoder(nn.Module):
     def __init__(self, embedding_dim: int, n_glimpses: int = 1):
         super().__init__()
-        # 这是一个简化的版本，你可以将原来复杂的Glimpse和Attention层代码搬过来
-        # 关键在于，它的输入是Encoder的输出，输出是指向每个物品的logits
+        self.n_glimpses = n_glimpses
+        self.glimpse_attention = nn.Linear(embedding_dim, embedding_dim, bias=False)
+        self.pointer_attention = nn.Linear(embedding_dim, embedding_dim, bias=False)
+
         self.project_context = nn.Linear(embedding_dim, embedding_dim, bias=False)
-        self.project_query = nn.Linear(embedding_dim, embedding_dim, bias=False)
+        # self.project_query = nn.Linear(embedding_dim, embedding_dim, bias=False)
         self.v = nn.Parameter(torch.randn(embedding_dim), requires_grad=True)
 
     def forward(self, context: torch.Tensor, query: torch.Tensor) -> torch.Tensor:
         # context: (batch, max_n, embed_dim) - from Encoder
-        # query: (batch, embed_dim) - 代表当前状态的查询向量 (例如context的平均池化)
-        
-        # (batch, max_n, embed_dim)
+        # query: (batch, embed_dim)
+
         projected_context = self.project_context(context)
-        # (batch, 1, embed_dim)
-        projected_query = self.project_query(query).unsqueeze(1)
+        for _ in range(self.n_glimpses):
+            # (batch, 1, embed_dim)
+            projected_glimpse_query = self.glimpse_attention(query).unsqueeze(1)
+            
+            # (batch, max_n)
+            glimpse_scores = torch.sum(self.v * torch.tanh(projected_context + projected_glimpse_query), dim=-1)
+            glimpse_weights = torch.softmax(glimpse_scores, dim=1)
+            
+            # 用注意力权重重新聚合context，得到新的query
+            # bmm: (batch, 1, max_n) @ (batch, max_n, embed_dim) -> (batch, 1, embed_dim)
+            query = torch.bmm(glimpse_weights.unsqueeze(1), context).squeeze(1)
+
+        # 2. Pointer Phase: 使用最终精炼过的query进行决策
+        projected_pointer_query = self.pointer_attention(query).unsqueeze(1)
+        final_scores = torch.sum(self.v * torch.tanh(projected_context + projected_pointer_query), dim=-1)
         
-        # (batch, max_n)
-        scores = torch.sum(self.v * torch.tanh(projected_context + projected_query), dim=-1)
-        return scores
+        return final_scores
+        # # (batch, max_n, embed_dim)
+        # projected_context = self.project_context(context)
+        # # (batch, 1, embed_dim)
+        # projected_query = self.project_query(query).unsqueeze(1)
+        
+        # # (batch, max_n)
+        # scores = torch.sum(self.v * torch.tanh(projected_context + projected_query), dim=-1)
+        # return scores
 
 # --- Critic ---
+# bad practice: Critic should share the same Encoder as Actor
 class CriticNetwork(nn.Module):
     def __init__(self, observation_space: gym.spaces.Dict, embedding_dim: int, n_process_block_iters: int = 3):
         super().__init__()
@@ -107,17 +128,28 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
     def _build(self, lr_schedule):
         self.action_net = PointerDecoder(self.features_extractor.features_dim)
-        self.value_net = CriticNetwork(
-            observation_space=self.observation_space,
-            embedding_dim=self.features_extractor_kwargs['embedding_dim'],
-            n_process_block_iters=3 # 可以加入配置
+        features_dim = self.features_extractor.features_dim
+        self.value_net = nn.Sequential(
+            nn.Linear(features_dim, 256),
+            nn.BatchNorm1d(256),  # <-- 增加BatchNorm
+            nn.ReLU(),
+            nn.Dropout(0.1),      # <-- 增加Dropout
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
         )
+
+        # self.value_net = nn.Sequential(
+        #     nn.Linear(self.features_extractor.features_dim, 256),
+        #     nn.ReLU(),
+        #     nn.Linear(256, 1)
+        # )
         self.action_dist = CategoricalDistribution(self.action_space.n)
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
     def forward(self, obs: Dict[str, torch.Tensor], deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         context, pooled_features = self.extract_features(obs)
-        values = self.value_net(obs)
+        values = self.value_net(pooled_features)
         
         action_logits = self.action_net(context, pooled_features)
         action_logits[~obs["mask"].bool()] = -torch.inf
@@ -130,7 +162,7 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
     def evaluate_actions(self, obs: Dict[str, torch.Tensor], actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         context, pooled_features = self.extract_features(obs)
-        values = self.value_net(obs)
+        values = self.value_net(pooled_features)
         
         action_logits = self.action_net(context, pooled_features)
         action_logits[~obs["mask"].bool()] = -torch.inf
@@ -142,10 +174,10 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return values, log_prob, entropy
 
     def predict_values(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        return self.value_net(obs)
+        _context, pooled_features = self.extract_features(obs)
+        return self.value_net(pooled_features)
 
     def _predict(self, observation: Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
-
         context, pooled_features = self.extract_features(observation)
         
         action_logits = self.action_net(context, pooled_features)
@@ -154,9 +186,9 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         return distribution.get_actions(deterministic=deterministic)
 
-    def _get_action_logits_from_context(self, context, obs):
-        """helper function to get action logits from context"""
-        query = torch.mean(context, dim=1)
-        action_logits = self.action_net(context, query)
-        action_logits[~obs["mask"].bool()] = -torch.inf
-        return action_logits
+    # def _get_action_logits_from_context(self, context, obs):
+    #     """helper function to get action logits from context"""
+    #     query = torch.mean(context, dim=1)
+    #     action_logits = self.action_net(context, query)
+    #     action_logits[~obs["mask"].bool()] = -torch.inf
+    #     return action_logits
