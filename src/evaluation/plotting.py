@@ -109,7 +109,7 @@ def plot_evaluation_errors_DNN(results_df: pd.DataFrame, save_path: str):
     logger.info(f"Error plot saved to {save_path}")
 
 def plot_results(df: pd.DataFrame, save_dir: str):
-    """绘制所有性能和误差图表（更健壮的版本）"""
+    """绘制所有性能和误差图表(gym+sb3)"""
     os.makedirs(save_dir, exist_ok=True)
     
     # 检查x轴有多少个独特的点
@@ -126,7 +126,9 @@ def plot_results(df: pd.DataFrame, save_dir: str):
     else: # 如果只有一个n，画散点图
         sns.stripplot(data=df, x='n', y='ppo_value', ax=axes[0], jitter=True, label='PPO Agent')
         if 'baseline_value' in df.columns:
-            sns.stripplot(data=df, x='n', y='baseline_value', ax=axes[0], marker='x', color='gray', label='Baseline (Optimal)')
+            sns.stripplot(data=df, x='n', y='baseline_value', ax=axes[0], 
+              marker='x', s=100, color='darkorange', linewidth=2, 
+              label='Baseline (Optimal)', zorder=3)
 
     axes[0].set_title('PPO Agent Performance vs. Problem Size')
     axes[0].set_ylabel('Total Value')
@@ -140,7 +142,9 @@ def plot_results(df: pd.DataFrame, save_dir: str):
     else:
         sns.stripplot(data=df, x='n', y='ppo_time', ax=axes[1], jitter=True, color='r', label='PPO Agent')
         if 'baseline_time' in df.columns:
-            sns.stripplot(data=df, x='n', y='baseline_time', ax=axes[1], marker='x', color='gray', label='Baseline (Optimal)')
+            sns.stripplot(data=df, x='n', y='baseline_time', ax=axes[1], 
+              marker='x', s=100, color='darkorange', linewidth=2, 
+              label='Baseline (Optimal)', zorder=3)
     
     axes[1].set_ylabel('Time (seconds)')
     axes[1].grid(True)

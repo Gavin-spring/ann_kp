@@ -6,12 +6,12 @@ This script sets up the training environment, defines the custom policy, and sta
 
 import os
 import torch
+import warnings
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.utils import get_linear_fn
 from stable_baselines3.common.vec_env import VecNormalize
-
 
 from src.utils.config_loader import cfg
 from src.utils.run_utils import create_run_name
@@ -20,12 +20,19 @@ from src.env.knapsack_env import KnapsackEnv
 from src.solvers.ml.custom_policy import KnapsackActorCriticPolicy, KnapsackEncoder
 
 torch.set_float32_matmul_precision('high')
+warnings.filterwarnings("ignore", ".*get_linear_fn().*", category=UserWarning)
 
 def main():
     # Create a unique run name based on the current configuration
     run_name = create_run_name(cfg)
     run_dir = os.path.join("artifacts_sb3", "training", run_name)
     os.makedirs(run_dir, exist_ok=True)
+
+    # Define directories for models and logs
+    models_dir = os.path.join(run_dir, "models")
+    logs_dir = os.path.join(run_dir, "logs") # evaluation.npz
+    unified_tensorboard_log_dir = os.path.join("artifacts_sb3", "tensorboard_logs")
+
     print(f"--- Starting new training run: {run_name} ---")
     print(f"All artifacts will be saved in: {run_dir}")
     
@@ -62,9 +69,6 @@ def main():
                            gamma=cfg.ml.rl.training.gamma)
 
     # 2. define evaluation callback
-    models_dir = os.path.join(run_dir, "models")
-    logs_dir = os.path.join(run_dir, "logs")
-    tensorboard_log_dir = os.path.join(run_dir, "tensorboard_logs")
     eval_callback = EvalCallback(val_env, 
                                  best_model_save_path=models_dir,
                                  log_path=logs_dir,
@@ -87,7 +91,7 @@ def main():
         train_env,
         policy_kwargs=policy_kwargs,
         verbose=1,
-        tensorboard_log=tensorboard_log_dir,
+        tensorboard_log=unified_tensorboard_log_dir,
         learning_rate=lr_schedule,
         n_steps=2048,
         batch_size=64,
@@ -101,7 +105,7 @@ def main():
 
     # 5. start training
     print("start training...")
-    model.learn(total_timesteps=500_000, callback=eval_callback)
+    model.learn(total_timesteps=500_000, callback=eval_callback, tb_log_name=run_name)
 
     # 6. save the final model and VecNormalize stats
     print("Training complete. Saving VecNormalize stats and final model...")

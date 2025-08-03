@@ -60,6 +60,45 @@ class PointerDecoder(nn.Module):
         scores = torch.sum(self.v * torch.tanh(projected_context + projected_query), dim=-1)
         return scores
 
+# --- Critic ---
+class CriticNetwork(nn.Module):
+    def __init__(self, observation_space: gym.spaces.Dict, embedding_dim: int, n_process_block_iters: int = 3):
+        super().__init__()
+        
+        # Critic拥有自己独立的Encoder实例
+        self.encoder = KnapsackEncoder(observation_space, embedding_dim)
+        
+        self.n_process_block_iters = n_process_block_iters
+        
+        # 用于状态精炼的注意力模块 (Process Block)
+        self.process_block = PointerDecoder(embedding_dim) # 我们可以复用PointerDecoder作为注意力层
+        
+        # 最终输出价值的MLP
+        self.value_decoder = nn.Sequential(
+            nn.Linear(embedding_dim, embedding_dim),
+            nn.ReLU(),
+            nn.Linear(embedding_dim, 1)
+        )
+
+    def forward(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
+        # 1. Critic独立地对观测进行编码
+        # context: (batch, max_n, embed_dim), pooled_features: (batch, embed_dim)
+        context, pooled_features = self.encoder(obs)
+        
+        # 2. 使用pooled_features作为初始的"状态"，进行迭代精炼
+        process_block_state = pooled_features
+        for _ in range(self.n_process_block_iters):
+            # 用当前状态作为query，在所有物品的context上做注意力
+            attention_logits = self.process_block(context, process_block_state)
+            attention_weights = torch.softmax(attention_logits, dim=1)
+            
+            # 根据注意力权重，重新聚合context，得到新的、更精炼的状态
+            # bmm: (batch, 1, max_n) @ (batch, max_n, embed_dim) -> (batch, 1, embed_dim)
+            process_block_state = torch.bmm(attention_weights.unsqueeze(1), context).squeeze(1)
+            
+        # 3. 使用最终精炼过的状态来预测价值
+        return self.value_decoder(process_block_state)
+
 # --- Actor-Critic Policy ---
 class KnapsackActorCriticPolicy(ActorCriticPolicy):
     def __init__(self, observation_space: gym.spaces.Space, action_space: gym.spaces.Space, lr_schedule, **kwargs):
@@ -68,13 +107,17 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
     def _build(self, lr_schedule):
         self.action_net = PointerDecoder(self.features_extractor.features_dim)
-        self.value_net = nn.Linear(self.features_extractor.features_dim, 1)
+        self.value_net = CriticNetwork(
+            observation_space=self.observation_space,
+            embedding_dim=self.features_extractor_kwargs['embedding_dim'],
+            n_process_block_iters=3 # 可以加入配置
+        )
         self.action_dist = CategoricalDistribution(self.action_space.n)
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
     def forward(self, obs: Dict[str, torch.Tensor], deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         context, pooled_features = self.extract_features(obs)
-        values = self.value_net(pooled_features)
+        values = self.value_net(obs)
         
         action_logits = self.action_net(context, pooled_features)
         action_logits[~obs["mask"].bool()] = -torch.inf
@@ -87,7 +130,7 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
     def evaluate_actions(self, obs: Dict[str, torch.Tensor], actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         context, pooled_features = self.extract_features(obs)
-        values = self.value_net(pooled_features)
+        values = self.value_net(obs)
         
         action_logits = self.action_net(context, pooled_features)
         action_logits[~obs["mask"].bool()] = -torch.inf
@@ -99,8 +142,7 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return values, log_prob, entropy
 
     def predict_values(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        _context, pooled_features = self.extract_features(obs)
-        return self.value_net(pooled_features)
+        return self.value_net(obs)
 
     def _predict(self, observation: Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
 
@@ -111,3 +153,10 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         return distribution.get_actions(deterministic=deterministic)
+
+    def _get_action_logits_from_context(self, context, obs):
+        """helper function to get action logits from context"""
+        query = torch.mean(context, dim=1)
+        action_logits = self.action_net(context, query)
+        action_logits[~obs["mask"].bool()] = -torch.inf
+        return action_logits
