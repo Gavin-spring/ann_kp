@@ -8,33 +8,31 @@ from typing import Dict, List, Tuple
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.distributions import CategoricalDistribution
+from src.utils.config_loader import cfg
 
 # --- Encoder ---
 class KnapsackEncoder(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, embedding_dim: int = 128, nhead: int = 4, num_layers: int = 2):
-        # 输出的特征维度是聚合后的向量维度
         super().__init__(observation_space, features_dim=embedding_dim)
-        
-        max_items = observation_space["items"].shape[0]
-        item_feature_dim = observation_space["items"].shape[1]
+
+        item_feature_dim = cfg.ml.rl.ppo.hyperparams.item_feature_dim  # weight, value
+        self.max_possible_n = cfg.ml.rl.ppo.hyperparams.eval_max_n
 
         self.item_embedder = nn.Linear(item_feature_dim, embedding_dim)
         encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=nhead, batch_first=True)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        self.positional_encoding = nn.Parameter(torch.randn(1, max_items, embedding_dim))
+        self.positional_encoding = nn.Parameter(torch.randn(1, self.max_possible_n, embedding_dim))
     
     def forward(self, observations: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         items_obs = observations["items"]
+        batch_size, seq_len, _ = items_obs.shape
         item_embeddings = self.item_embedder(items_obs)
-        item_embeddings += self.positional_encoding[:, :item_embeddings.size(1), :]
+        item_embeddings += self.positional_encoding[:, :seq_len, :]
         
         # (batch, max_n, embed_dim)
         context = self.transformer_encoder(item_embeddings)
-        
-        # 聚合特征用于ValueNet
         pooled_features = torch.mean(context, dim=1)
-        
-        # **同时返回序列(context)和聚合特征(pooled_features)**
+
         return context, pooled_features
 
 # --- Decoder ---

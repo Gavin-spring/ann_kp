@@ -140,7 +140,7 @@ def main():
     #     num_instances=100,
     # )
     
-    # print("Running Task: Generate a tiny VALIDATION set...")
+    # print("Running Task: Generate a small VALIDATION set...")
     # create_dataset(
     #     dataset_name="Validation-Small-Set",
     #     output_dir="data/small_validation",
@@ -149,12 +149,12 @@ def main():
     #     num_instances=30,
     # )
 
-    print("Running Task: Generate a tiny TESTING set...")
+    print("Running Task: Generate a small TESTING set...")
     create_dataset(
         dataset_name="Testing-Small-Set",
         output_dir="data/small_testing",
         instance_params=shared_instance_params,
-        n_range=(5, 50, 5),
+        n_range=(50, 200, 5),
         num_instances=50,
     )
     

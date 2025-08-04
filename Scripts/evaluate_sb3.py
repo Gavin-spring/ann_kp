@@ -19,7 +19,8 @@ from src.evaluation.plotting import plot_results
 
 # --- Main Function ---
 def main():
-    # model path and stats path
+    # --- 1. model path and stats path ---
+    # parser --run-dir
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-dir", type=str, required=True, help="Path to the training run directory to evaluate.")
     args = parser.parse_args()
@@ -34,31 +35,78 @@ def main():
     print(f"--- Starting new evaluation run for: {args.run_dir} ---")
     print(f"Evaluation results will be saved in: {eval_dir}")
 
-    # evaluate the PPO agent
-    print("--- 1. Evaluating PPO Agent ---")
     model_path = os.path.join(args.run_dir, "models", "best_model.zip")
     stats_path = os.path.join(args.run_dir, "models", "vec_normalize.pkl")
 
-    env_kwargs = {
+    # --- 2. 加载模型 (使用尺寸匹配的临时环境) ---
+    print("Step 1: Creating temporary environment with training size to load model...")
+    model_train_max_n = cfg.ml.rl.ppo.hyperparams.max_n
+    temp_env_kwargs = {
         "data_dir": cfg.paths.data_testing,
-        "max_n": cfg.ml.rl.ppo.hyperparams.max_n,
+        "max_n": model_train_max_n,
         "max_weight": cfg.ml.generation.max_weight,
         "max_value": cfg.ml.generation.max_value,
     }
-    env_unwrapped = make_vec_env(KnapsackEnv, n_envs=1, env_kwargs=env_kwargs)
-    env = VecNormalize.load(stats_path, env_unwrapped)
-    env.training = False
-    env.norm_reward = False
+    temp_env = KnapsackEnv(**temp_env_kwargs)
 
+    print(f"Step 2: Loading model from {model_path}...")
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=UserWarning)
-        model = PPO.load(model_path, env=env)
+        model = PPO.load(model_path, env=temp_env)
+    print("Model loaded successfully.")
 
+    # --- 3. 手动创建和校准用于评估的VecNormalize环境 ---
+    print("Step 3: Manually setting up full-size normalized environment...")
+    
+    # a. 创建一个临时的、未包装的VecEnv，仅用于加载统计数据
+    temp_vec_env = make_vec_env(lambda: KnapsackEnv(**temp_env_kwargs), n_envs=1)
+    loaded_stats = VecNormalize.load(stats_path, temp_vec_env)
+
+    # b. 创建我们真正需要的、足够大的评估环境
+    eval_max_n = cfg.ml.rl.ppo.hyperparams.eval_max_n
+    eval_env_kwargs = temp_env_kwargs.copy()
+    eval_env_kwargs['max_n'] = eval_max_n
+    eval_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=1, env_kwargs=eval_env_kwargs)
+    
+    # c. 用一个全新的VecNormalize来包装大环境
+    norm_obs_keys = ["items", "capacity"]
+    env = VecNormalize(eval_env_unwrapped, norm_obs=True, norm_reward=False, 
+                       gamma=cfg.ml.rl.ppo.training.gamma, norm_obs_keys=norm_obs_keys)
+
+    # d. 【核心修复】进行“数据输血”，逐一处理每个观测的键
+    #   ret_rms是标量，可以直接复制
+    env.ret_rms = loaded_stats.ret_rms
+    #   obs_rms是一个字典，我们需要逐一处理
+    for key in norm_obs_keys:
+        # 获取训练时保存的统计值的长度
+        n_train_obs = loaded_stats.obs_rms[key].mean.shape[0]
+        # 将数值复制到新环境对应key的统计对象中
+        env.obs_rms[key].mean[:n_train_obs] = loaded_stats.obs_rms[key].mean
+        env.obs_rms[key].var[:n_train_obs] = loaded_stats.obs_rms[key].var
+        env.obs_rms[key].count = loaded_stats.obs_rms[key].count
+    print("Normalization stats manually transferred and padded.")
+
+    # e. 更新模型的“身份证”
+    print("Updating model's internal spaces to match new environment...")
+    model.observation_space = env.observation_space
+    model.action_space = env.action_space
+    model.policy.observation_space = env.observation_space
+    model.policy.action_space = env.action_space
+
+    # f. 将模型与我们手动校准好的大环境关联
+    model.set_env(env)
+    print("Environment setup complete.")
+    
+    # --- 3. Start Evaluation ---
+    print("\n--- Evaluating PPO Agent on full test set ---")
     ppo_results = []
-    # get all testing instances
     test_instances = env.venv.get_attr('instance_files')[0]
 
-    for instance_path in tqdm(test_instances, desc="Evaluating PPO Agent"):
+    # filter instances to only those that fit the model's max_n
+    model_capacity = cfg.ml.rl.ppo.hyperparams.eval_max_n
+    valid_test_instances = [p for p in test_instances if int(os.path.basename(p).split('_n')[1].split('_')[0]) <= model_capacity]
+
+    for instance_path in tqdm(valid_test_instances, desc="Evaluating PPO Agent"):
         # manually set the next instance
         env.venv.env_method('manual_set_next_instance', instance_path)
         obs = env.reset()
@@ -79,8 +127,8 @@ def main():
         })
     ppo_df = pd.DataFrame(ppo_results)
 
-    # --- Evaluate Baseline Solver ---
-    print("\n--- 2. Evaluating Baseline Solver ---")    
+    # --- 4. Evaluate Baseline Solver ---
+    print("\n--- Evaluating Baseline Solver ---")    
     BaselineSolverClass = cfg.ml.baseline_algorithm
     baseline_solver_name = None
 
@@ -121,7 +169,7 @@ def main():
         print(f"Baseline solver '{baseline_solver_name}' not found. Skipping error analysis.")
         final_df = ppo_df
 
-    # Save the final results
+    # --- 5. Save the final results ---
     results_path = os.path.join(eval_dir, "evaluation_results_full.csv")
     final_df.to_csv(results_path, index=False)
     

@@ -111,7 +111,10 @@ ml:
     ppo:
       # --- 模型架构超参数 (新的Transformer + PointerNet) ---
       hyperparams:
-        max_n: 50              # 最大问题规模
+        data_type: "unfixed"   # "fixed" for fixed-size, "unfixed" for variable size
+        max_n: 50              # 训练时最大问题规模
+        eval_max_n: 2000       # 测试时最大问题规模 (用于位置编码)
+        item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
         embedding_dim: 128
         n_glimpses: 2          # Actor (PointerDecoder) 的 Glimpse 次数
         nhead: 4               # Encoder (Transformer) 的多头注意力头数
@@ -125,8 +128,8 @@ ml:
         early_stopping_patience: 10
 
         # 学习率调度
-        learning_rate_initial: 0.0001
-        learning_rate_final: 0.00001
+        learning_rate_initial: 0.00001
+        learning_rate_final: 0.000001
 
         # PPO 核心参数 (与SB3完全对应)
         n_steps: 2048

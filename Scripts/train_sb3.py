@@ -49,11 +49,16 @@ def main():
     run_info = {
         "run_name": run_name,
         "policy_architecture": "Shared Encoder + MLP Critic", # edit this if you change the architecture
-        "critic_details": "2-layer MLP", # edit this if you change the critic architecture
+        "critic_details": "MLP with bn and dropout", # edit this if you change the critic architecture
+        "data_type": cfg.ml.rl.ppo.hyperparams.data_type, # "fixed" or "unfixed"
+        "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n, # training max_n
+        "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n, # evaluation max_n
         "n_glimpses": cfg.ml.rl.ppo.hyperparams.n_glimpses,
         "embedding_dim": cfg.ml.rl.ppo.hyperparams.embedding_dim,
         "nhead": cfg.ml.rl.ppo.hyperparams.nhead,
         "num_layers": cfg.ml.rl.ppo.hyperparams.num_layers,
+        "total_timesteps": cfg.ml.rl.ppo.training.total_timesteps,
+        "eval_freq": cfg.ml.rl.ppo.training.eval_freq,
         "learning_rate_initial": cfg.ml.rl.ppo.training.learning_rate_initial,
         "learning_rate_final": cfg.ml.rl.ppo.training.learning_rate_final,
         "vf_coef": cfg.ml.rl.ppo.training.vf_coef,
