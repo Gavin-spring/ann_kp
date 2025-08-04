@@ -147,13 +147,31 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         self.action_dist = CategoricalDistribution(self.action_space.n)
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
-    def forward(self, obs: Dict[str, torch.Tensor], deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+    def _get_action_logits_from_obs(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
+        """从观测计算出最终的、安全的logits"""
         context, pooled_features = self.extract_features(obs)
-        values = self.value_net(pooled_features)
-        
         action_logits = self.action_net(context, pooled_features)
-        action_logits[~obs["mask"].bool()] = -torch.inf
         
+        mask = obs["mask"].bool()
+        action_logits[~mask] = -torch.inf
+
+        # 检查是否存在所有动作都被屏蔽的行
+        all_masked_rows = torch.all(~mask, dim=1)
+        if all_masked_rows.any():
+            # 对于这些完全被屏蔽的行，我们将第一个动作的logit设为0
+            # 这可以确保softmax的输出是 [1, 0, 0, ...] 而不是 [nan, nan, nan, ...]
+            # 从而避免CUDA崩溃。这个动作是无效的，但可以安全地被采样。
+            action_logits[all_masked_rows, 0] = 0
+
+        return action_logits
+
+    def forward(self, obs: Dict[str, torch.Tensor], deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        # critic
+        _context, pooled_features = self.extract_features(obs)
+        values = self.value_net(pooled_features)
+
+        # actor
+        action_logits = self._get_action_logits_from_obs(obs)
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         actions = distribution.get_actions(deterministic=deterministic)
         log_prob = distribution.log_prob(actions)
@@ -161,12 +179,12 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return actions, values, log_prob
 
     def evaluate_actions(self, obs: Dict[str, torch.Tensor], actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        context, pooled_features = self.extract_features(obs)
+        # critic
+        _context, pooled_features = self.extract_features(obs)
         values = self.value_net(pooled_features)
-        
-        action_logits = self.action_net(context, pooled_features)
-        action_logits[~obs["mask"].bool()] = -torch.inf
-        
+
+        # actor
+        action_logits = self._get_action_logits_from_obs(obs)
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         log_prob = distribution.log_prob(actions)
         entropy = distribution.entropy()
@@ -178,17 +196,7 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return self.value_net(pooled_features)
 
     def _predict(self, observation: Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
-        context, pooled_features = self.extract_features(observation)
-        
-        action_logits = self.action_net(context, pooled_features)
-        action_logits[~observation["mask"].bool()] = -torch.inf
+        action_logits = self._get_action_logits_from_obs(observation)
         
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         return distribution.get_actions(deterministic=deterministic)
-
-    # def _get_action_logits_from_context(self, context, obs):
-    #     """helper function to get action logits from context"""
-    #     query = torch.mean(context, dim=1)
-    #     action_logits = self.action_net(context, query)
-    #     action_logits[~obs["mask"].bool()] = -torch.inf
-    #     return action_logits

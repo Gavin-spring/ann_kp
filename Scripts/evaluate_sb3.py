@@ -6,6 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 import warnings
 import argparse
+import datetime
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import VecNormalize
@@ -23,9 +24,12 @@ def main():
     parser.add_argument("--run-dir", type=str, required=True, help="Path to the training run directory to evaluate.")
     args = parser.parse_args()
 
-    # Create a unique run name based on the current configuration
-    eval_run_name = create_run_name(cfg)
+    # Create a unique run name based on the current time and the training run name
+    training_run_name = os.path.basename(args.run_dir)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+    eval_run_name = f"{timestamp}-eval_on-{training_run_name}"
     eval_dir = os.path.join("artifacts_sb3", "evaluation", eval_run_name)
+
     os.makedirs(eval_dir, exist_ok=True)
     print(f"--- Starting new evaluation run for: {args.run_dir} ---")
     print(f"Evaluation results will be saved in: {eval_dir}")
@@ -37,7 +41,7 @@ def main():
 
     env_kwargs = {
         "data_dir": cfg.paths.data_testing,
-        "max_n": cfg.ml.rl.hyperparams.max_n,
+        "max_n": cfg.ml.rl.ppo.hyperparams.max_n,
         "max_weight": cfg.ml.generation.max_weight,
         "max_value": cfg.ml.generation.max_value,
     }

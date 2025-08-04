@@ -151,22 +151,25 @@ class KnapsackEnv(gym.Env):
         return {"items": items_obs, "capacity": capacity_obs, "mask": mask_obs}
 
     def _get_info(self):
+        active_mask = self.items_packed[:self.n_items]
         return {
             "remaining_capacity": self.remaining_capacity,
             "n_items_packed": np.sum(self.items_packed),
-            "total_value": np.sum(self.values[self.items_packed]),
+            "total_value": np.sum(self.values[active_mask]),
             "instance_file": self.current_instance_path,
         }
 
     def render(self):
         """
-        （可选）用于可视化环境。
+        visualize the current state of the knapsack environment.
         """
+        active_mask = self.items_packed[:self.n_items]
+
         print("--- Knapsack State ---")
         print(f"Instance: {os.path.basename(self.current_instance_path)}")
         print(f"Capacity: {self.remaining_capacity:.2f} / {self.initial_capacity:.2f}")
-        packed_values = self.values[self.items_packed]
-        packed_weights = self.weights[self.items_packed]
+        packed_values = self.values[active_mask]
+        packed_weights = self.weights[active_mask]
         print(f"Items Packed: {np.sum(self.items_packed)} | Total Value: {np.sum(packed_values):.2f} | Total Weight: {np.sum(packed_weights):.2f}")
         print("----------------------")
 
