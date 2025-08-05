@@ -3,6 +3,8 @@ import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import logging
+import os
+import matplotlib.ticker as mticker
 
 logger = logging.getLogger(__name__)
 
@@ -105,3 +107,71 @@ def plot_evaluation_errors_DNN(results_df: pd.DataFrame, save_path: str):
     plt.savefig(save_path, dpi=300)
     plt.close()
     logger.info(f"Error plot saved to {save_path}")
+
+def plot_results(df: pd.DataFrame, save_dir: str):
+    """绘制所有性能和误差图表(gym+sb3)"""
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # 检查x轴有多少个独特的点
+    unique_n_count = df['n'].nunique()
+
+    # --- 图1: PPO模型性能 ---
+    fig, axes = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
+    plot_kind = 'line' if unique_n_count > 1 else 'strip' # 智能选择绘图类型
+
+    if plot_kind == 'line':
+        sns.lineplot(data=df, x='n', y='ppo_value', ax=axes[0], marker='o', errorbar='sd', label='PPO Agent')
+        if 'baseline_value' in df.columns:
+            sns.lineplot(data=df, x='n', y='baseline_value', ax=axes[0], marker='x', linestyle='--', color='gray', label='Baseline (Optimal)')
+    else: # 如果只有一个n，画散点图
+        sns.stripplot(data=df, x='n', y='ppo_value', ax=axes[0], jitter=True, label='PPO Agent')
+        if 'baseline_value' in df.columns:
+            sns.stripplot(data=df, x='n', y='baseline_value', ax=axes[0], 
+              marker='x', s=10, color='darkorange', linewidth=1.2, 
+              label='Baseline (Optimal)', zorder=3)
+
+    axes[0].set_title('PPO Agent Performance vs. Problem Size')
+    axes[0].set_ylabel('Total Value')
+    axes[0].grid(True)
+    axes[0].legend()
+
+    if plot_kind == 'line':
+        sns.lineplot(data=df, x='n', y='ppo_time', ax=axes[1], marker='o', color='r', errorbar='sd', label='PPO Agent')
+        if 'baseline_time' in df.columns:
+            sns.lineplot(data=df, x='n', y='baseline_time', ax=axes[1], marker='x', linestyle='--', color='gray', label='Baseline (Optimal)')
+    else:
+        sns.stripplot(data=df, x='n', y='ppo_time', ax=axes[1], jitter=True, color='r', label='PPO Agent')
+        if 'baseline_time' in df.columns:
+            sns.stripplot(data=df, x='n', y='baseline_time', ax=axes[1], 
+              marker='x', s=10, color='darkorange', linewidth=1.2, 
+              label='Baseline (Optimal)', zorder=3)
+    
+    axes[1].set_ylabel('Time (seconds)')
+    axes[1].grid(True)
+    axes[1].legend()
+
+    plt.xlabel('Problem Size (n)')
+    fig.suptitle('PPO Agent Performance Analysis', fontsize=16)
+    plt.tight_layout(rect=[0, 0.03, 1, 0.97])
+    plt.savefig(os.path.join(save_dir, 'ppo_performance.png'))
+    plt.close()
+    
+    # --- 图2: 优化差距 (Optimality Gap) ---
+    if 'optimality_gap' in df.columns:
+        plt.figure(figsize=(12, 5))
+        if plot_kind == 'line':
+            sns.lineplot(data=df, x='n', y='optimality_gap', marker='o', errorbar='sd')
+        else:
+            sns.stripplot(data=df, x='n', y='optimality_gap', jitter=True)
+            
+        plt.title('Optimality Gap vs. Problem Size')
+        plt.ylabel('Optimality Gap (%)')
+        plt.xlabel('Problem Size (n)')
+        plt.grid(True)
+        # 将y轴格式化为百分比
+        plt.gca().yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1.0))
+        plt.tight_layout()
+        plt.savefig(os.path.join(save_dir, 'optimality_gap.png'))
+        plt.close()
+        
+    print(f"All plots have been saved to '{save_dir}'")

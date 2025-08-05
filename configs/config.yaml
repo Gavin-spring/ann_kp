@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/sanity_training
-  data_validation: data/sanity_validation
-  data_testing: data/mid_testing
+  data_training: data/n50_training
+  data_validation: data/n50_validation
+  data_testing: data/n50_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -46,13 +46,8 @@ classic_solvers:
 # 4. Machine Learning Config
 ml:
   training_mode: "RL" # Options: "DNN", "RL"
-
-  # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
-  device: "auto"
-
-  # The algorithm used as the ground truth for calculating ML model errors.
+  device: "auto"  # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
   baseline_algorithm: "Gurobi"
-
   approximation_solvers:
     "DNN": "dnn"
     "PointerNet RL": "rl"
@@ -88,38 +83,65 @@ ml:
       weight_decay: 0.001
 
   rl:
-    # Model architecture and normalization hyperparameters (ref pemami4911/trainer.py argparse)
-    hyperparams:
-      embedding_dim: 128
-      hidden_dim: 128
-      n_glimpses: 2
-      tanh_exploration: 30
-      use_tanh: true
-      max_n: 150 # larger(training data is still depends on dataset) or equal to the scale of the datasets
+    # ==========================================================
+    # 方案一：基于你之前实现的 REINFORCE (Monte Carlo) 版本
+    # ==========================================================
+    reinforce:
+      # --- 模型架构超参数 (旧的LSTM + PointerNet) ---
+      hyperparams:
+        embedding_dim: 128
+        hidden_dim: 128      # LSTM 隐藏层维度
+        n_glimpses: 2
+        tanh_exploration: 30 # Tanh 探索因子 C
+        use_tanh: true       # 是否在注意力中使用tanh
+
+      # --- 训练循环参数 (旧的训练脚本使用) ---
+      training:
+        total_epochs: 300
+        batch_size: 32
+        learning_rate: 0.0001
+        lr_decay_step: 500
+        lr_decay_rate: 0.96
+        max_grad_norm: 2.0
+        baseline_beta: 0.8     # EMA 基线的beta系数
+
+    # ==========================================================
+    # 方案二：基于 gym + stable-baselines3 的 PPO 版本
+    # ==========================================================
+    ppo:
+      # --- 模型架构超参数 (新的Transformer + PointerNet) ---
+      hyperparams:
+        data_type: "fixed"     # ixed" for fixed-size, "unfixed" for variable size
+        max_n: 50              # 训练时最大问题规模
+        eval_max_n: 500       # 大于测试时最大问题规模 (用于位置编码)
+        item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
+        embedding_dim: 128
+        n_glimpses: 2          # Actor (PointerDecoder) 的 Glimpse 次数
+        nhead: 4               # Encoder (Transformer) 的多头注意力头数
+        num_layers: 2          # Encoder (Transformer) 的层数
+
+      # --- 训练流程与PPO算法超参数 ---
+      training:
+        # 训练流程控制
+        total_timesteps: 2000000
+        eval_freq: 2500
+        early_stopping_patience: 10
+
+        # 学习率调度
+        learning_rate_initial: 0.00001
+        learning_rate_final: 0.000001
+
+        # PPO 核心参数 (与SB3完全对应)
+        n_steps: 4096
+        batch_size: 64
+        n_epochs: 10
+        gamma: 0.99
+        gae_lambda: 0.95
+        clip_range: 0.2
+        vf_coef: 0.5
+        ent_coef: 0.01
+        max_grad_norm: 2.0
       
-    # Training loop settings.
-    training:
-      total_epochs: 300
-      batch_size: 32
-      learning_rate: 0.0001
-      # For learning rate decay scheduler
-      lr_decay_step: 500
-      lr_decay_rate: 0.96
-
-      # For gradient clipping
-      max_grad_norm: 2.0
-
-      # For REINFORCE, not used when using Critic
-      # exponential moving average baseline
-      # baseline_beta: 0.8
-
-      # For PPO
-      ppo_epochs: 4          # K, 每次采集数据后，网络优化的轮数
-      gamma: 0.99            # 折扣因子 (在当前问题中作用不大，但保留是个好习惯)
-      gae_lambda: 0.95       # GAE的lambda参数 (同样，在当前问题中作用不大)
-      clip_param: 0.2        # PPO的裁剪参数 epsilon
-      value_loss_coef: 0.5   # c1, Critic损失的权重
-      entropy_coef: 0        # c2, 熵奖励的权重，鼓励探索
-
-    testing:
-      batch_size: 64
+      # --- 评估流程参数 ---
+      testing:
+        batch_size: 64
