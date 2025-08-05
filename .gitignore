@@ -31,6 +31,7 @@ venv/
 # Shell scripts
 *.sh
 *.ps1
+tools/
 
 # Build and distribution artifacts
 *.egg-info/
@@ -43,6 +44,8 @@ artifacts_sb3/
 latex/
 latex/out/
 learn/
+
+# vlab
 ngrok
 ngrok-v3-stable-linux-amd64.zip
 .ipynb_checkpoints/
