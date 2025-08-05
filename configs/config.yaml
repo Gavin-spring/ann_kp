@@ -111,7 +111,7 @@ ml:
     ppo:
       # --- 模型架构超参数 (新的Transformer + PointerNet) ---
       hyperparams:
-        data_type: "unfixed"   # "fixed" for fixed-size, "unfixed" for variable size
+        data_type: "fixed"     # ixed" for fixed-size, "unfixed" for variable size
         max_n: 50              # 训练时最大问题规模
         eval_max_n: 500       # 大于测试时最大问题规模 (用于位置编码)
         item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
@@ -123,22 +123,22 @@ ml:
       # --- 训练流程与PPO算法超参数 ---
       training:
         # 训练流程控制
-        total_timesteps: 500000
+        total_timesteps: 2000000
         eval_freq: 2500
         early_stopping_patience: 10
 
         # 学习率调度
-        learning_rate_initial: 0.0001
-        learning_rate_final: 0.00001
+        learning_rate_initial: 0.00001
+        learning_rate_final: 0.000001
 
         # PPO 核心参数 (与SB3完全对应)
-        n_steps: 2048
+        n_steps: 4096
         batch_size: 64
         n_epochs: 10
         gamma: 0.99
         gae_lambda: 0.95
         clip_range: 0.2
-        vf_coef: 1.0
+        vf_coef: 0.5
         ent_coef: 0.01
         max_grad_norm: 2.0
       
