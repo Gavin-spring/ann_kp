@@ -36,7 +36,10 @@ venv/
 *.egg-info/
 build/
 dist/
+artifacts/
+artifacts_sb3/
 
+# Dissertation latex code
 latex/
 latex/out/
 learn/
