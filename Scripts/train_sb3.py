@@ -101,7 +101,7 @@ def main():
     train_env = VecNormalize(train_env_unwrapped, 
                        norm_obs=True, 
                        norm_obs_keys=norm_obs_keys,
-                       norm_reward=True, 
+                       norm_reward=False, # False when unfixed data
                        gamma=cfg.ml.rl.ppo.training.gamma)
 
     # Validation environment
