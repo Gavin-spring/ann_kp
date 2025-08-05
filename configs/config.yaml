@@ -119,6 +119,7 @@ ml:
         n_glimpses: 2          # Actor (PointerDecoder) 的 Glimpse 次数
         nhead: 4               # Encoder (Transformer) 的多头注意力头数
         num_layers: 2          # Encoder (Transformer) 的层数
+        n_process_block_iters: 3 # Attention blocks in CriticNetwork
 
       # --- 训练流程与PPO算法超参数 ---
       training:

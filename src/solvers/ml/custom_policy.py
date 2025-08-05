@@ -79,13 +79,10 @@ class PointerDecoder(nn.Module):
         # return scores
 
 # --- Critic ---
-# bad practice: Critic should share the same Encoder as Actor
+# Critic should share the same Encoder as Actor
 class CriticNetwork(nn.Module):
-    def __init__(self, observation_space: gym.spaces.Dict, embedding_dim: int, n_process_block_iters: int = 3):
+    def __init__(self, embedding_dim: int, n_process_block_iters: int = 3):
         super().__init__()
-        
-        # Critic拥有自己独立的Encoder实例
-        self.encoder = KnapsackEncoder(observation_space, embedding_dim)
         
         self.n_process_block_iters = n_process_block_iters
         
@@ -99,12 +96,8 @@ class CriticNetwork(nn.Module):
             nn.Linear(embedding_dim, 1)
         )
 
-    def forward(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        # 1. Critic独立地对观测进行编码
-        # context: (batch, max_n, embed_dim), pooled_features: (batch, embed_dim)
-        context, pooled_features = self.encoder(obs)
-        
-        # 2. 使用pooled_features作为初始的"状态"，进行迭代精炼
+    def forward(self, context: torch.Tensor, pooled_features: torch.Tensor) -> torch.Tensor:
+        # pooled_features作为初始的"状态"，进行迭代精炼
         process_block_state = pooled_features
         for _ in range(self.n_process_block_iters):
             # 用当前状态作为query，在所有物品的context上做注意力
@@ -120,28 +113,23 @@ class CriticNetwork(nn.Module):
 
 # --- Actor-Critic Policy ---
 class KnapsackActorCriticPolicy(ActorCriticPolicy):
-    def __init__(self, observation_space: gym.spaces.Space, action_space: gym.spaces.Space, lr_schedule, **kwargs):
+    def __init__(self,
+                 observation_space: gym.spaces.Space,
+                 action_space: gym.spaces.Space,
+                 lr_schedule,
+                 n_process_block_iters: int = 3,
+                 **kwargs):
+        self.n_process_block_iters = n_process_block_iters
         super().__init__(observation_space, action_space, lr_schedule, **kwargs)
-        self.mlp_extractor = None
 
     def _build(self, lr_schedule):
+        # Actor
         self.action_net = PointerDecoder(self.features_extractor.features_dim)
-        features_dim = self.features_extractor.features_dim
-        self.value_net = nn.Sequential(
-            nn.Linear(features_dim, 256),
-            nn.BatchNorm1d(256),  # <-- 增加BatchNorm
-            nn.ReLU(),
-            nn.Dropout(0.1),      # <-- 增加Dropout
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1)
-        )
 
-        # self.value_net = nn.Sequential(
-        #     nn.Linear(self.features_extractor.features_dim, 256),
-        #     nn.ReLU(),
-        #     nn.Linear(256, 1)
-        # )
+        # Critic
+        features_dim = self.features_extractor.features_dim
+        
+        self.value_net = CriticNetwork(embedding_dim=features_dim, n_process_block_iters=self.n_process_block_iters)
         self.action_dist = CategoricalDistribution(self.action_space.n)
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
@@ -164,12 +152,24 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return action_logits
 
     def forward(self, obs: Dict[str, torch.Tensor], deterministic: bool = False) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        # shared features encoder
+        context, pooled_features = self.extract_features(obs)
+
         # critic
-        _context, pooled_features = self.extract_features(obs)
-        values = self.value_net(pooled_features)
+        values = self.value_net(context, pooled_features)
 
         # actor
-        action_logits = self._get_action_logits_from_obs(obs)
+        action_logits = self.action_net(context, pooled_features)
+
+        # mask
+        mask = obs["mask"].bool()
+        action_logits[~mask] = -torch.inf
+
+        all_masked_rows = torch.all(~mask, dim=1)
+        if all_masked_rows.any():
+            action_logits[all_masked_rows, 0] = 0
+
+        # get results
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         actions = distribution.get_actions(deterministic=deterministic)
         log_prob = distribution.log_prob(actions)
@@ -177,12 +177,26 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return actions, values, log_prob
 
     def evaluate_actions(self, obs: Dict[str, torch.Tensor], actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        # critic
-        _context, pooled_features = self.extract_features(obs)
-        values = self.value_net(pooled_features)
+        # --- 步骤 1: 只调用一次特征提取器，获取共享的特征 ---
+        # context 用于 Actor (PointerDecoder)，pooled_features 用于 Critic (MLP)
+        context, pooled_features = self.extract_features(obs)
+        
+        # --- 步骤 2: Critic 使用详细的 context 和池化后的特征计算价值 ---
+        values = self.value_net(context, pooled_features)
 
-        # actor
-        action_logits = self._get_action_logits_from_obs(obs)
+        # --- 步骤 3: Actor 使用详细的 context 和池化的 query 计算 logits ---
+        action_logits = self.action_net(context, pooled_features)
+        
+        # --- 步骤 4: 应用 mask 来屏蔽无效动作 ---
+        mask = obs["mask"].bool()
+        action_logits[~mask] = -torch.inf
+
+        # 检查并处理所有动作都被屏蔽的特殊情况
+        all_masked_rows = torch.all(~mask, dim=1)
+        if all_masked_rows.any():
+            action_logits[all_masked_rows, 0] = 0
+            
+        # --- 步骤 5: 从安全的 logits 计算 log_prob 和 entropy ---
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         log_prob = distribution.log_prob(actions)
         entropy = distribution.entropy()

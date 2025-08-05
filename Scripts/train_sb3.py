@@ -127,9 +127,10 @@ def main():
         features_extractor_class=KnapsackEncoder,
         features_extractor_kwargs=dict(
             embedding_dim=cfg.ml.rl.ppo.hyperparams.embedding_dim,
-            nhead=4,
-            num_layers=2,
-        )
+            nhead=cfg.ml.rl.ppo.hyperparams.nhead,
+            num_layers=cfg.ml.rl.ppo.hyperparams.num_layers,
+        ),
+        n_process_block_iters=cfg.ml.rl.ppo.hyperparams.n_process_block_iters,
     )
 
     # 4. initialize the PPO model with the custom policy
