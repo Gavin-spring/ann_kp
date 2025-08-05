@@ -43,3 +43,6 @@ artifacts_sb3/
 latex/
 latex/out/
 learn/
+ngrok
+ngrok-v3-stable-linux-amd64.zip
+.ipynb_checkpoints/

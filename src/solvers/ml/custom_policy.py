@@ -204,8 +204,8 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return values, log_prob, entropy
 
     def predict_values(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
-        _context, pooled_features = self.extract_features(obs)
-        return self.value_net(pooled_features)
+        context, pooled_features = self.extract_features(obs)
+        return self.value_net(context, pooled_features)
 
     def _predict(self, observation: Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
         action_logits = self._get_action_logits_from_obs(observation)

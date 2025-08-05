@@ -48,8 +48,8 @@ def main():
     # info of this run
     run_info = {
         "run_name": run_name,
-        "policy_architecture": "Shared Encoder + MLP Critic", # edit this if you change the architecture
-        "critic_details": "MLP with bn and dropout", # edit this if you change the critic architecture
+        "policy_architecture": "Shared Encoder + CriticNetwork", # edit this if you change the architecture
+        "critic_details": "Iterative Attention Refinement", # edit this if you change the critic architecture
         "data_type": cfg.ml.rl.ppo.hyperparams.data_type, # "fixed" or "unfixed"
         "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n, # training max_n
         "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n, # evaluation max_n

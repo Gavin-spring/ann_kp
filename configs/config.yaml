@@ -124,7 +124,7 @@ ml:
       # --- 训练流程与PPO算法超参数 ---
       training:
         # 训练流程控制
-        total_timesteps: 2000000
+        total_timesteps: 1000000
         eval_freq: 2500
         early_stopping_patience: 10
 
