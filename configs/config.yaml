@@ -105,6 +105,10 @@ ml:
         max_grad_norm: 2.0
         baseline_beta: 0.8     # EMA 基线的beta系数
 
+      # --- 评估流程参数 ---
+      testing:
+        batch_size: 64
+
     # ==========================================================
     # 方案二：基于 gym + stable-baselines3 的 PPO 版本
     # ==========================================================
@@ -145,4 +149,6 @@ ml:
       
       # --- 评估流程参数 ---
       testing:
+        is_deterministic: False # Sampling False, Greedy True
         batch_size: 64
+        n_samples: 100

@@ -21,19 +21,33 @@ class KnapsackEncoder(BaseFeaturesExtractor):
         self.item_embedder = nn.Linear(item_feature_dim, embedding_dim)
         encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=nhead, batch_first=True)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        self.positional_encoding = nn.Parameter(torch.randn(1, self.max_possible_n, embedding_dim))
+        
+        # Add [CLS] Token
+        self.cls_token = nn.Parameter(torch.randn(1, 1, embedding_dim))
+        self.positional_encoding = nn.Parameter(torch.randn(1, self.max_possible_n + 1, embedding_dim))
     
     def forward(self, observations: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         items_obs = observations["items"]
         batch_size, seq_len, _ = items_obs.shape
-        item_embeddings = self.item_embedder(items_obs)
-        item_embeddings += self.positional_encoding[:, :seq_len, :]
-        
-        # (batch, max_n, embed_dim)
-        context = self.transformer_encoder(item_embeddings)
-        pooled_features = torch.mean(context, dim=1)
 
-        return context, pooled_features
+        item_embeddings = self.item_embedder(items_obs)
+
+        # --- 将 [CLS] Token 拼接到每个 batch 序列的最前面 ---
+        cls_tokens = self.cls_token.expand(batch_size, -1, -1) # 将 cls_token 复制 batch_size 份
+        input_embeddings = torch.cat((cls_tokens, item_embeddings), dim=1)
+        
+        # 现在序列长度是 seq_len + 1
+        input_embeddings += self.positional_encoding[:, :(seq_len + 1), :]
+        
+        # 将拼接后的序列送入 Transformer
+        processed_context = self.transformer_encoder(input_embeddings)
+        
+        # --- 提取 [CLS] Token 的输出作为全局状态，并分离出物品的 context ---
+        global_state = processed_context[:, 0]            # 取出第一个 token (CLS) 的输出作为全局状态
+        item_context = processed_context[:, 1:]           # 剩下的部分是物品的 context
+        
+        # 返回分离后的物品 context 和高质量的全局状态
+        return item_context, global_state
 
 # --- Decoder ---
 class PointerDecoder(nn.Module):
