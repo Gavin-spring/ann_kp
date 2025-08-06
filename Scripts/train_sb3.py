@@ -21,6 +21,7 @@ from src.utils.run_utils import create_run_name
 from src.utils.logger import setup_logger
 from src.env.knapsack_env import KnapsackEnv
 from src.solvers.ml.custom_policy import KnapsackActorCriticPolicy, KnapsackEncoder
+from src.utils.callbacks import CompiledModelSaveCallback
 
 torch.set_float32_matmul_precision('high')
 warnings.filterwarnings("ignore", ".*get_linear_fn().*", category=UserWarning)
@@ -116,7 +117,7 @@ def main():
                            gamma=cfg.ml.rl.ppo.training.gamma)
 
     # 2. define evaluation callback
-    eval_callback = EvalCallback(val_env, 
+    eval_callback = CompiledModelSaveCallback(val_env, 
                                  best_model_save_path=models_dir,
                                  log_path=logs_dir,
                                  eval_freq=cfg.ml.rl.ppo.training.eval_freq,
@@ -151,8 +152,10 @@ def main():
         ent_coef=cfg.ml.rl.ppo.training.ent_coef,
         max_grad_norm=cfg.ml.rl.ppo.training.max_grad_norm,
     )
-    
+
+    print("Compiling the model with triton...")
     model.policy = torch.compile(model.policy) # triton compile the model for performance
+    print("Model compiled.")
 
     # 5. start training
     print("start training...")
