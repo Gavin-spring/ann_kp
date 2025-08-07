@@ -26,9 +26,15 @@ def main():
     args = parser.parse_args()
 
     # Create a unique run name based on the current time and the training run name
-    training_run_name = os.path.basename(args.run_dir)
+    is_deterministic = cfg.ml.rl.ppo.testing.is_deterministic
+    mode_suffix = "G" if is_deterministic else "S"
+
+    training_run_name = os.path.basename(os.path.normpath(args.run_dir))
+    if not training_run_name:
+        training_run_name = "unknown_training_run"
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    eval_run_name = f"{timestamp}-eval_on-{training_run_name}"
+    eval_run_name = f"{timestamp}-eval_on-{training_run_name}-{mode_suffix}"
     eval_dir = os.path.join("artifacts_sb3", "evaluation", eval_run_name)
 
     os.makedirs(eval_dir, exist_ok=True)
@@ -97,9 +103,8 @@ def main():
     model.set_env(env)
     print("Environment setup complete.")
     
-    # --- 3. Start Evaluation ---
+    # --- 4. Start Evaluation ---
     # 读取评估模式配置
-    is_deterministic = cfg.ml.rl.ppo.testing.is_deterministic
     n_samples = cfg.ml.rl.ppo.testing.n_samples if not is_deterministic else 1
 
     # 根据模式打印提示信息

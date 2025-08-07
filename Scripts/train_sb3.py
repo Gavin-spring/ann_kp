@@ -49,9 +49,10 @@ def main():
     # info of this run
     run_info = {
         "run_name": run_name,
-        "policy_architecture": "Shared Encoder + CriticNetwork", # edit this if you change the architecture
-        "critic_details": "Iterative Attention Refinement", # edit this if you change the critic architecture
-        "data_type": cfg.ml.rl.ppo.hyperparams.data_type, # "fixed" or "unfixed"
+        "policy_architecture": cfg.ml.rl.ppo.hyperparams.policy_architecture,
+        "critic_details": cfg.ml.rl.ppo.hyperparams.critic_details,
+        "description": cfg.ml.rl.ppo.hyperparams.description,
+        "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
         "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n, # training max_n
         "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n, # evaluation max_n
         "n_glimpses": cfg.ml.rl.ppo.hyperparams.n_glimpses,
@@ -100,9 +101,9 @@ def main():
     # Training environment
     train_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=env_kwargs)
     train_env = VecNormalize(train_env_unwrapped, 
-                       norm_obs=True, 
+                       norm_obs=cfg.ml.rl.ppo.hyperparams.VecNormalize.obs, 
                        norm_obs_keys=norm_obs_keys,
-                       norm_reward=False, # False when unfixed data
+                       norm_reward=cfg.ml.rl.ppo.hyperparams.VecNormalize.reward,
                        gamma=cfg.ml.rl.ppo.training.gamma)
 
     # Validation environment
@@ -111,9 +112,9 @@ def main():
     val_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=val_env_kwargs)
     val_env = VecNormalize(val_env_unwrapped, 
                            training=False, 
-                           norm_obs=True, 
+                           norm_obs=cfg.ml.rl.ppo.hyperparams.VecNormalize.obs, 
                            norm_obs_keys=norm_obs_keys,
-                           norm_reward=False, 
+                           norm_reward=cfg.ml.rl.ppo.hyperparams.VecNormalize.reward, 
                            gamma=cfg.ml.rl.ppo.training.gamma)
 
     # 2. define evaluation callback

@@ -17,7 +17,7 @@ paths:
   # Subdirectories for data
   data_training: data/n50_training
   data_validation: data/n50_validation
-  data_testing: data/n50_testing
+  data_testing: data/small_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -115,7 +115,13 @@ ml:
     ppo:
       # --- 模型架构超参数 (新的Transformer + PointerNet) ---
       hyperparams:
-        data_type: "fixed"     # ixed" for fixed-size, "unfixed" for variable size
+        policy_architecture: "Shared Encoder + CriticNetwork"
+        critic_details: "Iterative Attention Refinement"
+        description: "Exp21: this is Exp19 trained on unfixed data"
+        VecNormalize:
+          obs: True
+          reward: False # False when unfixed data
+        data_type: "unfixed"     # "fixed" for fixed-size, "unfixed" for variable size
         max_n: 50              # 训练时最大问题规模
         eval_max_n: 500       # 大于测试时最大问题规模 (用于位置编码)
         item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
