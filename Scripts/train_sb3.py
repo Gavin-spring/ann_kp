@@ -49,30 +49,39 @@ def main():
     # info of this run
     run_info = {
         "run_name": run_name,
-        "policy_architecture": cfg.ml.rl.ppo.hyperparams.policy_architecture,
-        "critic_details": cfg.ml.rl.ppo.hyperparams.critic_details,
-        "description": cfg.ml.rl.ppo.hyperparams.description,
-        "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
-        "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n, # training max_n
-        "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n, # evaluation max_n
-        "n_glimpses": cfg.ml.rl.ppo.hyperparams.n_glimpses,
-        "embedding_dim": cfg.ml.rl.ppo.hyperparams.embedding_dim,
-        "nhead": cfg.ml.rl.ppo.hyperparams.nhead,
-        "num_layers": cfg.ml.rl.ppo.hyperparams.num_layers,
-        "total_timesteps": cfg.ml.rl.ppo.training.total_timesteps,
-        "eval_freq": cfg.ml.rl.ppo.training.eval_freq,
-        "learning_rate_initial": cfg.ml.rl.ppo.training.learning_rate_initial,
-        "learning_rate_final": cfg.ml.rl.ppo.training.learning_rate_final,
-        "vf_coef": cfg.ml.rl.ppo.training.vf_coef,
-        "entropy_coef": cfg.ml.rl.ppo.training.ent_coef,
-        "n_epochs": cfg.ml.rl.ppo.training.n_epochs,
-        "n_steps": cfg.ml.rl.ppo.training.n_steps,
-        "gamma": cfg.ml.rl.ppo.training.gamma,
-        "gae_lambda": cfg.ml.rl.ppo.training.gae_lambda,
-        "clip_range": cfg.ml.rl.ppo.training.clip_range,
-        "batch_size": cfg.ml.rl.ppo.training.batch_size,
-        "batch_size": cfg.ml.rl.ppo.training.batch_size,
-        "max_grad_norm": cfg.ml.rl.ppo.training.max_grad_norm,
+        "model_info": {
+            "policy_architecture": cfg.ml.rl.ppo.hyperparams.policy_architecture,
+            "critic_details": cfg.ml.rl.ppo.hyperparams.critic_details,
+            "description": cfg.ml.rl.ppo.hyperparams.description,
+        },
+        "hyperparams": {
+            "use_shaping_reward": cfg.ml.rl.ppo.hyperparams.use_shaping_reward,
+            "VecNormalize_obs": cfg.ml.rl.ppo.hyperparams.VecNormalize.obs,
+            "VecNormalize_reward": cfg.ml.rl.ppo.hyperparams.VecNormalize.reward,
+            "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
+            "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n,
+            "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n,
+            "n_glimpses": cfg.ml.rl.ppo.hyperparams.n_glimpses,
+            "embedding_dim": cfg.ml.rl.ppo.hyperparams.embedding_dim,
+            "nhead": cfg.ml.rl.ppo.hyperparams.nhead,
+            "num_layers": cfg.ml.rl.ppo.hyperparams.num_layers,
+            "n_process_block_iters": cfg.ml.rl.ppo.hyperparams.n_process_block_iters,
+        },
+        "params": {
+            "total_timesteps": cfg.ml.rl.ppo.training.total_timesteps,
+            "eval_freq": cfg.ml.rl.ppo.training.eval_freq,
+            "learning_rate_initial": cfg.ml.rl.ppo.training.learning_rate_initial,
+            "learning_rate_final": cfg.ml.rl.ppo.training.learning_rate_final,
+            "n_steps": cfg.ml.rl.ppo.training.n_steps,
+            "batch_size": cfg.ml.rl.ppo.training.batch_size,
+            "n_epochs": cfg.ml.rl.ppo.training.n_epochs,
+            "gamma": cfg.ml.rl.ppo.training.gamma,
+            "gae_lambda": cfg.ml.rl.ppo.training.gae_lambda,
+            "clip_range": cfg.ml.rl.ppo.training.clip_range,
+            "vf_coef": cfg.ml.rl.ppo.training.vf_coef,
+            "entropy_coef": cfg.ml.rl.ppo.training.ent_coef,
+            "max_grad_norm": cfg.ml.rl.ppo.training.max_grad_norm,
+        },
     }
     with open(os.path.join(run_dir, "run_info.json"), 'w') as f:
         json.dump(run_info, f, indent=4)
@@ -96,6 +105,7 @@ def main():
         "max_n": cfg.ml.rl.ppo.hyperparams.max_n,
         "max_weight": cfg.ml.generation.max_weight,
         "max_value": cfg.ml.generation.max_value,
+        "use_shaping_reward": cfg.ml.rl.ppo.hyperparams.use_shaping_reward,
     }
     norm_obs_keys = ["items", "capacity"]
     # Training environment

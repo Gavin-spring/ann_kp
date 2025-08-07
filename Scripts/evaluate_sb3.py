@@ -7,6 +7,7 @@ from tqdm import tqdm
 import warnings
 import argparse
 import datetime
+import json
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import VecNormalize
@@ -43,6 +44,22 @@ def main():
 
     model_path = os.path.join(args.run_dir, "models", "best_model.zip")
     stats_path = os.path.join(args.run_dir, "models", "vec_normalize.pkl")
+
+    # Record evaluation configuration
+    eval_info = {
+        "eval_run_name": eval_run_name,
+        "training_run_name": training_run_name,
+        "is_deterministic": is_deterministic,
+        "data_range": cfg.ml.rl.ppo.testing.data_range,
+        "batch_size": cfg.ml.rl.ppo.testing.batch_size,
+        "n_samples": cfg.ml.rl.ppo.testing.n_samples,
+        "model_path": model_path,
+        "stats_path": stats_path,
+    }
+    eval_info_path = os.path.join(eval_dir, "run_info.json")
+    with open(eval_info_path, 'w') as f:
+        json.dump(eval_info, f, indent=4)
+    print(f"Evaluation configuration saved to: {eval_info_path}")
 
     # --- 2. 加载模型 (使用尺寸匹配的临时环境) ---
     print("Step 1: Creating temporary environment with training size to load model...")

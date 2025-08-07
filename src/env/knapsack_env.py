@@ -9,7 +9,7 @@ import random
 from src.utils.generator import load_instance_from_file
 
 class KnapsackEnv(gym.Env):
-    def __init__(self, data_dir: str, max_n: int, max_weight: int, max_value: int):
+    def __init__(self, data_dir: str, max_n: int, max_weight: int, max_value: int, use_shaping_reward: bool = False):
         """
         初始化环境。
 
@@ -24,6 +24,7 @@ class KnapsackEnv(gym.Env):
         self.max_n = max_n
         self.max_weight = float(max_weight)
         self.max_value = float(max_value)
+        self.use_shaping_reward = use_shaping_reward
         
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"数据目录不存在: {data_dir}")
@@ -113,7 +114,7 @@ class KnapsackEnv(gym.Env):
         truncated = False
         
         # --- 在回合结束时，加入一个评价“最终方案”好坏的塑形奖励 ---
-        if terminated:
+        if terminated and self.use_shaping_reward:
             final_mask = self.items_packed[:self.n_items]
             final_total_value = np.sum(self.values[final_mask])
             final_total_weight = np.sum(self.weights[final_mask])
