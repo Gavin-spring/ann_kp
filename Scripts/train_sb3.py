@@ -53,12 +53,17 @@ def main():
             "policy_architecture": cfg.ml.rl.ppo.hyperparams.policy_architecture,
             "critic_details": cfg.ml.rl.ppo.hyperparams.critic_details,
             "description": cfg.ml.rl.ppo.hyperparams.description,
+            "data_range": cfg.ml.rl.ppo.hyperparams.data_range,
+            "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
+            "data_paths":{
+                "training": cfg.paths.data_training,
+                "validation": cfg.paths.data_validation,
+            },
         },
         "hyperparams": {
             "use_shaping_reward": cfg.ml.rl.ppo.hyperparams.use_shaping_reward,
             "VecNormalize_obs": cfg.ml.rl.ppo.hyperparams.VecNormalize.obs,
             "VecNormalize_reward": cfg.ml.rl.ppo.hyperparams.VecNormalize.reward,
-            "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
             "train_max_n": cfg.ml.rl.ppo.hyperparams.max_n,
             "eval_max_n": cfg.ml.rl.ppo.hyperparams.eval_max_n,
             "n_glimpses": cfg.ml.rl.ppo.hyperparams.n_glimpses,

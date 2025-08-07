@@ -53,6 +53,7 @@ def main():
         "data_range": cfg.ml.rl.ppo.testing.data_range,
         "batch_size": cfg.ml.rl.ppo.testing.batch_size,
         "n_samples": cfg.ml.rl.ppo.testing.n_samples,
+        "data_path": cfg.paths.data_testing,
         "model_path": model_path,
         "stats_path": stats_path,
     }
