@@ -3,6 +3,9 @@ misc/
 data_old/
 .deprecated/
 
+# backup
+*backup/
+
 # data
 data/
 *.csv
@@ -31,7 +34,7 @@ venv/
 # Shell scripts
 *.sh
 *.ps1
-tools/
+# tools/
 
 # Build and distribution artifacts
 *.egg-info/
@@ -49,3 +52,4 @@ learn/
 ngrok
 ngrok-v3-stable-linux-amd64.zip
 .ipynb_checkpoints/
+*vlab*.*

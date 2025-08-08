@@ -15,9 +15,9 @@ paths:
   logs: artifacts/logs
   results: artifacts/results
   # Subdirectories for data
-  data_training: data/n50_training
-  data_validation: data/n50_validation
-  data_testing: data/n10_100_testing
+  data_training: data/small_training
+  data_validation: data/small_validation
+  data_testing: data/n50_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -117,13 +117,13 @@ ml:
       hyperparams:
         policy_architecture: "Shared Encoder + CriticNetwork"
         critic_details: "Iterative Attention Refinement"
-        description: "Exp21: this is Exp19 trained on unfixed data"
-        data_range: "(5, 50, 5)"
+        description: "Exp24: pro-version-2 of Exp13, norm reward, larger n_steps, same n_epochs, more stable, more balance, more advanced architecture."
+        data_range: "10~50"
         data_type: "unfixed"     # "fixed" for fixed-size, "unfixed" for variable size
         use_shaping_reward: False
         VecNormalize:
           obs: True
-          reward: False # False when unfixed data
+          reward: True
         max_n: 50              # 训练时最大问题规模
         eval_max_n: 500        # 大于测试时最大问题规模 (用于位置编码)
         item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
@@ -136,7 +136,7 @@ ml:
       # --- 训练流程与PPO算法超参数 ---
       training:
         # 训练流程控制
-        total_timesteps: 3000000
+        total_timesteps: 2500000
         eval_freq: 2500
         early_stopping_patience: 10
 
@@ -157,7 +157,7 @@ ml:
       
       # --- 评估流程参数 ---
       testing:
-        data_range: "(5, 50, 5)"
-        is_deterministic: False # Sampling False, Greedy True
+        data_range: "50"
+        is_deterministic: True # Sampling False, Greedy True
         batch_size: 64
         n_samples: 10
