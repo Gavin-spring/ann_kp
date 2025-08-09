@@ -17,7 +17,7 @@ paths:
   # Subdirectories for data
   data_training: data/small_training
   data_validation: data/small_validation
-  data_testing: data/n50_testing
+  data_testing: data/small_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -115,9 +115,13 @@ ml:
     ppo:
       # --- 模型架构超参数 (新的Transformer + PointerNet) ---
       hyperparams:
-        policy_architecture: "Shared Encoder + CriticNetwork"
-        critic_details: "Iterative Attention Refinement"
-        description: "Exp24: pro-version-2 of Exp13, norm reward, larger n_steps, same n_epochs, more stable, more balance, more advanced architecture."
+        model_description: "Shared Encoder + MLP"
+        exp_description: "Exp25: Replicate Exp13, same params"
+        architecture:
+          critic_description: "MLP with bn and dropout"
+          critic_type: "simple"  # 可选: "simple" 或 "advanced"
+          critic_input_context: False # 可选: True 或 False (当critic_type为advanced时才有效)
+          use_cls_token: False      # 可选: True 或 False
         data_range: "10~50"
         data_type: "unfixed"     # "fixed" for fixed-size, "unfixed" for variable size
         use_shaping_reward: False
@@ -145,14 +149,14 @@ ml:
         learning_rate_final: 0.000001
 
         # PPO 核心参数 (与SB3完全对应)
-        n_steps: 4096
+        n_steps: 2048
         batch_size: 64
         n_epochs: 10
         gamma: 0.99
         gae_lambda: 0.95
-        clip_range: 0.1
-        vf_coef: 0.5
-        ent_coef: 0.01
+        clip_range: 0.2
+        vf_coef: 1.0
+        ent_coef: 0
         max_grad_norm: 2.0
       
       # --- 评估流程参数 ---

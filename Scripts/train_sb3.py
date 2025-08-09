@@ -10,6 +10,8 @@ import warnings
 import json
 import argparse
 import datetime
+import random
+import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.common.callbacks import EvalCallback, StopTrainingOnRewardThreshold
 from stable_baselines3.common.env_util import make_vec_env
@@ -26,21 +28,30 @@ from src.utils.callbacks import CompiledModelSaveCallback
 torch.set_float32_matmul_precision('high')
 warnings.filterwarnings("ignore", ".*get_linear_fn().*", category=UserWarning)
 
+def set_seed(seed):
+    """set random seed"""
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+
 def main():
     # unique run name
     parser = argparse.ArgumentParser()
     parser.add_argument("--name", type=str, default=None, help="A descriptive name for the experiment run.")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed for reproducibility.")
     args = parser.parse_args()
+
+    set_seed(args.seed) # random seed
 
     # 使用你的 create_run_name，但我们给它加上实验名
     base_run_name = create_run_name(cfg) # e.g., 20250803_..._RL_n20_lr0.0001
     if args.name:
-        # 如果提供了实验名，就用它
-        run_name = f"{args.name}-{base_run_name}"
-        tb_log_name = args.name # 在TensorBoard中使用简洁的实验名
+        run_name = f"{args.name}-seed{args.seed}-{base_run_name}"
+        tb_log_name = f"{args.name}_seed{args.seed}"
     else:
-        # 否则用原来的长名字
-        run_name = base_run_name
+        run_name = f"{base_run_name}-seed{args.seed}"
         tb_log_name = run_name
 
     run_dir = os.path.join("artifacts_sb3", "training", run_name)
@@ -50,9 +61,16 @@ def main():
     run_info = {
         "run_name": run_name,
         "model_info": {
-            "policy_architecture": cfg.ml.rl.ppo.hyperparams.policy_architecture,
-            "critic_details": cfg.ml.rl.ppo.hyperparams.critic_details,
-            "description": cfg.ml.rl.ppo.hyperparams.description,
+            "model_description": cfg.ml.rl.ppo.hyperparams.model_description,
+            "exp_description": cfg.ml.rl.ppo.hyperparams.exp_description,
+            "architecture": {
+                    "critic_description":cfg.ml.rl.ppo.hyperparams.architecture.critic_description,
+                    "critic_type":cfg.ml.rl.ppo.hyperparams.architecture.critic_type,
+                    "critic_input_context":cfg.ml.rl.ppo.hyperparams.architecture.critic_input_context,
+                    "use_cls_token":cfg.ml.rl.ppo.hyperparams.architecture.use_cls_token,
+                },
+        },
+        "data_info": {
             "data_range": cfg.ml.rl.ppo.hyperparams.data_range,
             "data_type": cfg.ml.rl.ppo.hyperparams.data_type,
             "data_paths":{
@@ -114,7 +132,7 @@ def main():
     }
     norm_obs_keys = ["items", "capacity"]
     # Training environment
-    train_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=env_kwargs)
+    train_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=env_kwargs, seed=args.seed)
     train_env = VecNormalize(train_env_unwrapped, 
                        norm_obs=cfg.ml.rl.ppo.hyperparams.VecNormalize.obs, 
                        norm_obs_keys=norm_obs_keys,
@@ -124,7 +142,7 @@ def main():
     # Validation environment
     val_env_kwargs = env_kwargs.copy()
     val_env_kwargs["data_dir"] = cfg.paths.data_validation    
-    val_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=val_env_kwargs)
+    val_env_unwrapped = make_vec_env(KnapsackEnv, n_envs=4, env_kwargs=val_env_kwargs, seed=args.seed)
     val_env = VecNormalize(val_env_unwrapped, 
                            training=False, 
                            norm_obs=cfg.ml.rl.ppo.hyperparams.VecNormalize.obs, 
@@ -147,6 +165,7 @@ def main():
             nhead=cfg.ml.rl.ppo.hyperparams.nhead,
             num_layers=cfg.ml.rl.ppo.hyperparams.num_layers,
         ),
+        critic_type=cfg.ml.rl.ppo.hyperparams.architecture.critic_type,
         n_process_block_iters=cfg.ml.rl.ppo.hyperparams.n_process_block_iters,
     )
 
@@ -156,6 +175,7 @@ def main():
         train_env,
         policy_kwargs=policy_kwargs,
         verbose=1,
+        seed=args.seed, 
         tensorboard_log=unified_tensorboard_log_dir,
         learning_rate=lr_schedule,
         n_steps=cfg.ml.rl.ppo.training.n_steps,

@@ -17,37 +17,46 @@ class KnapsackEncoder(BaseFeaturesExtractor):
 
         item_feature_dim = cfg.ml.rl.ppo.hyperparams.item_feature_dim  # weight, value
         self.max_possible_n = cfg.ml.rl.ppo.hyperparams.eval_max_n
-
         self.item_embedder = nn.Linear(item_feature_dim, embedding_dim)
+
+        # [CLS] Token 定义
+        self.use_cls_token = cfg.ml.rl.ppo.hyperparams.architecture.use_cls_token
+        if self.use_cls_token:
+            # 将 [CLS] token 定义为可学习的参数
+            self.cls_token = nn.Parameter(torch.randn(1, 1, embedding_dim))
+        
         encoder_layer = nn.TransformerEncoderLayer(d_model=embedding_dim, nhead=nhead, batch_first=True)
         self.transformer_encoder = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
-        
-        # Add [CLS] Token
-        self.cls_token = nn.Parameter(torch.randn(1, 1, embedding_dim))
-        self.positional_encoding = nn.Parameter(torch.randn(1, self.max_possible_n + 1, embedding_dim))
+        self.positional_encoding = nn.Parameter(torch.randn(1, self.max_possible_n + 1, embedding_dim)) # Add [CLS] Token
     
     def forward(self, observations: Dict[str, torch.Tensor]) -> Tuple[torch.Tensor, torch.Tensor]:
         items_obs = observations["items"]
         batch_size, seq_len, _ = items_obs.shape
-
         item_embeddings = self.item_embedder(items_obs)
 
-        # --- 将 [CLS] Token 拼接到每个 batch 序列的最前面 ---
-        cls_tokens = self.cls_token.expand(batch_size, -1, -1) # 将 cls_token 复制 batch_size 份
-        input_embeddings = torch.cat((cls_tokens, item_embeddings), dim=1)
-        
-        # 现在序列长度是 seq_len + 1
-        input_embeddings += self.positional_encoding[:, :(seq_len + 1), :]
-        
-        # 将拼接后的序列送入 Transformer
-        processed_context = self.transformer_encoder(input_embeddings)
-        
-        # --- 提取 [CLS] Token 的输出作为全局状态，并分离出物品的 context ---
-        global_state = processed_context[:, 0]            # 取出第一个 token (CLS) 的输出作为全局状态
-        item_context = processed_context[:, 1:]           # 剩下的部分是物品的 context
-        
-        # 返回分离后的物品 context 和高质量的全局状态
-        return item_context, global_state
+        # 根据配置决定是否使用 CLS Token
+        if self.use_cls_token:
+            # --- 将 [CLS] Token 拼接到每个 batch 序列的最前面 ---
+            cls_tokens = self.cls_token.expand(batch_size, -1, -1) # 将 cls_token 复制 batch_size 份
+            input_embeddings = torch.cat((cls_tokens, item_embeddings), dim=1)
+            
+            # 现在序列长度是 seq_len + 1
+            input_embeddings += self.positional_encoding[:, :(seq_len + 1), :]
+            
+            # 将拼接后的序列送入 Transformer
+            processed_context = self.transformer_encoder(input_embeddings)
+            
+            # --- 提取 [CLS] Token 的输出作为全局状态，并分离出物品的 context ---
+            pooled_features = processed_context[:, 0]    # 取出第一个 token (CLS) 的输出作为全局状态
+            context = processed_context[:, 1:]           # 剩下的部分是物品的 context
+            
+        else:
+            # --- 不使用 [CLS] Token 的原始逻辑 ---
+            input_embeddings = item_embeddings + self.positional_encoding[:, :seq_len, :]
+            context = self.transformer_encoder(input_embeddings)
+            pooled_features = torch.mean(context, dim=1)
+
+        return context, pooled_features
 
 # --- Decoder ---
 class PointerDecoder(nn.Module):
@@ -94,16 +103,30 @@ class PointerDecoder(nn.Module):
 
 # --- Critic ---
 # Critic should share the same Encoder as Actor
-class CriticNetwork(nn.Module):
-    def __init__(self, embedding_dim: int, n_process_block_iters: int = 3):
+class SimpleMLPCritic(nn.Module):
+    def __init__(self, features_dim: int):
         super().__init__()
-        
-        self.n_process_block_iters = n_process_block_iters
-        
-        # 用于状态精炼的注意力模块 (Process Block)
-        self.process_block = PointerDecoder(embedding_dim) # 我们可以复用PointerDecoder作为注意力层
-        
-        # 最终输出价值的MLP
+        self.value_net = nn.Sequential(
+            nn.Linear(features_dim, 256),
+            nn.BatchNorm1d(256),
+            nn.ReLU(),
+            nn.Dropout(0.1),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+    
+    def forward(self, pooled_features: torch.Tensor, context: torch.Tensor = None) -> torch.Tensor:
+        # 这个Critic只使用pooled_features
+        return self.value_net(pooled_features)
+
+class AdvancedAttentionCritic(nn.Module):
+    def __init__(self, embedding_dim: int, n_process_block_iters: int):
+        super().__init__()        
+        self.n_process_block_iters = n_process_block_iters        
+        self.process_block = PointerDecoder(embedding_dim) # 复用PointerDecoder作为注意力层
+        self.use_context = cfg.ml.rl.ppo.hyperparams.architecture.critic_input_context
+
         self.value_decoder = nn.Sequential(
             nn.Linear(embedding_dim, embedding_dim),
             nn.ReLU(),
@@ -111,6 +134,11 @@ class CriticNetwork(nn.Module):
         )
 
     def forward(self, context: torch.Tensor, pooled_features: torch.Tensor) -> torch.Tensor:
+        # 根据配置决定Critic的输入
+        if not self.use_context:
+            # 如果不使用context，行为退化为只看全局特征
+            return self.value_decoder(pooled_features)
+
         # pooled_features作为初始的"状态"，进行迭代精炼
         process_block_state = pooled_features
         for _ in range(self.n_process_block_iters):
@@ -131,19 +159,30 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
                  observation_space: gym.spaces.Space,
                  action_space: gym.spaces.Space,
                  lr_schedule,
-                 n_process_block_iters: int = 3,
                  **kwargs):
-        self.n_process_block_iters = n_process_block_iters
+        self.critic_type = kwargs.pop("critic_type", "advanced")
+        self.n_process_block_iters = kwargs.pop("n_process_block_iters", 3)
+
         super().__init__(observation_space, action_space, lr_schedule, **kwargs)
+        self.mlp_extractor = None
 
     def _build(self, lr_schedule):
         # Actor
         self.action_net = PointerDecoder(self.features_extractor.features_dim)
 
         # Critic
-        features_dim = self.features_extractor.features_dim
+        if self.critic_type == "simple":
+            print(">>> Building with SimpleMLPCritic <<<")
+            self.value_net = SimpleMLPCritic(self.features_extractor.features_dim)
+        elif self.critic_type == "advanced":
+            print(">>> Building with AdvancedAttentionCritic <<<")
+            self.value_net = AdvancedAttentionCritic(
+                embedding_dim=self.features_extractor.features_dim,
+                n_process_block_iters=self.n_process_block_iters
+            )
+        else:
+            raise ValueError(f"Unknown critic_type: {self.critic_type}")
         
-        self.value_net = CriticNetwork(embedding_dim=features_dim, n_process_block_iters=self.n_process_block_iters)
         self.action_dist = CategoricalDistribution(self.action_space.n)
         self.optimizer = self.optimizer_class(self.parameters(), lr=lr_schedule(1), **self.optimizer_kwargs)
 
