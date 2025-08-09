@@ -136,7 +136,7 @@ class AdvancedAttentionCritic(nn.Module):
             nn.Linear(embedding_dim, 1)
         )
 
-    def forward(self, context: torch.Tensor, pooled_features: torch.Tensor) -> torch.Tensor:
+    def forward(self, pooled_features: torch.Tensor, context: torch.Tensor) -> torch.Tensor:
         # 根据配置决定Critic的输入
         if not self.use_context:
             # 如果不使用context，行为退化为只看全局特征
@@ -212,7 +212,10 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         context, pooled_features = self.extract_features(obs)
 
         # critic
-        values = self.value_net(context, pooled_features)
+        if self.critic_type == "simple":
+            values = self.value_net(pooled_features)
+        else: # advanced
+            values = self.value_net(pooled_features, context)
 
         # actor
         action_logits = self.action_net(context, pooled_features)
@@ -233,26 +236,21 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         return actions, values, log_prob
 
     def evaluate_actions(self, obs: Dict[str, torch.Tensor], actions: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-        # --- 步骤 1: 只调用一次特征提取器，获取共享的特征 ---
-        # context 用于 Actor (PointerDecoder)，pooled_features 用于 Critic (MLP)
         context, pooled_features = self.extract_features(obs)
         
-        # --- 步骤 2: Critic 使用详细的 context 和池化后的特征计算价值 ---
-        values = self.value_net(context, pooled_features)
+        if self.critic_type == "simple":
+            values = self.value_net(pooled_features)
+        else: # advanced
+            values = self.value_net(pooled_features, context)
 
-        # --- 步骤 3: Actor 使用详细的 context 和池化的 query 计算 logits ---
         action_logits = self.action_net(context, pooled_features)
-        
-        # --- 步骤 4: 应用 mask 来屏蔽无效动作 ---
+
         mask = obs["mask"].bool()
         action_logits[~mask] = -torch.inf
-
-        # 检查并处理所有动作都被屏蔽的特殊情况
         all_masked_rows = torch.all(~mask, dim=1)
         if all_masked_rows.any():
             action_logits[all_masked_rows, 0] = 0
-            
-        # --- 步骤 5: 从安全的 logits 计算 log_prob 和 entropy ---
+
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         log_prob = distribution.log_prob(actions)
         entropy = distribution.entropy()
@@ -261,7 +259,10 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
     def predict_values(self, obs: Dict[str, torch.Tensor]) -> torch.Tensor:
         context, pooled_features = self.extract_features(obs)
-        return self.value_net(context, pooled_features)
+        if self.critic_type == "simple":
+            return self.value_net(pooled_features)
+        else: # advanced
+            return self.value_net(pooled_features, context)
 
     def _predict(self, observation: Dict[str, torch.Tensor], deterministic: bool = False) -> torch.Tensor:
         action_logits = self._get_action_logits_from_obs(observation)
