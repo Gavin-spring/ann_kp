@@ -106,14 +106,17 @@ class PointerDecoder(nn.Module):
 class SimpleMLPCritic(nn.Module):
     def __init__(self, features_dim: int):
         super().__init__()
+        hidden_dim_1 = 256
+        hidden_dim_2 = 128
+        
         self.value_net = nn.Sequential(
-            nn.Linear(features_dim, 256),
-            nn.BatchNorm1d(256),
+            nn.Linear(features_dim, hidden_dim_1),
+            nn.LayerNorm(hidden_dim_1),
             nn.ReLU(),
             nn.Dropout(0.1),
-            nn.Linear(256, 128),
+            nn.Linear(hidden_dim_1, hidden_dim_2),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(hidden_dim_2, 1)
         )
     
     def forward(self, pooled_features: torch.Tensor, context: torch.Tensor = None) -> torch.Tensor:
