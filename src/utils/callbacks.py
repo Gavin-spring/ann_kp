@@ -1,7 +1,9 @@
 # src/utils/callbacks.py
 
-from stable_baselines3.common.callbacks import EvalCallback
+from stable_baselines3.common.callbacks import EvalCallback, BaseCallback
 import torch
+from tqdm.auto import tqdm
+
 
 class CompiledModelSaveCallback(EvalCallback):
     """
@@ -37,3 +39,30 @@ class CompiledModelSaveCallback(EvalCallback):
         # The parent _on_step will call our custom _save_model when it's time to save.
         continue_training = super()._on_step()
         return continue_training
+
+class TqdmCallback(BaseCallback):
+    """
+    一个显示tqdm进度条的回调函数。
+    """
+    def __init__(self, verbose: int = 0):
+        super().__init__(verbose)
+        self.progress_bar = None
+
+    def _on_training_start(self) -> None:
+        """在训练开始时被调用"""
+        # 从 learn 方法中获取 total_timesteps
+        total_timesteps = self.locals.get("total_timesteps", 0)
+        self.progress_bar = tqdm(total=total_timesteps, desc="Training")
+
+    def _on_step(self) -> bool:
+        """在每一步之后被调用"""
+        # 更新进度条
+        if self.progress_bar is not None:
+            self.progress_bar.update(1)
+        return True
+
+    def _on_training_end(self) -> None:
+        """在训练结束时被调用"""
+        if self.progress_bar is not None:
+            self.progress_bar.close()
+            self.progress_bar = None

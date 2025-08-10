@@ -10,6 +10,7 @@ import warnings
 import json
 import argparse
 import datetime
+import logging
 import random
 import numpy as np
 from stable_baselines3 import PPO
@@ -23,7 +24,8 @@ from src.utils.run_utils import create_run_name
 from src.utils.logger import setup_logger
 from src.env.knapsack_env import KnapsackEnv
 from src.solvers.ml.custom_policy import KnapsackActorCriticPolicy, KnapsackEncoder
-from src.utils.callbacks import CompiledModelSaveCallback
+from src.utils.callbacks import CompiledModelSaveCallback, TqdmCallback
+
 
 torch.set_float32_matmul_precision('high')
 warnings.filterwarnings("ignore", ".*get_linear_fn().*", category=UserWarning)
@@ -56,6 +58,26 @@ def main():
 
     run_dir = os.path.join("artifacts_sb3", "training", run_name)
     os.makedirs(run_dir, exist_ok=True)
+
+    # 配置日志系统，将所有信息输出到文件
+    log_file_path = os.path.join(run_dir, "training.log")
+    sb3_logger = logging.getLogger("stable_baselines3")
+    sb3_logger.setLevel(logging.INFO)
+
+    # 创建一个文件处理器 (FileHandler)
+    file_handler = logging.FileHandler(log_file_path)
+    file_handler.setLevel(logging.INFO)
+
+    # 创建一个格式化器 (Formatter)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    file_handler.setFormatter(formatter)
+
+    # 将文件处理器添加到 logger
+    sb3_logger.addHandler(file_handler)
+    
+    print(f"--- Starting new training run: {run_name} ---")
+    print(f"All artifacts will be saved in: {run_dir}")
+    print(f"Verbose logs are redirected to: {log_file_path}")
 
     # info of this run
     run_info = {
@@ -156,6 +178,8 @@ def main():
                                  log_path=logs_dir,
                                  eval_freq=cfg.ml.rl.ppo.training.eval_freq,
                                  deterministic=True, render=False)
+    tqdm_callback = TqdmCallback()
+    callback_list = [eval_callback, tqdm_callback]
 
     # 3. define the custom policy
     policy_kwargs = dict(
@@ -174,7 +198,7 @@ def main():
         KnapsackActorCriticPolicy,
         train_env,
         policy_kwargs=policy_kwargs,
-        verbose=1,
+        verbose=0,
         seed=args.seed, 
         tensorboard_log=unified_tensorboard_log_dir,
         learning_rate=lr_schedule,
@@ -195,7 +219,7 @@ def main():
 
     # 5. start training
     print("start training...")
-    model.learn(total_timesteps=cfg.ml.rl.ppo.training.total_timesteps, callback=eval_callback, tb_log_name=tb_log_name)
+    model.learn(total_timesteps=cfg.ml.rl.ppo.training.total_timesteps, callback=callback_list, tb_log_name=tb_log_name)
 
     # 6. save the final model and VecNormalize stats
     print("Training complete. Saving VecNormalize stats and final model...")
