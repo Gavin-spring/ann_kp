@@ -66,3 +66,41 @@ class TqdmCallback(BaseCallback):
         if self.progress_bar is not None:
             self.progress_bar.close()
             self.progress_bar = None
+
+class TqdmAndSaveCallback(EvalCallback):
+    """
+    一个集成了Tqdm进度条和模型评估与保存功能的回调函数。
+    它继承自EvalCallback，保留了所有评估和保存逻辑。
+    """
+    def __init__(self, *args, **kwargs):
+        # 先调用父类的构造函数
+        super(TqdmAndSaveCallback, self).__init__(*args, **kwargs)
+        self.progress_bar = None
+
+    def _on_training_start(self) -> None:
+        # 首先，调用父类的 _on_training_start
+        super(TqdmAndSaveCallback, self)._on_training_start()
+        
+        # 然后，初始化tqdm进度条
+        if self.progress_bar is None:
+            self.progress_bar = tqdm(total=self.locals.get("total_timesteps", 0), desc="Training")
+
+    def _on_step(self) -> bool:
+        # 在每一步都更新进度条
+        if self.progress_bar is not None:
+            # self.n_calls 是从BaseCallback继承的，代表真实的步数
+            # 我们用它来计算增量，防止与EvalCallback内部逻辑冲突
+            self.progress_bar.update(1)
+
+        # 【关键】调用父类的 _on_step 方法，让它执行评估和保存
+        # 如果父类返回False (例如触发了早停)，我们也返回False
+        return super(TqdmAndSaveCallback, self)._on_step()
+
+    def _on_training_end(self) -> None:
+        # 首先，调用父类的 _on_training_end
+        super(TqdmAndSaveCallback, self)._on_training_end()
+
+        # 然后，关闭进度条
+        if self.progress_bar is not None:
+            self.progress_bar.close()
+            self.progress_bar = None
