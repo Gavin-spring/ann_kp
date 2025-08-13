@@ -31,8 +31,8 @@ try:
         # "2D DP": DPSolver2D,        
         # "1D DP (on value)": DPValueSolver,
         # "Greedy": GreedySolver,
-        # "DNN": DNNSolver,
-        "PointerNet RL": RLSolver,
+        "DNN": DNNSolver,
+        # "PointerNet RL": RLSolver,
         # "Branch and Bound": BranchAndBoundSolver,        
         # "1D DP (Optimized)": DPSolver1D,
     }

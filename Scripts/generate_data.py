@@ -225,7 +225,7 @@ def main():
     # ==========================================================
     # ===  Fixed data ===
     # ==========================================================
-    fixed_n_range = (10, 100, 1)
+    fixed_n_range = (500, 500, 1)
     # print("Running Task: Generate fixed data for ML models...")
     # # === Training Sets for ML Models ===
     # create_dataset(
@@ -247,7 +247,7 @@ def main():
 
     # === Testing Sets for ML Models ===
     create_dataset(
-        dataset_name="n10-n100-Testing",
+        dataset_name="n500-Testing",
         output_dir=cfg.paths.data_testing,
         instance_params=shared_instance_params,
         n_range=fixed_n_range,

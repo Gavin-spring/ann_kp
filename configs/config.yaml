@@ -45,7 +45,7 @@ classic_solvers:
 
 # 4. Machine Learning Config
 ml:
-  training_mode: "RL" # Options: "DNN", "RL"
+  training_mode: "DNN" # Options: "DNN", "RL"
   device: "auto"  # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
   baseline_algorithm: "Gurobi"
   approximation_solvers:
@@ -84,7 +84,7 @@ ml:
 
   rl:
     # ==========================================================
-    # 方案一：基于你之前实现的 REINFORCE (Monte Carlo) 版本
+    # 方案一：基于 REINFORCE (Monte Carlo) 版本
     # ==========================================================
     reinforce:
       # --- 模型架构超参数 (旧的LSTM + PointerNet) ---
@@ -129,7 +129,7 @@ ml:
           obs: True
           reward: True
         max_n: 50              # 训练时最大问题规模
-        eval_max_n: 500        # 大于测试时最大问题规模 (用于位置编码)
+        eval_max_n: 1000        # 大于测试时最大问题规模 (用于位置编码)
         item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
         embedding_dim: 128
         n_glimpses: 2          # Actor (PointerDecoder) 的 Glimpse 次数

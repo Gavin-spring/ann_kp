@@ -25,19 +25,24 @@ class DNNSolver(SolverInterface):
     A full-featured solver for the Knapsack Problem using a Deep Neural Network.
     Refactored for clarity and maintainability.
     """
-    def __init__(self, config: SimpleNamespace, device: str, model_path: Optional[str] = None):
+    def __init__(self, config: SimpleNamespace, device: str, model_path: Optional[str] = None, **kwargs):
         """
         Initializes the DNNSolver.
         Args:
             config: The dnn-specific configuration object.
             device: The device to run the model on ('cuda' or 'cpu').
             model_path (optional): Path to a pre-trained model file for evaluation.
+            **kwargs: Catches any other keyword arguments (like 'compile_model') to prevent errors.
         """
         super().__init__(config)
         self.name = "DNN"
         self.device = device
-        self.model_path = model_path # <-- Store the model path
-        
+        self.model_path = model_path
+
+        # Log a warning if unexpected arguments are passed, for debugging purposes
+        if 'compile_model' in kwargs:
+            logger.debug("DNNSolver received 'compile_model' argument but does not use it.")
+
         self.model = KnapsackDNN(
             input_size=self.config.hyperparams.input_size,
             config=self.config
@@ -56,12 +61,20 @@ class DNNSolver(SolverInterface):
 
 
     # --- Main Orchestration Method ---
-    def train(self, model_save_path: str, plot_save_path: str):
+    def train(self, artifact_paths: dict):
         """
         Orchestrates the entire training process by calling helper methods.
         The logic is now high-level and easy to read.
         """
         logger.info(f"--- Starting Training for {self.name} ---")
+
+        # --- Extract paths from the artifact_paths dictionary ---
+        model_save_path = artifact_paths.get('model')
+        loss_plot_path = artifact_paths.get('loss_plot')
+
+        if not model_save_path or not loss_plot_path:
+            logger.error("'model' or 'loss_plot' path not found in artifact_paths dictionary.")
+            return
         
         # 1. Setup training components
         criterion, optimizer, scheduler = self._setup_training()
@@ -105,7 +118,7 @@ class DNNSolver(SolverInterface):
                 break # Exit the training loop
 
         # 4. Finalize and plot results
-        self._plot_loss_curve(pd.DataFrame(history), plot_save_path)
+        self._plot_loss_curve(pd.DataFrame(history), loss_plot_path)
         logger.info(f"--- Finished Training. Best validation loss: {best_val_loss:.6f} ---")
 
     # --- Helper Methods ---
@@ -121,9 +134,19 @@ class DNNSolver(SolverInterface):
         """Loads pre-processed data and prepares PyTorch DataLoaders."""
         from src.utils.config_loader import cfg # Local import for root data path
         
-        train_path = os.path.join(cfg.paths.data, "processed_training.pt")
-        val_path = os.path.join(cfg.paths.data, "processed_validation.pt")
+        train_path = os.path.join(cfg.paths.data, "processed_dnn_training.pt")
+        val_path = os.path.join(cfg.paths.data, "processed_dnn_validation.pt")
         
+        # Check if files exist before trying to load
+        if not os.path.exists(train_path):
+            logger.error(f"Pre-processed data file not found at: {train_path}")
+            logger.error("Please run 'python preprocess_data.py --mode dnn --dataset training' first.")
+            return None, None
+        if not os.path.exists(val_path):
+            logger.error(f"Pre-processed data file not found at: {val_path}")
+            logger.error("Please run 'python preprocess_data.py --mode dnn --dataset validation' first.")
+            return None, None
+
         train_dataset = PreprocessedKnapsackDataset(train_path)
         val_dataset = PreprocessedKnapsackDataset(val_path)
 
@@ -167,11 +190,16 @@ class DNNSolver(SolverInterface):
         """
         Uses the loaded neural network to predict the optimal value.
         """
+        from src.utils.config_loader import cfg
         if not self.model_path:
             raise RuntimeError("DNNSolver was not initialized with a model_path, cannot solve.")
             
         # The model is already loaded in __init__ and set to eval() mode.
-        features_tensor = extract_features_from_instance(instance_path, config=self.config)
+        features_tensor = extract_features_from_instance(
+            instance_path, 
+            dnn_config=self.config, 
+            generation_config=cfg.ml.generation
+        )
         
         if features_tensor is None:
             return {"value": -1, "time": 0, "solution": []}
@@ -203,15 +231,6 @@ class DNNSolver(SolverInterface):
         sns.lineplot(data=history_df, x='epoch', y='train_loss', label='Training Loss')
         sns.lineplot(data=history_df, x='epoch', y='val_loss', label='Validation Loss')
         
-        gen_cfg = self.config.generation
-        train_cfg = self.config.training
-        n_range = range(gen_cfg.start_n, gen_cfg.end_n + 1, gen_cfg.step_n)
-
-        # Draw vertical lines indicating change in 'n'
-        # epochs_per_n_step = train_cfg.epochs_per_n * len(n_range)
-        # This curriculum logic seems off, let's simplify based on total epochs
-        # A simpler plot would not have the n markers unless training is truly sequential per n
-        
         plt.title('Training & Validation Loss Curve', fontsize=16)
         plt.xlabel('Epoch', fontsize=12)
         plt.ylabel('Loss (MSE)', fontsize=12)
@@ -221,17 +240,3 @@ class DNNSolver(SolverInterface):
         plt.savefig(save_path, dpi=300)
         plt.close()
         logger.info(f"Loss curve plot saved to {save_path}")
-
-    # def _get_run_paths(self) -> dict:
-    #     """A helper method to generate paths for the current run based on its config."""
-    #     from src.utils.config_loader import cfg # Local import for path roots is fine here
-        
-    #     gen_cfg = self.config.generation
-    #     train_cfg = self.config.training
-    #     # Use the single total_epochs value from config for a consistent run name
-    #     run_name = f"dnn_n{gen_cfg.start_n}-{gen_cfg.end_n}_epochs{train_cfg.total_epochs}"
-        
-    #     return {
-    #         "model_file": os.path.join(cfg.paths.models, f"{run_name}.pth"),
-    #         "plot_file_loss": os.path.join(cfg.paths.plots, f"{run_name}_loss_curve.png"),
-    #     }
