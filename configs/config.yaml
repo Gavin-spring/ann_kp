@@ -51,6 +51,9 @@ ml:
   approximation_solvers:
     "DNN": "dnn"
     "PointerNet RL": "rl"
+    "PPO": "ppo"
+  testing: # For unified testing of all ML solvers.
+    is_deterministic: true
 
   # Settings for generating the ML-specific training/validation datasets.
   # MAX_N, input_size, target_scale are dynamically generated in config loader.
@@ -129,7 +132,7 @@ ml:
           obs: True
           reward: True
         max_n: 50              # 训练时最大问题规模
-        eval_max_n: 1000        # 大于测试时最大问题规模 (用于位置编码)
+        eval_max_n: 500        # 大于测试时最大问题规模 (用于位置编码)
         item_feature_dim: 2    # 每个物品的特征维度 (weight, value)
         embedding_dim: 128
         n_glimpses: 2          # Actor (PointerDecoder) 的 Glimpse 次数

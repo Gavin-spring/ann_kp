@@ -8,11 +8,11 @@ from typing import Dict, List, Tuple
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common.torch_layers import BaseFeaturesExtractor
 from stable_baselines3.common.distributions import CategoricalDistribution
-from src.utils.config_loader import cfg
 
 # --- Encoder ---
 class KnapsackEncoder(BaseFeaturesExtractor):
     def __init__(self, observation_space: gym.spaces.Dict, embedding_dim: int = 128, nhead: int = 4, num_layers: int = 2):
+        from src.utils.config_loader import cfg
         super().__init__(observation_space, features_dim=embedding_dim)
 
         item_feature_dim = cfg.ml.rl.ppo.hyperparams.item_feature_dim  # weight, value
@@ -125,6 +125,7 @@ class SimpleMLPCritic(nn.Module):
 
 class AdvancedAttentionCritic(nn.Module):
     def __init__(self, embedding_dim: int, n_process_block_iters: int):
+        from src.utils.config_loader import cfg
         super().__init__()        
         self.n_process_block_iters = n_process_block_iters        
         self.process_block = PointerDecoder(embedding_dim) # 复用PointerDecoder作为注意力层

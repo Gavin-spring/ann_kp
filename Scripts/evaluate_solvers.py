@@ -7,8 +7,10 @@ from tqdm import tqdm
 import numpy as np
 import argparse
 import torch
+import json
 from types import SimpleNamespace
 import copy
+import datetime
 from torch.utils.data import DataLoader
 
 from src.utils.config_loader import cfg, ALGORITHM_REGISTRY
@@ -41,6 +43,12 @@ def main():
         help="Path to a pre-trained .pth model file for the RLSolver."
     )
     parser.add_argument(
+        "--ppo-run-dir",
+        type=str,
+        default=None,
+        help="Path to a PPO training run directory for the PPOSolver."
+    )
+    parser.add_argument(
         "--training-max-n",
         type=int,
         default=None,
@@ -49,20 +57,20 @@ def main():
     args = parser.parse_args()
     
     # --- 1. Create a unique name and directory for this evaluation run ---
-    run_name = create_run_name(cfg)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    is_deterministic_mode = cfg.ml.testing.is_deterministic
+    mode_suffix = "G" if is_deterministic_mode else "S"
+
+    run_name = f"{timestamp}-eval-{mode_suffix}"
     run_dir = os.path.join(cfg.paths.artifacts, "runs", "evaluation", run_name)
     os.makedirs(run_dir, exist_ok=True)
     
     setup_logger(run_name="evaluation_session", log_dir=run_dir)
     logger = logging.getLogger(__name__)
     
-    logger.info(f"--- Starting New Evaluation Run: {run_name} ---")
-    # FIX 1: Check for dnn_model_path specifically
-    if args.dnn_model_path:
-        logger.info(f"Using specified DNN model: {args.dnn_model_path}")
-    # Add a log for the RL model path as well
-    if args.rl_model_path:
-        logger.info(f"Using specified RL model: {args.rl_model_path}")
+    logger.info(f"--- Starting New Unified Evaluation Run: {run_name} ---")
+    logger.info(f"All artifacts will be saved in: {run_dir}")
 
     # --- 2. Setup Solvers ---
     # We will test all solvers currently active in the registry.
@@ -71,6 +79,17 @@ def main():
         logger.critical("No solvers are active in ALGORITHM_REGISTRY. Exiting.")
         sys.exit(1)
     logger.info(f"Solvers to be evaluated: {list(solvers_to_evaluate.keys())}")
+    
+    all_solvers_in_run = list(solvers_to_evaluate.keys())
+    eval_info = { 
+        "run_name": run_name, 
+        "args": vars(args), 
+        "solvers_to_test": all_solvers_in_run 
+    }
+    eval_info_path = os.path.join(run_dir, "run_info.json")
+    with open(eval_info_path, 'w') as f:
+        json.dump(eval_info, f, indent=4)
+    logger.info(f"Evaluation configuration saved to: {eval_info_path}")
         
     # --- 3. Data Loading ---
     test_data_dir = cfg.paths.data_testing
@@ -131,28 +150,53 @@ def main():
         # a. instantiate the solver with the correct configuration
         try:
             solver_instance = None
-            if name in vars(cfg.ml.approximation_solvers):
-                config_key = getattr(cfg.ml.approximation_solvers, name)
-                model_path_arg = getattr(args, f"{config_key}_model_path")
-                if not model_path_arg:
-                    logger.warning(f"Skipping {name} because --{config_key}-model_path was not provided.")
+
+            # --- Case 1: PPO ---
+            if name == "PPO":
+                if not args.ppo_run_dir:
+                    logger.warning(f"Skipping PPO because --ppo-run-dir was not provided.")
                     continue
+                solver_instance = SolverClass(model_run_dir=args.ppo_run_dir,
+                                              is_deterministic=cfg.ml.testing.is_deterministic)
+
+            # --- Case 2: 其他的ML求解器 (DNN, PointerNet RL等) ---
+            elif name in vars(cfg.ml.approximation_solvers):
+                # 获取配置键名，例如 "DNN" -> "dnn"
+                config_key = getattr(cfg.ml.approximation_solvers, name)
+                # 根据键名构造命令行参数名，例如 "dnn" -> "--dnn-model-path"
+                model_path_arg_name = f"{config_key}_model_path"
+                
+                # 检查命令行是否提供了这个参数
+                if not hasattr(args, model_path_arg_name) or getattr(args, model_path_arg_name) is None:
+                    logger.warning(f"Skipping {name} because --{model_path_arg_name} was not provided.")
+                    continue
+                
+                # 获取参数值和对应的配置
+                model_path_arg = getattr(args, model_path_arg_name)
                 config = getattr(cfg.ml, config_key)
-                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False) # Compiling when evaluating is slow
+                
+                # 通用的实例化方法
+                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False)
+
+            # --- Case 3: 处理所有非ML的经典求解器 ---
             else:
                 solver_instance = SolverClass(config={})
+                
         except Exception as e:
             logger.error(f"Failed to instantiate solver {name}. Error: {e}", exc_info=True)
             continue
         
         # b. choose the evaluation method based on the solver type
-        if name in vars(cfg.ml.approximation_solvers):
-            # --- apply the new batched evaluation logic for ML solvers ---
+        if name == "PointerNet RL":
+            # --- apply the new batched evaluation logic ONLY for RL solver ---
             logger.info(f"Using batched evaluation for {name} with batch size {evaluation_batch_size}.")
             
-            # 1. Prepare the DataLoader for batched evaluation
             from src.solvers.ml.rl_solver import RawKnapsackDataset
-            test_dataset = RawKnapsackDataset(test_data_dir)
+            test_dataset = RawKnapsackDataset(
+                test_data_dir,
+                max_weight=cfg.ml.generation.max_weight,
+                max_value=cfg.ml.generation.max_value
+            )
             test_loader = DataLoader(
                 test_dataset, 
                 batch_size=evaluation_batch_size, 
@@ -179,7 +223,7 @@ def main():
                 logger.error(f"Solver '{name}' failed during batched evaluation. Error: {e}", exc_info=True)
 
         else:
-            # --- apply the single instance evaluation logic for non-ML solvers ---
+            # --- apply the single instance evaluation logic for ALL OTHER solvers (Gurobi, DNN, etc.) ---
             logger.info(f"Using single instance evaluation for {name}.")
             try:
                 for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
