@@ -369,7 +369,7 @@ class RLSolver(SolverInterface):
         
         return total_epoch_reward / len(data_loader), baseline
 
-    def _train_one_epoch_PPO(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, torch.Tensor]:
+    def _train_one_epoch_actor_critic(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, float, float, float]:
         self.model.train()
 
         # --- 1. 从self.config加载超参数 ---

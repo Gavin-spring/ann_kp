@@ -45,7 +45,7 @@ classic_solvers:
 
 # 4. Machine Learning Config
 ml:
-  training_mode: "reinforce"  # "dnn", "reinforce", "actor_critic" used in train_model.py; use train_sb3.py for PPO.
+  training_mode: "actor_critic"  # "dnn", "reinforce", "actor_critic" used in train_model.py; use train_sb3.py for PPO.
   device: "auto"  # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
   baseline_algorithm: "Gurobi"
   approximation_solvers:
@@ -134,6 +134,10 @@ ml:
         clip_param: 0.2
         value_loss_coef: 0.5
         entropy_coef: 0.01
+        n_steps: 2048
+        gamma: 0.99
+        gae_lambda: 0.95
+        max_grad_norm: 2.0
 
     # ==========================================================
     # 方案二：基于 gym + stable-baselines3 的 PPO 版本
