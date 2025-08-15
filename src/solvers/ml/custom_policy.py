@@ -114,13 +114,44 @@ class SimpleMLPCritic(nn.Module):
             nn.LayerNorm(hidden_dim_1),
             nn.ReLU(),
             nn.Dropout(0.1),
+
             nn.Linear(hidden_dim_1, hidden_dim_2),
             nn.ReLU(),
+
             nn.Linear(hidden_dim_2, 1)
         )
     
     def forward(self, pooled_features: torch.Tensor, context: torch.Tensor = None) -> torch.Tensor:
         # 这个Critic只使用pooled_features
+        return self.value_net(pooled_features)
+
+class SimpleMLPCritic_d(nn.Module):
+    def __init__(self, features_dim: int):
+        super().__init__()
+        hidden_dim_1 = 512
+        hidden_dim_2 = 256
+        hidden_dim_3 = 128
+        dropout_rate = 0.2
+        
+        self.value_net = nn.Sequential(
+            nn.Linear(features_dim, hidden_dim_1),
+            nn.LayerNorm(hidden_dim_1),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+            
+            nn.Linear(hidden_dim_1, hidden_dim_2),
+            nn.LayerNorm(hidden_dim_2),
+            nn.ReLU(),
+            nn.Dropout(dropout_rate),
+
+            nn.Linear(hidden_dim_2, hidden_dim_3),
+            nn.LayerNorm(hidden_dim_3),
+            nn.ReLU(),
+
+            nn.Linear(hidden_dim_3, 1)
+        )
+    
+    def forward(self, pooled_features: torch.Tensor, context: torch.Tensor = None) -> torch.Tensor:
         return self.value_net(pooled_features)
 
 class AdvancedAttentionCritic(nn.Module):
@@ -176,8 +207,8 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
         # Critic
         if self.critic_type == "simple":
-            print(">>> Building with SimpleMLPCritic <<<")
-            self.value_net = SimpleMLPCritic(self.features_extractor.features_dim)
+            print(">>> Building with SimpleMLPCritic_d <<<")
+            self.value_net = SimpleMLPCritic_d(self.features_extractor.features_dim)
         elif self.critic_type == "advanced":
             print(">>> Building with AdvancedAttentionCritic <<<")
             self.value_net = AdvancedAttentionCritic(
