@@ -34,7 +34,7 @@ try:
         # "Greedy": GreedySolver,
         "DNN": DNNSolver,
         "PointerNet RL": RLSolver,
-        "PPO": PPOSolver,
+        # "PPO": PPOSolver,
         # "Branch and Bound": BranchAndBoundSolver,        
         # "1D DP (Optimized)": DPSolver1D,
     }

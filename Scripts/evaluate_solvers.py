@@ -141,89 +141,71 @@ def main():
                            f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
 
     # --- 4. Run Evaluation Loop ---
-    training_mode = cfg.ml.training_mode
-    evaluation_batch_size = cfg.ml.rl.testing.batch_size if training_mode == "RL" else 1
-    
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
         
-        # a. instantiate the solver with the correct configuration
+        # --- Part 1: Instantiate the solver ---
+        solver_instance = None
         try:
-            solver_instance = None
-
-            # --- Case 1: PPO ---
             if name == "PPO":
                 if not args.ppo_run_dir:
                     logger.warning(f"Skipping PPO because --ppo-run-dir was not provided.")
                     continue
-                solver_instance = SolverClass(model_run_dir=args.ppo_run_dir,
-                                              is_deterministic=cfg.ml.testing.is_deterministic)
-
-            # --- Case 2: 其他的ML求解器 (DNN, PointerNet RL等) ---
+                solver_instance = SolverClass(
+                    model_run_dir=args.ppo_run_dir, 
+                    is_deterministic=cfg.ml.testing.is_deterministic
+                )
             elif name in vars(cfg.ml.approximation_solvers):
-                # 获取配置键名，例如 "DNN" -> "dnn"
                 config_key = getattr(cfg.ml.approximation_solvers, name)
-                # 根据键名构造命令行参数名，例如 "dnn" -> "--dnn-model-path"
                 model_path_arg_name = f"{config_key}_model_path"
-                
-                # 检查命令行是否提供了这个参数
                 if not hasattr(args, model_path_arg_name) or getattr(args, model_path_arg_name) is None:
                     logger.warning(f"Skipping {name} because --{model_path_arg_name} was not provided.")
                     continue
-                
-                # 获取参数值和对应的配置
                 model_path_arg = getattr(args, model_path_arg_name)
                 config = getattr(cfg.ml, config_key)
-                
-                # 通用的实例化方法
                 solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False)
-
-            # --- Case 3: 处理所有非ML的经典求解器 ---
             else:
                 solver_instance = SolverClass(config={})
-                
         except Exception as e:
             logger.error(f"Failed to instantiate solver {name}. Error: {e}", exc_info=True)
             continue
-        
-        # b. choose the evaluation method based on the solver type
-        if name == "PointerNet RL":
-            # --- apply the new batched evaluation logic ONLY for RL solver ---
-            logger.info(f"Using batched evaluation for {name} with batch size {evaluation_batch_size}.")
-            
-            from src.solvers.ml.rl_solver import RawKnapsackDataset
-            test_dataset = RawKnapsackDataset(
-                test_data_dir,
-                max_weight=cfg.ml.generation.max_weight,
-                max_value=cfg.ml.generation.max_value
-            )
-            test_loader = DataLoader(
-                test_dataset, 
-                batch_size=evaluation_batch_size, 
-                collate_fn=knapsack_collate_fn
-            )
 
-            # 2. Evaluate the solver in batches
+        if not solver_instance:
+            continue
+
+        # --- Part 2: Choose evaluation method based on the solver's CAPABILITIES ---
+        if hasattr(solver_instance, 'solve_batch'):
+            # --- Batched evaluation logic (for PointerNet RL, or any future batched solver) ---
+            logger.info(f"Using batched evaluation for {name}.")
             try:
+                batch_size = cfg.ml.testing.batch_size
+                from src.solvers.ml.rl_solver import RawKnapsackDataset
+                
+                test_dataset = RawKnapsackDataset(
+                    test_data_dir,
+                    max_weight=cfg.ml.generation.max_weight,
+                    max_value=cfg.ml.generation.max_value
+                )
+                test_loader = DataLoader(
+                    test_dataset, 
+                    batch_size=batch_size, 
+                    collate_fn=knapsack_collate_fn
+                )
+
                 for batch_data in tqdm(test_loader, desc=f"Solving with {name} (Batched)"):
                     batch_results = solver_instance.solve_batch(batch_data)
-
                     for i, result in enumerate(batch_results):
-                        instance_n = batch_data['n'][i].item()
-                        # Ensure the instance name is correctly extracted
-                        instance_name = batch_data['filenames'][i]
                         raw_results.append({
                             "solver": name,
-                            "instance": instance_name,
-                            "n": instance_n,
+                            "instance": batch_data['filenames'][i],
+                            "n": batch_data['n'][i].item(),
                             "value": result.get("value", -1),
                             "time_seconds": result.get("time", -1),
                         })
             except Exception as e:
                 logger.error(f"Solver '{name}' failed during batched evaluation. Error: {e}", exc_info=True)
-
         else:
-            # --- apply the single instance evaluation logic for ALL OTHER solvers (Gurobi, DNN, etc.) ---
+            # --- Single instance evaluation logic (for Gurobi, DNN, PPO Wrapper) ---
             logger.info(f"Using single instance evaluation for {name}.")
             try:
                 for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
@@ -237,7 +219,6 @@ def main():
                     })
             except Exception as e:
                 logger.error(f"Solver '{name}' failed during single instance evaluation. Error: {e}", exc_info=True)
-
     # --- 5. Process Results and Calculate All Metrics ---
     if not raw_results:
         logger.critical("CRITICAL: No results were generated from any solver. Exiting.")

@@ -5,6 +5,7 @@ data_old/
 
 # backup
 *backup/
+back_diff/
 
 # data
 data/

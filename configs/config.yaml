@@ -45,7 +45,7 @@ classic_solvers:
 
 # 4. Machine Learning Config
 ml:
-  training_mode: "DNN" # Options: "DNN", "RL"
+  training_mode: "reinforce"  # "dnn", "reinforce", "actor_critic" used in train_model.py; use train_sb3.py for PPO.
   device: "auto"  # "auto" will be resolved to 'cuda' if available, otherwise 'cpu'.
   baseline_algorithm: "Gurobi"
   approximation_solvers:
@@ -54,6 +54,9 @@ ml:
     "PPO": "ppo"
   testing: # For unified testing of all ML solvers.
     is_deterministic: true
+    batch_size: 64
+    data_range: "50"
+    n_samples: 10
 
   # Settings for generating the ML-specific training/validation datasets.
   # MAX_N, input_size, target_scale are dynamically generated in config loader.
@@ -87,19 +90,20 @@ ml:
 
   rl:
     # ==========================================================
-    # 方案一：基于 REINFORCE (Monte Carlo) 版本
+    # 方案一：基于 REINFORCE (Monte Carlo) + EMA Baseline
     # ==========================================================
     reinforce:
-      # --- 模型架构超参数 (旧的LSTM + PointerNet) ---
+      # --- 模型架构超参数 (LSTM + PointerNet) ---
       hyperparams:
-        embedding_dim: 128
-        hidden_dim: 128      # LSTM 隐藏层维度
+        embedding_dim: 96
+        hidden_dim: 96      # LSTM 隐藏层维度
         n_glimpses: 2
         tanh_exploration: 30 # Tanh 探索因子 C
         use_tanh: true       # 是否在注意力中使用tanh
 
-      # --- 训练循环参数 (旧的训练脚本使用) ---
+      # --- 训练循环参数 ---
       training:
+        algorithm_mode: "reinforce"
         total_epochs: 300
         batch_size: 32
         learning_rate: 0.0001
@@ -108,9 +112,28 @@ ml:
         max_grad_norm: 2.0
         baseline_beta: 0.8     # EMA 基线的beta系数
 
-      # --- 评估流程参数 ---
-      testing:
-        batch_size: 64
+    # ==========================================================
+    # 方案二：基于 REINFORCE (Monte Carlo) + Critic Baseline
+    # ==========================================================
+    actor_critic:
+      hyperparams:
+        embedding_dim: 96
+        hidden_dim: 96       # LSTM 隐藏层维度
+        n_glimpses: 2
+        tanh_exploration: 30 # Tanh 探索因子 C
+        use_tanh: true       # 是否在注意力中使用tanh
+      training:
+        algorithm_mode: "actor_critic"
+        total_epochs: 300
+        batch_size: 32
+        learning_rate: 0.0001
+        lr_decay_step: 500
+        lr_decay_rate: 0.96
+        # PPO 相关的参数
+        ppo_epochs: 4
+        clip_param: 0.2
+        value_loss_coef: 0.5
+        entropy_coef: 0.01
 
     # ==========================================================
     # 方案二：基于 gym + stable-baselines3 的 PPO 版本
@@ -161,10 +184,3 @@ ml:
         vf_coef: 1.0
         ent_coef: 0
         max_grad_norm: 2.0
-      
-      # --- 评估流程参数 ---
-      testing:
-        data_range: "50"
-        is_deterministic: True # Sampling False, Greedy True
-        batch_size: 64
-        n_samples: 10

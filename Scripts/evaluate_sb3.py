@@ -27,7 +27,7 @@ def main():
     args = parser.parse_args()
 
     # Create a unique run name based on the current time and the training run name
-    is_deterministic = cfg.ml.rl.ppo.testing.is_deterministic
+    is_deterministic = cfg.ml.testing.is_deterministic
     mode_suffix = "G" if is_deterministic else "S"
 
     training_run_name = os.path.basename(os.path.normpath(args.run_dir))
@@ -50,9 +50,9 @@ def main():
         "eval_run_name": eval_run_name,
         "training_run_name": training_run_name,
         "is_deterministic": is_deterministic,
-        "data_range": cfg.ml.rl.ppo.testing.data_range,
-        "batch_size": cfg.ml.rl.ppo.testing.batch_size,
-        "n_samples": cfg.ml.rl.ppo.testing.n_samples,
+        "data_range": cfg.ml.testing.data_range,
+        "batch_size": cfg.ml.testing.batch_size,
+        "n_samples": cfg.ml.testing.n_samples,
         "data_path": cfg.paths.data_testing,
         "model_path": model_path,
         "stats_path": stats_path,
@@ -123,7 +123,7 @@ def main():
     
     # --- 4. Start Evaluation ---
     # 读取评估模式配置
-    n_samples = cfg.ml.rl.ppo.testing.n_samples if not is_deterministic else 1
+    n_samples = cfg.ml.testing.n_samples if not is_deterministic else 1
 
     # 根据模式打印提示信息
     if is_deterministic:

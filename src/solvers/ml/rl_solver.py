@@ -148,9 +148,9 @@ class RLSolver(SolverInterface):
                 if any(key.startswith('_orig_mod.') for key in state_dict.keys()):
                     logger.info("Found compiled model state_dict, stripping '_orig_mod.' prefix...")
                     new_state_dict = {key.replace('_orig_mod.', ''): value for key, value in state_dict.items()}
-                    self.model.load_state_dict(new_state_dict)
+                    self.model.load_state_dict(new_state_dict, strict=False)
                 else:
-                    self.model.load_state_dict(state_dict)
+                    self.model.load_state_dict(state_dict, strict=False)
             else:
                 raise FileNotFoundError(f"Model file not found for RLSolver: {model_path}")
         
@@ -187,13 +187,20 @@ class RLSolver(SolverInterface):
         patience = 20  # How many epochs to wait for improvement before stopping.
                     # Can be made a config parameter.
         epochs_no_improve = 0
-    
+
+        rl_algorithm_mode = getattr(self.config.training, 'algorithm_mode', 'actor_critic')
+        logger.info(f"Using RL training algorithm mode: {rl_algorithm_mode}")
         logger.info(f"Starting training for {total_epochs} epochs...")
         for epoch in range(total_epochs):
             # --- start training ---
-            train_reward, critic_loss, actor_loss, entropy = self._train_one_epoch_PPO(
-                train_loader, optimizer, scheduler
-            )
+            if rl_algorithm_mode == 'reinforce':
+                train_reward, final_baseline = self._train_one_epoch_reinforce(train_loader, optimizer, scheduler)
+                critic_loss, actor_loss, entropy = 0.0, 0.0, 0.0
+            elif rl_algorithm_mode == 'actor_critic':
+                train_reward, critic_loss, actor_loss, entropy = self._train_one_epoch_actor_critic(train_loader, optimizer, scheduler)
+                final_baseline = torch.tensor(0.0)
+            else:
+                raise ValueError(f"Unknown algorithm_mode: '{rl_algorithm_mode}' in config.")
             
             val_reward = self._validate_one_epoch(val_loader)
             
@@ -203,7 +210,8 @@ class RLSolver(SolverInterface):
                 'val_reward': val_reward,
                 'critic_loss': critic_loss,
                 'actor_loss': actor_loss, # for ppo
-                'entropy': entropy # for ppo
+                'entropy': entropy, # for ppo
+                'baseline': final_baseline.item() if rl_algorithm_mode == 'reinforce' else 0.0 # for reinforce
             })
 
             logger.info(f"Epoch {epoch+1}/{total_epochs}, Train Reward: {train_reward:.4f}, Val Reward: {val_reward:.4f}, " \
@@ -279,7 +287,8 @@ class RLSolver(SolverInterface):
             logger.error(f"Failed to prepare dataloaders for RL training. Error: {e}", exc_info=True)
             return None, None
 
-    def _train_one_epoch(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, torch.Tensor]:
+    def _train_one_epoch_reinforce(self, data_loader: DataLoader, optimizer: torch.optim.Optimizer, scheduler: torch.optim.lr_scheduler._LRScheduler) -> Tuple[float, torch.Tensor]:
+
         """
         Executes a single training epoch for the RL model,
         now including gradient clipping and scheduler stepping.
@@ -301,7 +310,7 @@ class RLSolver(SolverInterface):
         # Numerically sensitive operations  (such as softmax, log in loss functions, or activation functions with large input ranges) are only a minority . 
 
         scaler = torch.amp.GradScaler()
-        for i, batch_data in enumerate(tqdm(data_loader, desc="Training", leave=False)):
+        for i, batch_data in enumerate(tqdm(data_loader, desc="Training (REINFORCE)", leave=False)):
             
             weights = batch_data['weights'].to(self.device)
             values = batch_data['values'].to(self.device)
@@ -315,7 +324,7 @@ class RLSolver(SolverInterface):
             
             # 2. Perform forward pass with mixed precision
             with torch.amp.autocast(device_type='cuda'):
-                probs_list, action_idxs = self.model(inputs_for_model, capacity, attention_mask)
+                probs_list, action_idxs, _ = self.model(inputs_for_model, capacity, attention_mask)
                 rewards = self._calculate_reward(action_idxs, batch_data).to(self.device)
 
                 # 3. Calculate the baseline using an exponential moving average
