@@ -6,6 +6,7 @@ data_old/
 # backup
 *backup/
 back_diff/
+*.zip
 
 # data
 data/
@@ -45,8 +46,15 @@ artifacts/
 artifacts_sb3/
 
 # Dissertation latex code
-latex/
-latex/out/
+latex/dissertation
+latex/out
+latex/presentation/figures
+latex/presentation/mermaid
+latex/presentation/out
+latex/*/*.pdf
+latex/*/*.pptx
+latex/*/*.md
+latex/*/*.pseudo
 learn/
 
 # vlab

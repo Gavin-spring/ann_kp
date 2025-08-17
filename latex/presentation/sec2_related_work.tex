@@ -1,0 +1,101 @@
+% \section{Related Work \& My Contributions}
+
+% \begin{frame}
+%     \frametitle{Related Work: A Comparative Overview}
+
+%     \begin{tiny} % Use tiny font size for this very dense table
+%     \begin{tabular}{@{}llp{2.8cm}p{3cm}l@{}}
+%     \toprule
+%     \textbf{Work (Author, Year)} & \textbf{Architecture} & \textbf{Algorithm / Approach} & \textbf{Scalability / Generalization} & \textbf{Problem Domain} \\
+%     \midrule
+%     \multicolumn{5}{l}{\textit{\textbf{Foundational Pointer Network \& RL Models}}} \\
+%     \addlinespace
+%     Vinyals et al. (2015) & Pointer Network & Supervised Learning & Fixed-scale & TSP, Convex Hull \\
+%     \addlinespace
+%     Bello et al. (2017) & Pointer Network & RL (REINFORCE) & Fixed-scale (Train/Test on same size) & TSP, **Knapsack** \\
+    
+%     \addlinespace
+%     \midrule
+%     \addlinespace
+    
+%     \multicolumn{5}{l}{\textit{\textbf{Advanced Attention \& Transformer-based Models}}} \\
+%     \addlinespace
+%     Kool et al. (2019) & Transformer & RL (REINFORCE) & Fixed-scale & TSP, CVRP, **Knapsack** \\
+%     \addlinespace
+%     Yildiz (2022) & Transformer/Attn & RL (DQN) & Fixed-scale & **Knapsack** \\
+%     \addlinespace
+%     Gholipour et al. (2023) & Transformer & RL (PPO) & Fixed-scale & Task Offloading \\
+    
+%     \addlinespace
+%     \midrule
+%     \addlinespace
+    
+%     \rowcolor{blue!10} % Highlight your work
+%     \textbf{Our Work} & \textbf{Custom (CNN+Attn)} & \textbf{RL (PPO-based)} & \textbf{Generalizes to larger scales} & \textbf{0/1 Knapsack} \\
+    
+%     \bottomrule
+%     \end{tabular}
+%     \end{tiny}
+    
+%     \vspace{1em}
+%     \small % Return to a slightly larger font for the summary
+%     \textbf{Key Limitations of Prior Work:} Most existing models are trained and tested on fixed-size problems, lacking generalization to different or larger scales.
+    
+% \end{frame}
+
+\section{Related Work \& My Contributions}
+
+\begin{frame}
+    \frametitle{Related Work: A Comparative Overview}
+
+    \begin{tiny} % Use tiny font size for this very dense table
+    \begin{tabular}{@{}llp{2.8cm}p{3.6cm}l@{}}
+    \toprule
+    \textbf{Work (Author, Year)} & \textbf{Architecture} & \textbf{Algorithm / Approach} & \textbf{Scalability / Generalization} & \textbf{Problem Domain} \\
+    \midrule
+    \multicolumn{5}{l}{\textit{\textbf{Foundational Pointer Network \& RL Models (Often Lack Generalization)}}} \\
+    \addlinespace
+    Vinyals et al. (2015) & Pointer Network & Supervised Learning (Constructive) & Fixed-scale (Train and test on same small sizes) & TSP, Convex Hull \\
+    \addlinespace
+    Bello et al. (2017) & Pointer Network & RL (REINFORCE) (Constructive) & Fixed-scale (e.g., trained on N=50, tested on N=50) & TSP, **Knapsack** \\
+    
+    \addlinespace
+    \midrule
+    \addlinespace
+    
+    \multicolumn{5}{l}{\textit{\textbf{GNN-based and Hybrid Models (Often Generalize Better)}}} \\
+    \addlinespace
+    Dai et al. (2017) & GNN (structure2vec) & RL (DQN) (Constructive) & Generalizes to unseen \& larger scale graphs due to graph-based nature & MVC, MAXCUT, TSP \\
+    \addlinespace
+    Cappart et al. (2021) & DRL + CP (Hybrid) & DRL learns a heuristic for a Constraint Programming (CP) solver (Improvement) & Generalizes well to new, unseen instances of various sizes & TSPTW, **Knapsack** \\
+    
+    \addlinespace
+    \midrule
+    \addlinespace
+    
+    \multicolumn{5}{l}{\textit{\textbf{Advanced Transformer-based Models (Mixed Generalization)}}} \\
+    \addlinespace
+    Kool et al. (2019) & Transformer & RL (REINFORCE) (Constructive) & Generalizes to larger scales (e.g., train N=50, test N=100), but performance may degrade & TSP, CVRP \\
+    \addlinespace
+    Yildiz (2022) & Transformer/Attn & RL (DQN) (Constructive) & Fixed-scale (Performance degrades significantly on different sizes) & **Knapsack** \\
+    \addlinespace
+    Que et al. (2023) & Transformer & RL (PPO) (Constructive) & Fixed-scale (Trained and tested on same N) & 3D Packing \\
+    \addlinespace
+    Zhang et al. (2025) & Dueling DQN & RL (Dueling DQN) with state modification (Constructive) & Fixed-scale (Trained and tested on specific small sizes) & \textbf{0/1 Knapsack} \\
+
+    \addlinespace
+    \midrule
+    \addlinespace
+    
+    \rowcolor{green!15} % Highlight your work
+    \textbf{My Work} & \textbf{Custom Arch. + PPO} & \textbf{RL (PPO) (Constructive)} & \textbf{Generalizes to larger scales (Train on N, Test on >N with ~70\% acc.)} & \textbf{0/1 Knapsack} \\
+    
+    \bottomrule
+    \end{tabular}
+    \end{tiny}
+    
+    \vspace{0.1em}
+    \footnotesize
+    \textbf{My Contribution:} My work addresses a key limitation of many prior models by building a \textbf{generalizable framework}. Unlike fixed-scale approaches, our model is trained to solve knapsack problems of varying sizes, including those larger than seen during training, and is supported by a powerful, integrated platform for research.
+    
+\end{frame}
