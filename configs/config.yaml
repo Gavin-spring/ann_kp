@@ -17,7 +17,7 @@ paths:
   # Subdirectories for data
   data_training: data/small_training
   data_validation: data/small_validation
-  data_testing: data/n500_2500_testing
+  data_testing: data/n200_2000_testing
 
 # 2. TESTING Data Generation Config
 data_gen:
@@ -40,6 +40,7 @@ classic_solvers:
     - "Gurobi"
     - "2D DP"
     - "1D DP (Optimized)"
+    - "FPTAS"
     - "Branch and Bound"
     - "Greedy"
 

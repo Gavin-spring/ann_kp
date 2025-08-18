@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 # For now, we use a try-except block to handle missing dependencies gracefully.
 try:
     from src.solvers.classic.gurobi_solver import GurobiSolver
-    from src.solvers.classic.dp_solver import DPSolver2D, DPSolver1D, DPValueSolver
+    from src.solvers.classic.dp_solver import DPSolver2D, DPSolver1D, DPValueSolver, FPTASSolver
     from src.solvers.classic.heuristic_solvers import GreedySolver, BranchAndBoundSolver
     from src.solvers.ml.dnn_solver import DNNSolver
     from src.solvers.ml.rl_solver import RLSolver
@@ -31,12 +31,13 @@ try:
         "Gurobi": GurobiSolver,
         # "2D DP": DPSolver2D,        
         # "1D DP (on value)": DPValueSolver,
-        # "Greedy": GreedySolver,
-        "DNN": DNNSolver,
-        "PointerNet RL": RLSolver,
-        "PPO": PPOSolver,
-        # "Branch and Bound": BranchAndBoundSolver,        
-        # "1D DP (Optimized)": DPSolver1D,
+        "Greedy": GreedySolver,
+        # "DNN": DNNSolver,
+        # "PointerNet RL": RLSolver,
+        # "PPO": PPOSolver,
+        "Branch and Bound": BranchAndBoundSolver,        
+        "1D DP (Optimized)": DPSolver1D,
+        "FPTAS": FPTASSolver,
     }
 except NameError:
     # This happens if one of the solver classes could not be imported.
