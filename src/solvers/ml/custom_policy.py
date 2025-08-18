@@ -207,8 +207,8 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
 
         # Critic
         if self.critic_type == "simple":
-            print(">>> Building with SimpleMLPCritic_d <<<")
-            self.value_net = SimpleMLPCritic_d(self.features_extractor.features_dim)
+            print(">>> Building with SimpleMLPCritic <<<")
+            self.value_net = SimpleMLPCritic(self.features_extractor.features_dim)
         elif self.critic_type == "advanced":
             print(">>> Building with AdvancedAttentionCritic <<<")
             self.value_net = AdvancedAttentionCritic(

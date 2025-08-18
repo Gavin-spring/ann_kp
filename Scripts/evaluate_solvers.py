@@ -163,6 +163,15 @@ def main():
                     continue
                 model_path_arg = getattr(args, model_path_arg_name)
                 config = getattr(cfg.ml, config_key)
+                # --- FIX: 如果是 PointerNet RL，则选择一个具体的子配置 ---
+                if name == "PointerNet RL":
+                    # 假设我们评估的是用 reinforce 模式训练的旧模型
+                    if hasattr(config, 'reinforce'):
+                        logger.debug("PointerNet RL detected. Passing the 'reinforce' sub-configuration.")
+                        config = config.reinforce # 关键步骤：将 config 指向更深一层
+                    else:
+                        logger.error(f"Could not find 'reinforce' sub-config for {name}. Aborting its evaluation.")
+                        continue
                 solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False)
             else:
                 solver_instance = SolverClass(config={})
