@@ -6,45 +6,7 @@
 % --- Subsection 3.1: Algorithms ---
 \subsection{Algorithms}
 
-% --- Slide 1 ---
-\begin{frame}
-    \frametitle{Scalability Limits of Traditional \& Commercial Solvers}
-
-    \begin{columns}[T]
-        
-        % --- LEFT COLUMN: Traditional Exact Algorithms ---
-        \begin{column}{0.5\textwidth}
-            \begin{block}{1. Space Complexity}
-                \begin{figure}
-                    \includegraphics[width=\textwidth]{memory-explosion.png} 
-                    \caption{Performance degradation due to memory constraints.}
-                \end{figure}
-                \vspace{-1.2em}
-                \begin{itemize}
-                    \item Suffer from the "curse of dimensionality".
-                    \item Leads to a \textbf{memory explosion}, making them infeasible for large-scale problems.
-                \end{itemize}
-            \end{block}
-        \end{column}
-
-        % --- RIGHT COLUMN: Commercial Solvers ---
-        \begin{column}{0.5\textwidth}
-            \begin{block}{2. Time Complexity}
-                \begin{figure}
-                    \includegraphics[width=\textwidth]{time-growth.png}
-                    \caption{Performance comparison of various solvers.}
-                \end{figure}
-                \vspace{-1.2em}
-                \begin{itemize}
-                    \item Runtime of Commercial Solver like Gurobi still exhibits \textbf{exponential growth}, becoming a bottleneck for very large problems.
-                \end{itemize}
-            \end{block}
-        \end{column}
-
-    \end{columns}
-\end{frame}
-
-% --- Slide 2: From Dynamic Programming to Reinforcement Learning ---
+% --- Slide 1: From Dynamic Programming to Reinforcement Learning ---
 \begin{frame}
     \frametitle{From Dynamic Programming (DP) to Reinforcement Learning (RL)}
 
@@ -102,7 +64,7 @@
 
 \end{frame}
 
-% --- Slide 3: From Bellman to PPO: An Evolutionary Path ---
+% --- Slide 2: From Bellman to PPO: An Evolutionary Path ---
 \begin{frame}
     \frametitle{From Bellman to PPO: An Evolutionary Path}
     \small % Use smaller font to fit content
@@ -145,7 +107,7 @@
     \end{block}
 \end{frame}
 
-% --- Slide 4: PPO Algorithm and Model Architecture ---
+% --- Slide 3: PPO Algorithm and Model Architecture ---
 \begin{frame}
     \frametitle{PPO: Algorithm and Architecture}
 
