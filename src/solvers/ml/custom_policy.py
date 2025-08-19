@@ -301,3 +301,65 @@ class KnapsackActorCriticPolicy(ActorCriticPolicy):
         
         distribution = self.action_dist.proba_distribution(action_logits=action_logits)
         return distribution.get_actions(deterministic=deterministic)
+
+    def decode_batch(
+        self, 
+        obs_for_features: Dict[str, torch.Tensor], 
+        raw_weights: torch.Tensor, 
+        raw_capacity: torch.Tensor, 
+        deterministic: bool = True
+    ) -> torch.Tensor:
+        """
+        Final, corrected version of autoregressive decoding.
+        This version uses the embedding of the previously selected item as the
+        query for the next step, which is a standard and robust approach.
+        """
+        self.eval()
+        batch_size = obs_for_features["items"].shape[0]
+        max_n = obs_for_features["items"].shape[1]
+        
+        # --- 1. Run Encoder ONCE ---
+        # context contains the rich embeddings of all items.
+        context, pooled_features = self.extract_features(obs_for_features)
+
+        # --- 2. Initialize State Tensors ---
+        current_mask = obs_for_features["mask"].clone()
+        current_capacity = raw_capacity.clone().float()
+        actions_sequence = []
+        
+        # The initial query is the global state representation.
+        query = pooled_features
+
+        # --- 3. Internal Decoding Loop with CORRECT Query Update ---
+        for _ in range(max_n):
+            action_logits = self.action_net(context, query)
+            action_logits[~current_mask] = -torch.inf
+            
+            if deterministic:
+                chosen_action = torch.argmax(action_logits, dim=1)
+            else:
+                distribution = self.action_dist.proba_distribution(action_logits=action_logits)
+                chosen_action = distribution.sample()
+            
+            actions_sequence.append(chosen_action)
+
+            # --- 4. CRITICAL FIX: Update query for the next step ---
+            # The query for the next step is the embedding of the item we just chose.
+            # This directly informs the model about its last decision.
+            # Use torch.gather to select the context vectors for the chosen actions.
+            # chosen_action shape: [B], need [B, 1, D] for gather
+            chosen_action_expanded = chosen_action.unsqueeze(1).unsqueeze(2).expand(-1, -1, context.shape[2])
+            query = torch.gather(context, 1, chosen_action_expanded).squeeze(1)
+
+            # --- 5. Update State Tensors ---
+            chosen_weights = torch.gather(raw_weights, 1, chosen_action.unsqueeze(1))
+            current_capacity -= chosen_weights.squeeze(1)
+            
+            capacity_mask = raw_weights <= current_capacity.unsqueeze(1)
+            current_mask.scatter_(1, chosen_action.unsqueeze(1), False)
+            current_mask = current_mask & capacity_mask
+            
+            if not current_mask.any():
+                break
+
+        return torch.stack(actions_sequence, dim=1)

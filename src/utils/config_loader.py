@@ -20,6 +20,7 @@ try:
     from src.solvers.ml.dnn_solver import DNNSolver
     from src.solvers.ml.rl_solver import RLSolver
     from src.solvers.ml.ppo_solver import PPOSolver
+    from src.solvers.ml.fast_ppo_solver import FastPPOSolver
 except ImportError as e:
     logger.warning(f"Could not import all solvers, some may be unavailable. Error: {e}")
     # Define placeholder classes or functions if needed, or just let the registry be smaller.
@@ -29,15 +30,16 @@ except ImportError as e:
 try:
     ALGORITHM_REGISTRY = {
         "Gurobi": GurobiSolver,
-        # "2D DP": DPSolver2D,        
+        # "2D DP": DPSolver2D,
         # "1D DP (on value)": DPValueSolver,
-        "Greedy": GreedySolver,
+        # "Greedy": GreedySolver,
         # "DNN": DNNSolver,
         # "PointerNet RL": RLSolver,
-        # "PPO": PPOSolver,
-        "Branch and Bound": BranchAndBoundSolver,        
-        "1D DP (Optimized)": DPSolver1D,
-        "FPTAS": FPTASSolver,
+        "PPO": PPOSolver,
+        # "PPO": FastPPOSolver,  # Batch-oriented PPO solver
+        # "Branch and Bound": BranchAndBoundSolver,
+        # "1D DP (Optimized)": DPSolver1D,
+        # "FPTAS": FPTASSolver,
     }
 except NameError:
     # This happens if one of the solver classes could not be imported.

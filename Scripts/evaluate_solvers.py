@@ -270,7 +270,8 @@ def main():
                 temp_df.dropna(subset=[ml_solver_name, baseline_name], inplace=True)
                 
                 temp_df['absolute_error'] = (temp_df[baseline_name] - temp_df[ml_solver_name]).abs()
-                temp_df['relative_error'] = (temp_df['absolute_error'] / temp_df[baseline_name].abs().replace(0, 1e-9)).fillna(0)
+                relative_error = (temp_df['absolute_error'] / temp_df[baseline_name].abs().replace(0, 1e-9))
+                temp_df['relative_error'] = relative_error.astype(float).fillna(0.0)
                 temp_df['squared_error'] = temp_df['absolute_error'] ** 2
                 
                 error_summary_df = temp_df.groupby('n').agg(

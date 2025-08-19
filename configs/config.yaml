@@ -17,7 +17,7 @@ paths:
   # Subdirectories for data
   data_training: data/small_training
   data_validation: data/small_validation
-  data_testing: data/n200_2000_testing
+  data_testing: data/small_testing
 
 # 2. TESTING Data Generation Config
 data_gen:

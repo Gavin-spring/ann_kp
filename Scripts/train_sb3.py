@@ -178,8 +178,8 @@ def main():
                                  log_path=logs_dir,
                                  eval_freq=cfg.ml.rl.ppo.training.eval_freq,
                                  deterministic=True, render=False)
-    tqdm_callback = TqdmCallback()
-    callback_list = [eval_callback, tqdm_callback]
+    # tqdm_callback = TqdmCallback()
+    # callback_list = [eval_callback, tqdm_callback]
 
     # 3. define the custom policy
     policy_kwargs = dict(
@@ -198,7 +198,7 @@ def main():
         KnapsackActorCriticPolicy,
         train_env,
         policy_kwargs=policy_kwargs,
-        verbose=0,
+        verbose=1,
         seed=args.seed, 
         tensorboard_log=unified_tensorboard_log_dir,
         learning_rate=lr_schedule,
@@ -219,7 +219,7 @@ def main():
 
     # 5. start training
     print("start training...")
-    model.learn(total_timesteps=cfg.ml.rl.ppo.training.total_timesteps, callback=callback_list, tb_log_name=tb_log_name)
+    model.learn(total_timesteps=cfg.ml.rl.ppo.training.total_timesteps, callback=eval_callback, tb_log_name=tb_log_name)
 
     # 6. save the final model and VecNormalize stats
     print("Training complete. Saving VecNormalize stats and final model...")
