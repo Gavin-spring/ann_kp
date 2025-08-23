@@ -29,14 +29,25 @@ def main():
     logger.info(f"All artifacts for this run will be saved in: {run_dir}")
 
     # --- 2. Initialize Solver based on config ---
-    if cfg.ml.training_mode == "DNN":
+    mode = cfg.ml.training_mode
+    solver = None
+    
+    logger.info(f"Initializing solver for training mode: '{mode}'")
+
+    if mode == "dnn":
         from src.solvers.ml.dnn_solver import DNNSolver
         solver = DNNSolver(config=cfg.ml.dnn, device=cfg.ml.device)
-    elif cfg.ml.training_mode == "RL":
+
+    elif mode == "reinforce":
         from src.solvers.ml.rl_solver import RLSolver
-        solver = RLSolver(config=cfg.ml.rl, device=cfg.ml.device, compile_model=False)
+        solver = RLSolver(config=cfg.ml.rl.reinforce, device=cfg.ml.device, compile_model=True)
+
+    elif mode == "actor_critic":
+        from src.solvers.ml.rl_solver import RLSolver
+        solver = RLSolver(config=cfg.ml.rl.actor_critic, device=cfg.ml.device, compile_model=True)
+        
     else:
-        raise ValueError(f"Unsupported training mode: {cfg.ml.training_mode}")
+        raise ValueError(f"Unsupported training mode: '{mode}' found in config.yaml")
     
     # --- 3. Define artifact paths and train ---
     artifact_paths = {

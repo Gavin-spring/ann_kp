@@ -2,6 +2,12 @@
 misc/
 data_old/
 .deprecated/
+*deprecated*
+
+# backup
+*backup/
+back_diff/
+*.zip
 
 # data
 data/
@@ -31,6 +37,7 @@ venv/
 # Shell scripts
 *.sh
 *.ps1
+# tools/
 
 # Build and distribution artifacts
 *.egg-info/
@@ -40,6 +47,22 @@ artifacts/
 artifacts_sb3/
 
 # Dissertation latex code
-latex/
-latex/out/
+latex/dissertation
+latex/out
+latex/presentation/figures
+latex/presentation/mermaid
+latex/presentation/out
+latex/*/*.pdf
+latex/*/*.pptx
+latex/*/*.md
+latex/*/*.pseudo
 learn/
+
+# vlab
+ngrok
+ngrok-v3-stable-linux-amd64.zip
+.ipynb_checkpoints/
+*vlab*.*
+*.Identifier
+*.pptx
+*.pptx

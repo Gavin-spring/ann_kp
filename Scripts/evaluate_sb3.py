@@ -7,6 +7,7 @@ from tqdm import tqdm
 import warnings
 import argparse
 import datetime
+import json
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import VecNormalize
@@ -26,9 +27,15 @@ def main():
     args = parser.parse_args()
 
     # Create a unique run name based on the current time and the training run name
-    training_run_name = os.path.basename(args.run_dir)
+    is_deterministic = cfg.ml.testing.is_deterministic
+    mode_suffix = "G" if is_deterministic else "S"
+
+    training_run_name = os.path.basename(os.path.normpath(args.run_dir))
+    if not training_run_name:
+        training_run_name = "unknown_training_run"
+
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    eval_run_name = f"{timestamp}-eval_on-{training_run_name}"
+    eval_run_name = f"{timestamp}-eval_on-{training_run_name}-{mode_suffix}"
     eval_dir = os.path.join("artifacts_sb3", "evaluation", eval_run_name)
 
     os.makedirs(eval_dir, exist_ok=True)
@@ -37,6 +44,23 @@ def main():
 
     model_path = os.path.join(args.run_dir, "models", "best_model.zip")
     stats_path = os.path.join(args.run_dir, "models", "vec_normalize.pkl")
+
+    # Record evaluation configuration
+    eval_info = {
+        "eval_run_name": eval_run_name,
+        "training_run_name": training_run_name,
+        "is_deterministic": is_deterministic,
+        "data_range": cfg.ml.testing.data_range,
+        "batch_size": cfg.ml.testing.batch_size,
+        "n_samples": cfg.ml.testing.n_samples,
+        "data_path": cfg.paths.data_testing,
+        "model_path": model_path,
+        "stats_path": stats_path,
+    }
+    eval_info_path = os.path.join(eval_dir, "run_info.json")
+    with open(eval_info_path, 'w') as f:
+        json.dump(eval_info, f, indent=4)
+    print(f"Evaluation configuration saved to: {eval_info_path}")
 
     # --- 2. 加载模型 (使用尺寸匹配的临时环境) ---
     print("Step 1: Creating temporary environment with training size to load model...")
@@ -97,33 +121,53 @@ def main():
     model.set_env(env)
     print("Environment setup complete.")
     
-    # --- 3. Start Evaluation ---
-    print("\n--- Evaluating PPO Agent on full test set ---")
+    # --- 4. Start Evaluation ---
+    # 读取评估模式配置
+    n_samples = cfg.ml.testing.n_samples if not is_deterministic else 1
+
+    # 根据模式打印提示信息
+    if is_deterministic:
+        print(f"\n--- Evaluating PPO Agent in DETERMINISTIC mode ---")
+    else:
+        print(f"\n--- Evaluating PPO Agent in SAMPLING mode ({n_samples} samples/instance) ---")
+
     ppo_results = []
     test_instances = env.venv.get_attr('instance_files')[0]
 
-    # filter instances to only those that fit the model's max_n
     model_capacity = cfg.ml.rl.ppo.hyperparams.eval_max_n
     valid_test_instances = [p for p in test_instances if int(os.path.basename(p).split('_n')[1].split('_')[0]) <= model_capacity]
 
     for instance_path in tqdm(valid_test_instances, desc="Evaluating PPO Agent"):
-        # manually set the next instance
-        env.venv.env_method('manual_set_next_instance', instance_path)
-        obs = env.reset()
-        done = [False]
+        best_value_for_instance = -1.0
         
         start_time = time.time()
-        while not done[0]:
-            action, _ = model.predict(obs, deterministic=True)
-            obs, _, done, info = env.step(action)
+        # 循环采样 n_samples 次 (在确定性模式下，n_samples为1)
+        for _ in range(n_samples):
+            # 每次循环都必须手动设置同一个实例并重置环境
+            env.venv.env_method('manual_set_next_instance', instance_path)
+            obs = env.reset()
+            done = [False]
+            
+            while not done[0]:
+                # 关键：根据配置决定是 deterministic 还是 sampling
+                action, _ = model.predict(obs, deterministic=is_deterministic)
+                obs, _, done, info = env.step(action)
+            
+            # 记录本次采样/运行得到的总价值
+            current_value = info[0]["total_value"]
+            if current_value > best_value_for_instance:
+                best_value_for_instance = current_value
+
         end_time = time.time()
         
-        final_info = info[0]
+        # 使用最后一次运行的 info 来获取文件名等信息
+        final_info = info[0] 
         ppo_results.append({
             "instance": final_info["instance_file"],
             "n": int(os.path.basename(final_info["instance_file"]).split('_n')[1].split('_')[0]),
-            "ppo_value": final_info["total_value"],
-            "ppo_time": end_time - start_time,
+            # 记录多次采样中的最佳值 (在确定性模式下，就是那一次的值)
+            "ppo_value": best_value_for_instance,
+            "ppo_time": (end_time - start_time), # 这是多次采样的总时间
         })
     ppo_df = pd.DataFrame(ppo_results)
 
