@@ -7,8 +7,10 @@ from tqdm import tqdm
 import numpy as np
 import argparse
 import torch
+import json
 from types import SimpleNamespace
 import copy
+import datetime
 from torch.utils.data import DataLoader
 
 from src.utils.config_loader import cfg, ALGORITHM_REGISTRY
@@ -41,6 +43,12 @@ def main():
         help="Path to a pre-trained .pth model file for the RLSolver."
     )
     parser.add_argument(
+        "--ppo-run-dir",
+        type=str,
+        default=None,
+        help="Path to a PPO training run directory for the PPOSolver."
+    )
+    parser.add_argument(
         "--training-max-n",
         type=int,
         default=None,
@@ -49,20 +57,20 @@ def main():
     args = parser.parse_args()
     
     # --- 1. Create a unique name and directory for this evaluation run ---
-    run_name = create_run_name(cfg)
+    timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    is_deterministic_mode = cfg.ml.testing.is_deterministic
+    mode_suffix = "G" if is_deterministic_mode else "S"
+
+    run_name = f"{timestamp}-eval-{mode_suffix}"
     run_dir = os.path.join(cfg.paths.artifacts, "runs", "evaluation", run_name)
     os.makedirs(run_dir, exist_ok=True)
     
     setup_logger(run_name="evaluation_session", log_dir=run_dir)
     logger = logging.getLogger(__name__)
     
-    logger.info(f"--- Starting New Evaluation Run: {run_name} ---")
-    # FIX 1: Check for dnn_model_path specifically
-    if args.dnn_model_path:
-        logger.info(f"Using specified DNN model: {args.dnn_model_path}")
-    # Add a log for the RL model path as well
-    if args.rl_model_path:
-        logger.info(f"Using specified RL model: {args.rl_model_path}")
+    logger.info(f"--- Starting New Unified Evaluation Run: {run_name} ---")
+    logger.info(f"All artifacts will be saved in: {run_dir}")
 
     # --- 2. Setup Solvers ---
     # We will test all solvers currently active in the registry.
@@ -71,6 +79,17 @@ def main():
         logger.critical("No solvers are active in ALGORITHM_REGISTRY. Exiting.")
         sys.exit(1)
     logger.info(f"Solvers to be evaluated: {list(solvers_to_evaluate.keys())}")
+    
+    all_solvers_in_run = list(solvers_to_evaluate.keys())
+    eval_info = { 
+        "run_name": run_name, 
+        "args": vars(args), 
+        "solvers_to_test": all_solvers_in_run 
+    }
+    eval_info_path = os.path.join(run_dir, "run_info.json")
+    with open(eval_info_path, 'w') as f:
+        json.dump(eval_info, f, indent=4)
+    logger.info(f"Evaluation configuration saved to: {eval_info_path}")
         
     # --- 3. Data Loading ---
     test_data_dir = cfg.paths.data_testing
@@ -122,64 +141,80 @@ def main():
                            f"The baseline solver '{baseline_name}' will be run live. Error: {e}")
 
     # --- 4. Run Evaluation Loop ---
-    training_mode = cfg.ml.training_mode
-    evaluation_batch_size = cfg.ml.rl.testing.batch_size if training_mode == "RL" else 1
-    
     for name, SolverClass in solvers_to_evaluate.items():
         logger.info(f"--- Evaluating Solver: {name} ---")
         
-        # a. instantiate the solver with the correct configuration
+        # --- Part 1: Instantiate the solver ---
+        solver_instance = None
         try:
-            solver_instance = None
-            if name in vars(cfg.ml.approximation_solvers):
-                config_key = getattr(cfg.ml.approximation_solvers, name)
-                model_path_arg = getattr(args, f"{config_key}_model_path")
-                if not model_path_arg:
-                    logger.warning(f"Skipping {name} because --{config_key}-model_path was not provided.")
+            if name == "PPO":
+                if not args.ppo_run_dir:
+                    logger.warning(f"Skipping PPO because --ppo-run-dir was not provided.")
                     continue
+                solver_instance = SolverClass(
+                    model_run_dir=args.ppo_run_dir, 
+                    is_deterministic=cfg.ml.testing.is_deterministic
+                )
+            elif name in vars(cfg.ml.approximation_solvers):
+                config_key = getattr(cfg.ml.approximation_solvers, name)
+                model_path_arg_name = f"{config_key}_model_path"
+                if not hasattr(args, model_path_arg_name) or getattr(args, model_path_arg_name) is None:
+                    logger.warning(f"Skipping {name} because --{model_path_arg_name} was not provided.")
+                    continue
+                model_path_arg = getattr(args, model_path_arg_name)
                 config = getattr(cfg.ml, config_key)
-                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False) # Compiling when evaluating is slow
+                # --- FIX: 如果是 PointerNet RL，则选择一个具体的子配置 ---
+                if name == "PointerNet RL":
+                    # 假设我们评估的是用 reinforce 模式训练的旧模型
+                    if hasattr(config, 'reinforce'):
+                        logger.debug("PointerNet RL detected. Passing the 'reinforce' sub-configuration.")
+                        config = config.reinforce # 关键步骤：将 config 指向更深一层
+                    else:
+                        logger.error(f"Could not find 'reinforce' sub-config for {name}. Aborting its evaluation.")
+                        continue
+                solver_instance = SolverClass(config=config, device=cfg.ml.device, model_path=model_path_arg, compile_model=False)
             else:
                 solver_instance = SolverClass(config={})
         except Exception as e:
             logger.error(f"Failed to instantiate solver {name}. Error: {e}", exc_info=True)
             continue
-        
-        # b. choose the evaluation method based on the solver type
-        if name in vars(cfg.ml.approximation_solvers):
-            # --- apply the new batched evaluation logic for ML solvers ---
-            logger.info(f"Using batched evaluation for {name} with batch size {evaluation_batch_size}.")
-            
-            # 1. Prepare the DataLoader for batched evaluation
-            from src.solvers.ml.rl_solver import RawKnapsackDataset
-            test_dataset = RawKnapsackDataset(test_data_dir)
-            test_loader = DataLoader(
-                test_dataset, 
-                batch_size=evaluation_batch_size, 
-                collate_fn=knapsack_collate_fn
-            )
 
-            # 2. Evaluate the solver in batches
+        if not solver_instance:
+            continue
+
+        # --- Part 2: Choose evaluation method based on the solver's CAPABILITIES ---
+        if hasattr(solver_instance, 'solve_batch'):
+            # --- Batched evaluation logic (for PointerNet RL, or any future batched solver) ---
+            logger.info(f"Using batched evaluation for {name}.")
             try:
+                batch_size = cfg.ml.testing.batch_size
+                from src.solvers.ml.rl_solver import RawKnapsackDataset
+                
+                test_dataset = RawKnapsackDataset(
+                    test_data_dir,
+                    max_weight=cfg.ml.generation.max_weight,
+                    max_value=cfg.ml.generation.max_value
+                )
+                test_loader = DataLoader(
+                    test_dataset, 
+                    batch_size=batch_size, 
+                    collate_fn=knapsack_collate_fn
+                )
+
                 for batch_data in tqdm(test_loader, desc=f"Solving with {name} (Batched)"):
                     batch_results = solver_instance.solve_batch(batch_data)
-
                     for i, result in enumerate(batch_results):
-                        instance_n = batch_data['n'][i].item()
-                        # Ensure the instance name is correctly extracted
-                        instance_name = batch_data['filenames'][i]
                         raw_results.append({
                             "solver": name,
-                            "instance": instance_name,
-                            "n": instance_n,
+                            "instance": batch_data['filenames'][i],
+                            "n": batch_data['n'][i].item(),
                             "value": result.get("value", -1),
                             "time_seconds": result.get("time", -1),
                         })
             except Exception as e:
                 logger.error(f"Solver '{name}' failed during batched evaluation. Error: {e}", exc_info=True)
-
         else:
-            # --- apply the single instance evaluation logic for non-ML solvers ---
+            # --- Single instance evaluation logic (for Gurobi, DNN, PPO Wrapper) ---
             logger.info(f"Using single instance evaluation for {name}.")
             try:
                 for instance_file in tqdm(instance_files, desc=f"Solving with {name}"):
@@ -193,7 +228,6 @@ def main():
                     })
             except Exception as e:
                 logger.error(f"Solver '{name}' failed during single instance evaluation. Error: {e}", exc_info=True)
-
     # --- 5. Process Results and Calculate All Metrics ---
     if not raw_results:
         logger.critical("CRITICAL: No results were generated from any solver. Exiting.")
@@ -236,7 +270,8 @@ def main():
                 temp_df.dropna(subset=[ml_solver_name, baseline_name], inplace=True)
                 
                 temp_df['absolute_error'] = (temp_df[baseline_name] - temp_df[ml_solver_name]).abs()
-                temp_df['relative_error'] = (temp_df['absolute_error'] / temp_df[baseline_name].abs().replace(0, 1e-9)).fillna(0)
+                relative_error = (temp_df['absolute_error'] / temp_df[baseline_name].abs().replace(0, 1e-9))
+                temp_df['relative_error'] = relative_error.astype(float).fillna(0.0)
                 temp_df['squared_error'] = temp_df['absolute_error'] ** 2
                 
                 error_summary_df = temp_df.groupby('n').agg(

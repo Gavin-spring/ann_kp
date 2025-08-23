@@ -15,10 +15,12 @@ logger = logging.getLogger(__name__)
 # For now, we use a try-except block to handle missing dependencies gracefully.
 try:
     from src.solvers.classic.gurobi_solver import GurobiSolver
-    from src.solvers.classic.dp_solver import DPSolver2D, DPSolver1D, DPValueSolver
+    from src.solvers.classic.dp_solver import DPSolver2D, DPSolver1D, DPValueSolver, FPTASSolver
     from src.solvers.classic.heuristic_solvers import GreedySolver, BranchAndBoundSolver
     from src.solvers.ml.dnn_solver import DNNSolver
     from src.solvers.ml.rl_solver import RLSolver
+    from src.solvers.ml.ppo_solver import PPOSolver
+    from src.solvers.ml.fast_ppo_solver import FastPPOSolver
 except ImportError as e:
     logger.warning(f"Could not import all solvers, some may be unavailable. Error: {e}")
     # Define placeholder classes or functions if needed, or just let the registry be smaller.
@@ -28,13 +30,16 @@ except ImportError as e:
 try:
     ALGORITHM_REGISTRY = {
         "Gurobi": GurobiSolver,
-        # "2D DP": DPSolver2D,        
+        # "2D DP": DPSolver2D,
         # "1D DP (on value)": DPValueSolver,
         # "Greedy": GreedySolver,
         # "DNN": DNNSolver,
-        "PointerNet RL": RLSolver,
-        # "Branch and Bound": BranchAndBoundSolver,        
+        # "PointerNet RL": RLSolver,
+        "PPO": PPOSolver,
+        # "PPO": FastPPOSolver,  # Batch-oriented PPO solver
+        # "Branch and Bound": BranchAndBoundSolver,
         # "1D DP (Optimized)": DPSolver1D,
+        # "FPTAS": FPTASSolver,
     }
 except NameError:
     # This happens if one of the solver classes could not be imported.

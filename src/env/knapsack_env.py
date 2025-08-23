@@ -9,7 +9,7 @@ import random
 from src.utils.generator import load_instance_from_file
 
 class KnapsackEnv(gym.Env):
-    def __init__(self, data_dir: str, max_n: int, max_weight: int, max_value: int):
+    def __init__(self, data_dir: str, max_n: int, max_weight: int, max_value: int, use_shaping_reward: bool = False):
         """
         初始化环境。
 
@@ -24,6 +24,7 @@ class KnapsackEnv(gym.Env):
         self.max_n = max_n
         self.max_weight = float(max_weight)
         self.max_value = float(max_value)
+        self.use_shaping_reward = use_shaping_reward
         
         if not os.path.exists(data_dir):
             raise FileNotFoundError(f"数据目录不存在: {data_dir}")
@@ -111,6 +112,23 @@ class KnapsackEnv(gym.Env):
         possible_next_mask = self._get_action_mask()
         terminated = not np.any(possible_next_mask)
         truncated = False
+        
+        # --- 在回合结束时，加入一个评价“最终方案”好坏的塑形奖励 ---
+        if terminated and self.use_shaping_reward:
+            final_mask = self.items_packed[:self.n_items]
+            final_total_value = np.sum(self.values[final_mask])
+            final_total_weight = np.sum(self.weights[final_mask])
+            
+            # 计算背包填充率 (0到1之间)
+            fill_ratio = final_total_weight / self.initial_capacity
+            
+            # 最终的塑形奖励 = 最终总价值 * (填充率^2) * 奖励权重
+            # 填充率的平方是为了加大对“装满”这个行为的激励
+            # 0.1 是一个可以调整的超参数，避免这个最终奖励过大，影响了每一步的即时奖励
+            final_shaping_reward = final_total_value * (fill_ratio ** 2) * 0.1
+            
+            # 将塑形奖励加到最后一步的奖励上
+            reward += final_shaping_reward
 
         observation = self._get_observation()
         info = self._get_info()

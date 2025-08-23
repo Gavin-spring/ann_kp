@@ -225,33 +225,33 @@ def main():
     # ==========================================================
     # ===  Fixed data ===
     # ==========================================================
-    fixed_n_range = (50, 50, 1)
-    print("Running Task: Generate fixed data for ML models...")
-    # === Training Sets for ML Models ===
-    create_dataset(
-        dataset_name="FIXED-n50-Training",
-        output_dir=cfg.paths.data_training, # change in config.yaml
-        instance_params=shared_instance_params,
-        n_range=fixed_n_range,
-        num_instances=100
-    )
+    fixed_n_range = (100, 1000, 50)
+    # print("Running Task: Generate fixed data for ML models...")
+    # # === Training Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="FIXED-n50-Training",
+    #     output_dir=cfg.paths.data_training, # change in config.yaml
+    #     instance_params=shared_instance_params,
+    #     n_range=fixed_n_range,
+    #     num_instances=100
+    # )
 
-    # === Validation Sets for ML Models ===
-    create_dataset(
-        dataset_name="FIXED-n50-Validation",
-        output_dir=cfg.paths.data_validation,
-        instance_params=shared_instance_params,
-        n_range=fixed_n_range,
-        num_instances=30
-    )
+    # # === Validation Sets for ML Models ===
+    # create_dataset(
+    #     dataset_name="FIXED-n50-Validation",
+    #     output_dir=cfg.paths.data_validation,
+    #     instance_params=shared_instance_params,
+    #     n_range=fixed_n_range,
+    #     num_instances=30
+    # )
 
     # === Testing Sets for ML Models ===
     create_dataset(
-        dataset_name="FIXED-n50-Testing",
+        dataset_name="n100-1000-Testing",
         output_dir=cfg.paths.data_testing,
         instance_params=shared_instance_params,
         n_range=fixed_n_range,
-        num_instances=50
+        num_instances=10
     )
 
     print("\nAll selected data generation tasks are complete.")
