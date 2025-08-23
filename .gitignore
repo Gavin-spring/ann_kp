@@ -47,15 +47,30 @@ artifacts/
 artifacts_sb3/
 
 # Dissertation latex code
-latex/dissertation
-latex/out
+latex/*/out
 latex/presentation/figures
 latex/presentation/mermaid
 latex/presentation/out
-latex/*/*.pdf
-latex/*/*.pptx
-latex/*/*.md
-latex/*/*.pseudo
+latex/**/*.DS_Store
+latex/**/*.pdf
+latex/**/*.pptx
+latex/**/*.md
+latex/**/*.pseudo
+latex/*/*.aux
+latex/**/*.bbl
+latex/**/*.blg
+latex/**/*.log
+latex/**/*.out
+latex/**/*.toc
+latex/**/*.lof
+latex/**/*.lot
+latex/**/*.fls
+latex/**/*.fdb_latexmk
+latex/**/*.synctex.gz
+latex/**/*.png
+latex/**/*.jpg
+latex/**/*.jpeg
+latex/**/*.svg
 learn/
 
 # vlab
