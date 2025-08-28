@@ -42,7 +42,7 @@ The core of our proposed method is a novel neural architecture designed to effec
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.9\textwidth]{figures/ppo_model_manual.png}
-    \caption{The proposed neural architecture. An input observation is processed by a shared Transformer encoder to produce item-specific contexts and a global pooled feature vector. These are then consumed by a Pointer Network-based actor head and an MLP-based critic head.}
+    \caption{The proposed neural architecture. An input observation is processed by a shared Transformer encoder to produce item-specific contexts and a global pooled feature vector. These are then consumed by a Pointer Network-based actor head and an MLP-based critic head. In our best-performing model, a simple MLP architecture was used for the critic.}
     \label{fig:model_architecture}
 \end{figure}
 
@@ -50,7 +50,7 @@ The core of our proposed method is a novel neural architecture designed to effec
 The encoder's role is to process the raw problem instance and generate context-aware embeddings for each item. The input for each item \(i\) is its normalized weight \(w_i\) and value \(v_i\). We employ a \textbf{Transformer encoder} rather than a sequential model like an RNN. Its multi-head self-attention mechanism allows the model to weigh the importance of all other items when encoding a specific item, thereby capturing the global combinatorial structure of the problem. This is critical for the KP, where the decision to include one item is heavily dependent on the properties of all other available items. The encoder outputs two key tensors: a set of rich, context-aware embeddings for each item, \(\mathbf{H}_{context} \in \mathbb{R}^{B \times N_{max} \times D}\), and a global problem embedding, \(\mathbf{h}_{pooled} \in \mathbb{R}^{B \times D}\), derived by mean-pooling the item embeddings.
 
 \subsection{Actor Head: Pointer Network-based Decoder}
-The actor head, which implements the policy \(\pi_\theta(a|s)\), is a \textbf{Pointer Network}~\cite{vinyalsPointerNetworks2015}. This architecture is perfectly suited for our selection task as it directly outputs a probability distribution over the input items, rather than predicting a class from a fixed-size vocabulary. This avoids the limitation of a standard MLP, which would struggle to handle variable numbers of items and lacks the mechanism to directly reference inputs. At the same time, it is more efficient than a full Transformer decoder, as it does not need to generate new embeddings, only to point to existing ones.
+The actor head, which implements the policy \(\pi_\theta(a|s)\), is a \textbf{Pointer Network}~\cite{vinyalsPointerNetworks2017}. This architecture is perfectly suited for our selection task as it directly outputs a probability distribution over the input items, rather than predicting a class from a fixed-size vocabulary. This avoids the limitation of a standard MLP, which would struggle to handle variable numbers of items and lacks the mechanism to directly reference inputs. At the same time, it is more efficient than a full Transformer decoder, as it does not need to generate new embeddings, only to point to existing ones.
 
 Our implementation, the `PointerDecoder`, operates autoregressively. At each decoding step, it uses an attention mechanism to decide which item to select next. Its operation can be broken down as follows:
 \begin{enumerate}
