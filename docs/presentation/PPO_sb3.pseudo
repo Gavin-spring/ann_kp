@@ -1,0 +1,59 @@
+Algorithm: Proximal Policy Optimization (PPO-Clip) with GAE
+
+// --- Initialization Phase (在 train_sb3.py 中完成) ---
+1:  Initialize Actor network π(a|s; θ) and Critic network V(s; φ)
+    // 在你的代码中，这是 KnapsackActorCriticPolicy，它们共享一个 KnapsackEncoder
+2:  Initialize Optimizer for θ and φ (e.g., Adam)
+3:  Initialize N parallel KnapsackEnv environments
+
+// --- Training Loop (model.learn() 内部) ---
+4:  For each training iteration do:
+5:      // --- 1. Rollout / Experience Collection Phase ---
+6:      Initialize an empty Rollout Buffer
+7:      For t = 1 to n_steps do: // n_steps 来自你的 config, e.g., 4096
+8:          // Actor 根据当前状态 s_t (items, capacity, mask) 从 N 个环境中选择动作
+9:          For each parallel environment i = 1 to N do:
+10:             Action a_t, Value V(s_t), Log-probability log π(a_t|s_t) ← π(θ), V(φ)
+11:         End For
+
+12:         // 在 N 个环境中执行动作 a_t，获得新状态和奖励
+13:         Execute actions, observe next states s_{t+1} and rewards r_t
+
+14:         // 将经验 (s_t, a_t, r_t, V(s_t), log π(a_t|s_t)) 存入 Rollout Buffer
+15:         Store the collected transitions
+16:      End For
+
+17:     // --- 2. Advantage Estimation Phase ---
+18:     // 计算所有收集到的经验的优势和回报
+19:     Compute Advantage Estimates Â_t using GAE (Generalized Advantage Estimation)
+        // 这利用了 config 中的 gamma 和 gae_lambda 参数
+20:     Compute Returns-to-go R_t (作为 Critic 的学习目标)
+
+21:     // --- 3. Optimization Phase ---
+22:     For k = 1 to n_epochs do: // n_epochs 来自你的 config, e.g., 10
+23:         For each mini-batch from the Rollout Buffer do:
+24:             // a. 计算新旧策略的概率比
+25:             Ratio r(θ) = π_θ(a|s) / π_{θ_old}(a|s)
+
+26:             // b. 计算 Actor (Policy) 的 Clipped Surrogate Loss
+27:             L_clip = - mean( min(r(θ)Â, clip(r(θ), 1-ε, 1+ε)Â) )
+                      // ε 是 config 中的 clip_range
+
+28:             // c. 计算 Critic (Value) 的 Loss
+29:             L_vf = mean( (V(s; φ) - R_t)^2 )
+                     // V(s; φ) 是 Critic 对当前状态的最新预测
+
+30:             // d. 计算 Entropy Bonus (鼓励探索)
+31:             S = mean( Entropy(π_θ(s)) )
+
+32:             // e. 计算总损失
+33:             Total Loss = L_clip + (c1 * L_vf) - (c2 * S)
+                          // c1 和 c2 是 config 中的 vf_coef 和 ent_coef
+
+34:             // f. 根据总损失，更新 Actor 和 Critic 的网络权重 θ 和 φ
+35:             Update θ, φ using gradient descent
+36:         End For
+37:     End For
+
+38:     // 清空 Rollout Buffer，准备下一次迭代
+39: End For

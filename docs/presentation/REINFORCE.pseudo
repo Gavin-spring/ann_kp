@@ -1,0 +1,38 @@
+Algorithm: REINFORCE with Exponential Moving Average (EMA) Baseline
+
+1:  Initialize Policy Network π(a|s; θ) with random weights θ
+2:  Initialize Optimizer for θ (e.g., Adam)
+3:  Initialize EMA Baseline b ← 0
+4:  Initialize Baseline smoothing factor β (e.g., 0.8 from your config)
+
+5:  For each epoch do:
+6:      Initialize total_reward_for_epoch = 0
+7:      For each batch of problems in DataLoader do:
+8:          // --- Rollout Phase ---
+9:          // The model generates a complete solution (trajectory τ) for each problem in the batch
+10:         Sample trajectories {τ_1, τ_2, ...} by executing policy π(θ)
+11:         This yields sequences of (log-probabilities, actions) for each problem instance.
+
+12:         // --- Reward Calculation ---
+13:         For each trajectory τ_i in the batch:
+14:             Compute total return R(τ_i) (the total value of items packed)
+
+15:         // --- Baseline Update ---
+16:         Calculate the average return for the batch: R_batch_avg ← mean(R(τ_1), R(τ_2), ...)
+17:         Update the EMA baseline: b ← β * b + (1 - β) * R_batch_avg
+
+18:         // --- Loss Calculation ---
+19:         Calculate advantage for each trajectory: A(τ_i) = R(τ_i) - b
+20:         Sum the log-probabilities for each trajectory: log_p(τ_i) = Σ log(π(a_t|s_t; θ))
+21:         Calculate the policy gradient loss for the batch:
+22:         Loss = - mean(log_p(τ_i) * A(τ_i))  // Negative sign for gradient ascent
+
+23:         // --- Parameter Update ---
+24:         Zero out gradients in the optimizer
+25:         Compute gradients of Loss with respect to θ (Backpropagation)
+26:         Clip gradients to prevent explosion
+27:         Update network weights: θ ← θ + α * ∇θ(Loss) (Optimizer step)
+
+28:         Update total_reward_for_epoch with R_batch_avg
+29:      End For
+30: End For

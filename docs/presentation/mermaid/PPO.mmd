@@ -1,0 +1,12 @@
+graph TD
+    A(Start) --> B["Initialize Actor Network π(θ) <br> and Critic Network V(φ)"];
+    B --> C{For iteration = 1, 2, ...};
+    C --> D["Collect a set of partial trajectories <br> for N steps using policy π(θ_old)"];
+    D --> E["For each step t, compute <br> Advantage Estimate Â_t"];
+    E --> F{For epoch = 1, 2, ..., K};
+    F --> G["Update Actor policy π(θ) <br> by maximizing the PPO objective L_CLIP"];
+    G --> H["Update Critic value V(φ) <br> by minimizing loss (e.g., MSE)"];
+    H --> F;
+    F -- After K epochs --> I["Set θ_old ← θ"];
+    I --> C;
+    C -- Training Finished --> J(End);

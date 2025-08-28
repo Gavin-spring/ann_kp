@@ -34,10 +34,8 @@ venv/
 *.env
 .venv/
 
-# Shell scripts
-*.sh
-*.ps1
-# tools/
+# Tool scripts
+tools/
 
 # Build and distribution artifacts
 *.egg-info/
