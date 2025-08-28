@@ -36,6 +36,7 @@ venv/
 
 # Tool scripts
 tools/
+tools
 
 # Build and distribution artifacts
 *.egg-info/
