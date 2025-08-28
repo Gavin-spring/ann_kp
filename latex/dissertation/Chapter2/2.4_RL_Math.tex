@@ -14,8 +14,7 @@ Here, the terms are defined as:
 \begin{itemize}
     \item \(\pi(a|s)\) is the \textbf{policy}, defining the probability of taking action \(a\) in state \(s\).
     \item \(p(s'|s, a)\) and \(p(r|s, a)\) together form the \textbf{model} of the environment, specifying the probabilities of transitioning to state \(s'\) and receiving reward \(r\), respectively.
-    \item \(\gamma\) is the \textbf{discount factor} (\(0 \le \gamma \le 1\)), which balances immediate and future rewards. In our research, since the Knapsack Problem is an undiscounted, finite-horizon problem, \(\gamma\) is effectively a constant set to 1. The state transitions are also deterministic constants.
-\end{itemize}
+    \item \(\gamma\) is the \textbf{discount factor} (\(0 \le \gamma \le 1\)), which balances immediate and future rewards. Although the Knapsack Problem is theoretically an undiscounted, finite-horizon problem, our framework adopts \(\gamma = 0.99\). This choice aligns with standard practice in deep reinforcement learning, where a discount factor close to 1 is often used to stabilize training and reduce the variance of value estimates. The state transitions in the KP environment are also deterministic constants.\end{itemize}
 DP is a \textbf{model-based} approach because it requires full knowledge of the model (the transition and reward probabilities) to compute the value function. In contrast, most RL applications are \textbf{model-free}, learning a policy through trial-and-error without explicit knowledge of the environment's dynamics.
 
 \subsubsection{Step 1: Bellman to Value Function Approximation}
