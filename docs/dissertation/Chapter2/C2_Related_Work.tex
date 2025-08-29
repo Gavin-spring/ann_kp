@@ -37,3 +37,25 @@ This dissertation situates itself within the modern, end-to-end constructive par
 \end{itemize}
 
 While many advanced DRL applications have focused on routing problems like TSP and CVRP, this work applies the powerful Transformer-PPO architecture specifically to the 0-1 Knapsack Problem with a strong emphasis on \textbf{generalization} from small to large-scale instances. This addresses a critical gap, as many prior works were confined to fixed problem sizes \cite{belloNeuralCombinatorialOptimization2017}. Recent related studies, such as that by Zhang et al. (2025) \cite{zhangReinforcementLearningSolving2025}, have also tackled the KP with RL but have explored different avenues, such as value-based Dueling DQN combined with state representation normalization and Noisy layers for exploration. Our focus on a state-of-the-art policy gradient method contributes a valuable perspective to the ongoing effort to develop scalable and generalizable solvers for this fundamental combinatorial optimization problem.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Summary of Key Related Works in Learning-based COPs}
+    \label{tab:related_work_summary}
+    \small
+    \begin{tabular}{@{}lllll@{}}
+        \toprule
+        \textbf{Work} & \textbf{Model / Architecture} & \textbf{Method} & \textbf{Generalization} \\
+        \midrule
+        Bello et al. \cite{belloNeuralCombinatorialOptimization2017} & Ptr-Net + RNN & REINFORCE & To fixed size\\
+        Kool et al. \cite{koolAttentionLearnSolve2019a} & Transformer & REINFORCE& Improved but focused \\
+        Gholipour et al. \cite{gholipourTPTOTransformerPPOBased2023} & Transformer & PPO & Problem-specific \\
+        Zhang et al. \cite{zhangReinforcementLearningSolving2025} & Transformer & Dueling DQN & To fixed size \\
+        \midrule
+        \textbf{This Work} & 
+        \begin{tabular}[c]{@{}c@{}}{Transformer +} \\ {Ptr-Net Decoder}\end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}}{RL (PPO)} \\ {+ MLP Critic}\end{tabular} & 
+        \begin{tabular}[c]{@{}c@{}}{End-to-end} \\ {+ Generalization}\end{tabular} &  \\
+        \bottomrule
+    \end{tabular}
+\end{table}

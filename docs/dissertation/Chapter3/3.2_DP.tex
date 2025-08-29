@@ -54,3 +54,27 @@ Several optimizations have been developed to mitigate these issues, but they do 
 
     \item \textbf{Fully Polynomial-Time Approximation Scheme (FPTAS):} For the 0/1 Knapsack Problem, an FPTAS exists, which guarantees a solution with a value of at least \((1-\epsilon)\) times the optimal value. It works not by normalizing capacity, but by scaling and rounding the item \textit{values}. Given a desired approximation ratio \(\epsilon > 0\), the algorithm proceeds by setting a scaling factor \(K = (\epsilon v_{\max}) / n\), where \(v_{\max} = \max_{i} v_i\). Each item's value is then transformed to \(v'_i = \lfloor v_i / K \rfloor\). A standard DP algorithm is then run on these scaled, integer values. The time complexity of this approach is \(O(n^3/\epsilon)\), which is polynomial in both \(n\) and \(1/\epsilon\). Despite this, for the large-scale problems with many items addressed in this research, the computational cost can still be unacceptable.
 \end{itemize}
+
+\begin{table}[htbp]
+    \centering
+    \caption{Theoretical Complexity of Traditional Algorithms}
+    \label{tab:complexity_comparison}
+    \small
+    \begin{tabular}{@{}l l l p{5cm}@{}}
+        \toprule
+        \textbf{Algorithm} & \textbf{TC} & \textbf{SC} & \textbf{Notes} \\
+        \midrule
+        DP & $O(nC)$ & $O(C)$ & Exact. Pseudo-polynomial time complexity. \\
+        BnB & $O(2^n)$ & $O(n)$ & Exact. Exponential in the worst-case. \\
+        Greedy & $O(n \log n)$ & $O(n)$ & Approximation. Fast but suboptimal. \\
+        FPTAS & $O(n^3/\epsilon)$ & $O(n^2/\epsilon)$ & Approximation. Polynomial in $n$ and $1/\epsilon$. \\
+        \bottomrule
+    \end{tabular}
+
+    % Using a minipage to format the note below the table
+    \begin{minipage}{0.9\textwidth}
+        \vspace{2pt} % Adds a small space between the table and the note
+        \small % Use \small for the note, which is more readable than \tiny
+        \textbf{Note:} TC: Time Complexity, SC: Space Complexity. $n$: number of items, $C$: knapsack capacity, $\epsilon$: approximation ratio.
+    \end{minipage}
+\end{table}
