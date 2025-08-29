@@ -13,12 +13,37 @@ The primary objectives of these experiments are twofold:
 \end{enumerate}
 
 \subsection{Datasets}
-Two distinct sets of test data were generated using the methodology described in Chapter 4 to evaluate different aspects of solver performance.
-\begin{itemize}
-    \item \textbf{Generalization Test Set}: This set comprises Knapsack Problem instances with the number of items $n$ ranging from 50 to 500. This dataset is used for the primary comparative analysis of all solvers in terms of both solution quality (MRE) and inference time.
-    \item \textbf{Scalability Test Set}: To empirically validate the computational complexity of traditional algorithms, a second dataset was generated with larger problem sizes, where $n$ ranges from 100 to 1000. This set is used specifically to benchmark the runtime growth of non-learning-based solvers.
-\end{itemize}
+To ensure a robust and fair evaluation, three distinct primary datasets were procedurally generated for training, validation, and testing the generalization performance of the neural models. The parameters for these datasets are summarized in Table~\ref{tab:dataset_specs}.
 
+% --- TABLE HAS BEEN MODIFIED TO FIT PAGE WIDTH ---
+\begin{table}[htbp]
+    \centering
+    \caption{Specification of the Primary Datasets}
+    \label{tab:dataset_specs}
+    % Font size reduced slightly for a better fit
+    \footnotesize
+    \begin{tabular}{@{}lccc@{}}
+        \toprule
+        % The long header is now in a nested tabular to allow it to wrap
+        \textbf{Parameter} & \textbf{Training Set} & \textbf{Validation Set} & \begin{tabular}[c]{@{}c@{}}\textbf{Generalization} \\ \textbf{Test Set}\end{tabular} \\
+        \midrule
+        Item Count Range ($n$) & 5 to 50 & 5 to 50 & \textbf{50 to 200}\\
+        Step Size & 5 & 5 & 5  \\
+        Instances per Size & 100 & 30 & 50  \\
+        \addlinespace
+        \textbf{Total Instances} & \textbf{1,000} & \textbf{300} & \textbf{1,300} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+All generated instances across all datasets share a common set of properties.
+Item weights ($w_i$) and values ($v_i$) were sampled as integers from a uniform distribution $U[1, 100]$.
+There is no explicit correlation between an item's weight and its value.
+The knapsack capacity ($C$) for each instance was set relative to the sum of all its item weights ($\sum w_i$), with the capacity ratio randomly sampled from a uniform distribution $U[0.1, 0.9]$.
+**This range was chosen to ensure the generated problems are non-trivial; a capacity ratio below 0.1 would result in problems where very few items can be packed, while a ratio approaching 1.0 would allow nearly all items to be included, with both extremes lacking combinatorial difficulty and generality.
+** All input features are normalized before being passed to the neural network models, as detailed in Section 4.4.
+
+Furthermore, to empirically analyze the runtime of traditional algorithms on larger problems, a separate \textbf{Scalability Test Set} was generated. This dataset contains instances where the number of items $n$ ranges from 100 to 1000, with a step size of 5 and 10 instances generated per size, for a total of 1,810 instances. The item and capacity properties for this set are identical to those of the primary datasets.
 \subsection{Baseline Algorithms}
 To provide a thorough evaluation, our proposed PPO framework is benchmarked against three categories of solvers.
 
