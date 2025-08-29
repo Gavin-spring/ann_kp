@@ -30,10 +30,10 @@ A complete list of dependencies can be found in `requirements.txt`.
 
 ## Installation
 
-A bash script, `setup_vlab.sh`, is provided to automate the entire setup process within a Conda environment. This is the recommended installation method.
+A bash script, `setup_env.sh`, is provided to automate the entire setup process within a Conda environment. This is the recommended installation method.
 
 ```bash
-bash setup_vlab.sh
+bash setup_env.sh
 ```
 
 This script will:

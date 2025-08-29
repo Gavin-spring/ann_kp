@@ -46,32 +46,31 @@ artifacts/
 artifacts_sb3/
 
 # Dissertation latex code
-latex/*/out
-latex/presentation/figures
-latex/presentation/mermaid
-latex/presentation/out
-latex/**/*.DS_Store
-latex/**/*.pdf
-latex/**/*.pptx
-latex/**/*.md
-latex/**/*.pseudo
-latex/*/*.aux
-latex/**/*.bbl
-latex/**/*.blg
-latex/**/*.log
-latex/**/*.out
-latex/**/*.toc
-latex/**/*.lof
-latex/**/*.lot
-latex/**/*.fls
-latex/**/*.fdb_latexmk
-latex/**/*.synctex.gz
-latex/**/*.png
-latex/**/*.jpg
-latex/**/*.jpeg
-latex/**/*.svg
+docs/dissertation/out
+docs/presentation/figures
+docs/presentation/mermaid
+docs/presentation/out
+docs/**/*.DS_Store
+docs/**/*.pptx
+docs/**/*.md
+docs/**/*.pseudo
+docs/*/*.aux
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.lof
+docs/**/*.lot
+docs/**/*.fls
+docs/**/*.fdb_latexmk
+docs/**/*.synctex.gz
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.svg
 learn/
-latex/**/*.drawio
+docs/**/*.drawio
 
 # vlab
 ngrok
