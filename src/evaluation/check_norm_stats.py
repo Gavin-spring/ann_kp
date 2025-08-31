@@ -5,7 +5,7 @@ from stable_baselines3.common.vec_env import VecNormalize
 
 # --- 1. Set the path to your file ---
 # Make sure to replace this with the actual path to your vec_normalize.pkl
-file_path = "artifacts_sb3/training/Exp23-proExp13-20250807_202659/models/vec_normalize.pkl"
+file_path = "artifacts_sb3/training/Exp26-ReplicateExp13-v2-seed42-20250810_014913/models/vec_normalize.pkl"
 
 print(f"Attempting to load file: {file_path}\n")
 

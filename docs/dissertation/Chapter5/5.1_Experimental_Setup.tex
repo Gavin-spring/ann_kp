@@ -83,6 +83,37 @@ The performance of all solvers is evaluated based on two primary metrics:
     \item \textbf{Computational Efficiency}: Measured by the \textbf{Average Inference Time} in milliseconds, recorded for each solver to find a solution for a single problem instance.
 \end{itemize}
 
+\subsection{Inference Procedure and Decoding Strategy}
+\label{sec:inference_procedure}
+
+To generate a complete, sequential solution from the trained static policy network, we employ an autoregressive inference procedure that simulates the agent's interaction with the environment, as detailed in Algorithm~\ref{alg:instance_solver}. This instance-based solver operates in a closed loop: at each timestep $t$, the environment's current state $s_t$ is provided to the PPO model, which then predicts the next item to be selected, $a_t$. Subsequently, the environment updates its internal state to $s_{t+1}$ based on this action (e.g., by reducing the remaining capacity and masking the selected item). This decision-update cycle continues until no further items can be packed, thereby constructing the final solution. This step-by-step process ensures that each decision is conditioned on the most recent and valid state of the knapsack.
+
+For all reported experiments, we utilize a deterministic greedy decoding strategy \texttt{is\_deterministic=True}. This choice serves two primary objectives. First, it consistently evaluates the optimal policy learned by the agent by eliminating stochasticity, which ensures the reproducibility of our results. Second, through preliminary experiments, we determined that introducing stochastic sampling did not yield a significant improvement in solution quality (MRE) but substantially increased computation time. Therefore, to achieve an optimal balance between evaluation efficiency and performance, all results are based on deterministic greedy decoding.
+
+\begin{algorithm}[htbp]
+    \caption{Inference Procedure for the Instance-based Solver}
+    \label{alg:instance_solver}
+    \KwIn{Trained PPO Model $\pi_\theta$, Problem Instance $I$}
+    \KwOut{Final solution value $V_{\text{final}}$}
+    \BlankLine
+    Initialize environment with instance $I$\;
+    $s_0 \leftarrow \text{env.reset()}$\;
+    $done \leftarrow \text{False}$\;
+    \BlankLine
+    \While{not $done$}{
+        \tcp{Agent makes a decision based on the current state}
+        $s_t^{\text{norm}} \leftarrow \text{VecNormalize}(s_t)$\;
+        $a_t \leftarrow \pi_\theta(s_t^{\text{norm}})$ using greedy decoding\;
+        \BlankLine
+        \tcp{Environment transitions to the next state}
+        $(s_{t+1}, r_t, done, \text{info}) \leftarrow \text{env.step}(a_t)$\;
+        $s_t \leftarrow s_{t+1}$\;
+    }
+    \BlankLine
+    $V_{\text{final}} \leftarrow \text{info.get("total\_value")}$\;
+    \Return{$V_{\text{final}}$}\;
+\end{algorithm}
+
 \subsection{Hardware and Software Environment}
 All experiments were conducted on a consistent hardware platform to ensure fair comparison.
 \begin{itemize}
