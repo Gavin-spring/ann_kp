@@ -1,0 +1,38 @@
+graph TD
+    A_start((Start Training)) --> A[Start Iteration];
+
+    subgraph "Phase 1: Rollout (Data Collection)"
+        B["Actor interacts with N parallel environments
+        for n_steps"];
+        C["Collect batch of experiences:
+        (s, a, r, v, log_p)"];
+        B --> C;
+    end
+
+    subgraph "Phase 2: Advantage Estimation"
+         D["Use GAE to calculate
+         Advantage Estimates (Â) & Returns (R)"];
+    end
+
+    subgraph "Phase 3: Optimization Loop (k epochs)"
+        E["Calculate Probability Ratio r(θ)"]
+        F["Compute Actor Loss (Clipped)"]
+        G["Compute Critic Loss (Value)"]
+        
+        H["Compute Entropy Bonus"]
+        I["Combine Losses"]
+        J["Update Network Weights"]
+
+        E --> F --> G;
+        G --> H;
+        H --> I --> J;
+    end
+
+    A --> B;
+    C --> D;
+    D --> E;
+    J --> K{All epochs done?};
+    K -- No --> E;
+    K -- Yes --> L(End Iteration);
+    L --> A;
+    L -- Total Timesteps Reached --> End((Training Complete));

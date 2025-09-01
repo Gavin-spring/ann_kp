@@ -1,0 +1,34 @@
+graph LR
+    A_start((Start Training)) --> B[Start Epoch]
+    B --> C{For each Batch}
+
+    %% --- Batch Process (Right Column) ---
+    subgraph "Batch Process"
+        D["Prepare Batch Data"]
+        E["Perform Rollout (Forward Pass)"]
+        F["Get Log-Probabilities"]
+        G["Calculate Rewards R"]
+        H["Update Baseline b"]
+        I["Calculate Advantage A = R - b"]
+        J["Calculate Loss"]
+        K["Update Model Weights"]
+
+        D --> E --> F --> G --> H --> I --> J --> K
+    end
+
+    %% --- Exit Path ---
+    C -- All Batches Processed --> L[Calculate Average Epoch Reward]
+    L --> M((End Training))
+
+    %% --- Loop Back ---
+    K --> C
+
+    %% --- Style and Layout ---
+    classDef start fill:#000, stroke:#fff, strokeWidth:2, textColor:#fff, rx:10, ry:10;
+    classDef decision fill:#000, stroke:#fff, strokeWidth:2, textColor:#fff, shape:diamond;
+    classDef process fill:#121212, stroke:#fff, strokeWidth:2, textColor:#fff, rx:5, ry:5;
+    classDef terminal fill:#000, stroke:#fff, strokeWidth:2, textColor:#fff, rx:10, ry:10;
+
+    class A_start,M terminal
+    class C decision
+    class D,E,F,G,H,I,J,K,L process

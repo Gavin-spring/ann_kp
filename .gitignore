@@ -34,10 +34,9 @@ venv/
 *.env
 .venv/
 
-# Shell scripts
-*.sh
-*.ps1
-# tools/
+# Tool scripts
+tools/
+tools
 
 # Build and distribution artifacts
 *.egg-info/
@@ -47,16 +46,32 @@ artifacts/
 artifacts_sb3/
 
 # Dissertation latex code
-latex/dissertation
-latex/out
-latex/presentation/figures
-latex/presentation/mermaid
-latex/presentation/out
-latex/*/*.pdf
-latex/*/*.pptx
-latex/*/*.md
-latex/*/*.pseudo
-learn/
+docs/dissertation/out
+docs/presentation/figures
+docs/presentation/mermaid
+docs/presentation/out
+docs/**/*.DS_Store
+docs/**/*.pptx
+docs/**/*.md
+docs/**/*.pseudo
+docs/*/*.aux
+docs/**/*.bbl
+docs/**/*.blg
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.lof
+docs/**/*.lot
+docs/**/*.fls
+docs/**/*.fdb_latexmk
+docs/**/*.synctex.gz
+docs/**/*.png
+docs/**/*.jpg
+docs/**/*.jpeg
+docs/**/*.svg
+docs/**/*.drawio
+docs/**/svg*/
+docs/**/figures
 
 # vlab
 ngrok
