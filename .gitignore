@@ -69,8 +69,9 @@ docs/**/*.png
 docs/**/*.jpg
 docs/**/*.jpeg
 docs/**/*.svg
-learn/
 docs/**/*.drawio
+docs/**/svg*/
+docs/**/figures
 
 # vlab
 ngrok
