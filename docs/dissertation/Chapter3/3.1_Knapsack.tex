@@ -1,13 +1,17 @@
 % !TEX root = ../Dissertation.tex
 \section{What is the 0/1 Knapsack Problem?}
 
-The Knapsack Problem (KP) is a quintessential problem in combinatorial optimization, serving as a fundamental model for resource allocation under constraints. It is formally classified as an NP-complete problem, meaning there is no known algorithm that can find the optimal solution in polynomial time for all instances. This work focuses on the most common and classic variant: the 0/1 Knapsack Problem.
+The Knapsack Problem (KP) is a quintessential problem in combinatorial optimization, serving as a fundamental model for resource allocation under constraints.
+It is formally classified as an NP-complete problem, meaning there is no known algorithm that can find the optimal solution in polynomial time for all instances.
+Given its importance, attempts to solve it using neural networks date back to early explorations with mean field neural networks \cite{ohlssonNeuralNetworksOptimization1993}. This work focuses on the most common and classic variant: the 0/1 Knapsack Problem.
 
 \subsection{Problem Definition}
 
-In the 0/1 Knapsack Problem, one is given a set of items, each with an associated weight and value, and a knapsack with a fixed capacity. The objective is to select a subset of these items to place into the knapsack such that the total value of the selected items is maximized, without exceeding the knapsack's weight capacity.
-
-The "0/1" property is a crucial constraint: for each item, the decision is binary. The item can either be fully included in the knapsack (represented by 1) or completely excluded (represented by 0). It is not possible to include a fraction of an item.
+In the 0/1 Knapsack Problem, one is given a set of items, each with an associated weight and value, and a knapsack with a fixed capacity.
+The objective is to select a subset of these items to place into the knapsack such that the total value of the selected items is maximized, without exceeding the knapsack's weight capacity.
+The "0/1" property is a crucial constraint: for each item, the decision is binary.
+The item can either be fully included in the knapsack (represented by 1) or completely excluded (represented by 0).
+It is not possible to include a fraction of an item.
 
 \subsection{Mathematical Formulation}
 

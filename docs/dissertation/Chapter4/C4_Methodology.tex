@@ -41,8 +41,8 @@ The core of our proposed method is a novel neural architecture designed to effec
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.9\textwidth]{figures/ppo_model_manual.png}
-    \caption{The proposed neural architecture. An input observation is processed by a shared Transformer encoder to produce item-specific contexts and a global pooled feature vector. These are then consumed by a Pointer Network-based actor head and an MLP-based critic head. In our best-performing model, a simple MLP architecture was used for the critic.}
+    \includesvg[width=0.9\textwidth]{figures/ppo_model_manual.svg}
+    \caption{The proposed neural architecture. An input observation is processed by a shared Transformer encoder to produce item-specific contexts and a global pooled feature vector. These are then consumed by a Pointer Network-based actor head and an MLP-based critic head. In our best-performing model, a simple MLP architecture was used for the critic. The input observation is a dictionary with keys for items (I), capacity (C), and a mask (M). The tensor dimensions are denoted as: B for batch size, N for the number of items, and D for the embedding dimension.}
     \label{fig:model_architecture}
 \end{figure}
 
