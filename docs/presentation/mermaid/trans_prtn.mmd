@@ -1,0 +1,51 @@
+graph LR
+    subgraph "PPO Actor-Critic Model (custom_policy.py)"
+        direction LR
+
+        A_Input("Input Observation<br/>(Items, Capacity, Mask)");
+        
+        subgraph "Shared Encoder (KnapsackEncoder)"
+            direction TB
+            B[Item Embedding<br/>nn.Linear];
+            C["CLS Token +<br/>Positional Encoding"];
+            D[Transformer Blocks];
+            B --> C --> D;
+        end
+
+        A_Input --> B;
+
+        subgraph "Encoder Outputs"
+            E_Context["Item Context<br/>(Batch, SeqLen, Dim)"];
+            F_Pooled["Pooled Features<br/>(Batch, Dim)<br/>(CLS Token Output or Mean Pooling)"];
+        end
+
+        D --> E_Context;
+        D --> F_Pooled;
+        
+        subgraph "Actor Head (Pointer Decoder)"
+            direction TB
+            G[Pointer Attention Mechanism];
+            H("Action Logits (Policy)");
+        end
+
+        subgraph "Critic Head (Value Function)"
+            direction TB
+            I{Critic Type?};
+            J["Option A:<br/>SimpleMLPCritic<br/>(MLP Network)"];
+            K["Option B:<br/>AdvancedAttentionCritic<br/>(Iterative Attention)"];
+            L("State Value");
+            
+            I --> J;
+            I --> K;
+            J --> L;
+            K --> L;
+        end
+
+        E_Context -- "for pointing" --> G;
+        F_Pooled -- "as initial query" --> G;
+        G --> H;
+
+        F_Pooled -- "input features" --> I;
+        E_Context -- "(only for AdvancedCritic)" --> K;
+
+    end

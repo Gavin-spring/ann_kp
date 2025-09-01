@@ -1,0 +1,9 @@
+graph TD
+    A(Start) --> B["Initialize Policy Network π(θ)"];
+    B --> C[Start New Episode];
+    C --> D["Collect Trajectory: (s,a,r)"];
+    D --> E[Compute Returns G_t];
+    E --> F[Update θ via Policy Gradient];
+    F --> G{Training Done?};
+    G -- Yes --> H(End);
+    G -- No --> C;

@@ -1,0 +1,99 @@
+graph LR
+    subgraph "Episode Start / Reset"
+        A["[File I/O: Load Instance]
+        Randomly select a .csv file from the data/ directory
+        "]
+        --> B["[Data Processing: Sorting]
+        Sort items in descending order by value-to-weight ratio
+        "]
+    end
+
+    subgraph "Step t: Environment Generates Observation"
+        C["[Data Processing: Padding & Scaling]
+        1. Place sorted items into a (50, 2) array
+        2. Pad remaining positions with zeros
+        3. Normalize: weight/100, value/100, capacity/100
+        4. Generate a boolean Mask
+        "]
+        --> D["[Data: Raw Observation Dictionary]
+        {items: (50,2), capacity: (1,), mask: (50,)}
+        (NumPy Arrays)"]
+    end
+    B --> C
+
+    subgraph "Step t: SB3 Wrapper & Model"
+        D --> E["[Data Normalization: VecNormalize]
+        Use accumulated mean and std from training
+        Apply Z-score normalization to items and capacity
+        Mask remains unchanged
+        "]
+        --> F["[Data: Normalized Observation Dictionary]
+        {items, capacity, mask}
+        (PyTorch Tensors)"]
+
+        F --> G["[Model-Encoder: Feature Extraction]
+        1. Item Embedding: (50, 2) -> (50, 128)
+        2. Transformer Encoder
+        3. Mean Pooling
+        "]
+
+        G --> H["[Data: Context & Global Features]
+        - context (50, 128)
+        - pooled_features (128,)"]
+        
+        subgraph "Actor-Critic Heads"
+            H --> I_Actor["[Model-Actor: PointerNet]
+            Use pooled_features as Query
+            Compute attention over context
+            "]
+            --> J_Actor["[Data: Raw Logits]
+            A score vector of size (50,)
+            "]
+            --> K_Actor["[Data Processing: Apply Mask]
+            Set logits to -inf where mask is False
+            "]
+            --> L_Actor["[Decision: Sample Action]
+            Convert logits to probabilities via Softmax
+            Sample an action (integer index)"]
+
+            H --> I_Critic["[Model-Critic: MLP]
+            Feed pooled_features into an MLP network
+            "]
+            --> J_Critic["[Data: State Value]
+            Output a scalar (float)
+            Used in PPO update"]
+        end
+    end
+    
+    subgraph "Step t: Environment Receives and Updates State"
+        L_Actor --> M["[Environment Interface: env.step(action)]
+        The selected action (integer) is passed
+        to the environment's step method
+        "]
+        --> N{"[Decision: Is Action Valid?]"}
+        N -- Yes --> O["[Core Operation: State Update & 'Memory']
+        1. self.remaining_capacity -= weight[action]
+        2. self.items_packed[action] = True (this is the 'memory')
+        "]
+        N -- No --> P["[State: Remains Unchanged]"]
+        O --> Q["[Loop: Prepare for Next Step]
+        Episode not yet finished"]
+        P --> Q
+    end
+
+    Q --> C_NextStep["[Proceed to Step t+1]
+    The environment, based on updated state
+    (new capacity and packed items)
+    regenerates a new observation in Phase 1"]
+    
+    C_NextStep --> C
+
+    subgraph "Episode End"
+        Q --> R{"[Decision: Is Episode Over?]
+        (No more items can fit or all are processed)"}
+        R -- Yes --> S["[End]"]
+        R -- No --> C_NextStep
+    end
+    
+    %% style A fill:#cde4ff
+    %% style S fill:#ffcdd2

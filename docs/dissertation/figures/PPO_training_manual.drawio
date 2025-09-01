@@ -1,0 +1,102 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/28.0.6 Chrome/138.0.7204.100 Electron/37.2.3 Safari/537.36" version="28.0.6">
+  <diagram name="第 1 页" id="_ksLS6vk8AXReH3x_EjZ">
+    <mxGraphModel dx="1426" dy="841" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-1" target="-jLRQ6ywCPKzy5jc2dw4-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-1" value="start training" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="325" y="50" width="120" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-3" target="-jLRQ6ywCPKzy5jc2dw4-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-3" value="&lt;div&gt;Initialize Actor Network&lt;/div&gt;&lt;div&gt;and Critic Network&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="285" y="110" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-4" target="-jLRQ6ywCPKzy5jc2dw4-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-4" target="-jLRQ6ywCPKzy5jc2dw4-27">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="620" y="340" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-4" value="For timesteps = 1, 2, ..." style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="287.5" y="190" width="195" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-5" target="-jLRQ6ywCPKzy5jc2dw4-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-30" value="ROLLOUT BUFFER:&amp;nbsp;&lt;div&gt;s_t,&amp;nbsp;a_t,&amp;nbsp;log π(a_t|s_t),&amp;nbsp;r_t,&amp;nbsp;V(s_t)&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-jLRQ6ywCPKzy5jc2dw4-15">
+          <mxGeometry x="-0.2" y="2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-5" value="&lt;div&gt;Collect a set of partial&lt;/div&gt;&lt;div&gt;trajectories&lt;/div&gt;&lt;div&gt;for N steps using old policy&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="270" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-6" target="-jLRQ6ywCPKzy5jc2dw4-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-6" value="&lt;div&gt;For each step t, compute&lt;/div&gt;&lt;div&gt;Advantage Estimate A_t&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="55" y="420" width="170" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-7" target="-jLRQ6ywCPKzy5jc2dw4-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-31" value="minibatch in buffer" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-jLRQ6ywCPKzy5jc2dw4-20">
+          <mxGeometry x="-0.5733" y="2" relative="1" as="geometry">
+            <mxPoint x="21" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-7" target="-jLRQ6ywCPKzy5jc2dw4-4">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="308" y="555" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-24" value="after K updatings" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-jLRQ6ywCPKzy5jc2dw4-23">
+          <mxGeometry x="0.0364" y="4" relative="1" as="geometry">
+            <mxPoint x="-71" y="56" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-34" value="Actor/Critic" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-jLRQ6ywCPKzy5jc2dw4-23">
+          <mxGeometry x="0.3169" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-32" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="-jLRQ6ywCPKzy5jc2dw4-7" target="-jLRQ6ywCPKzy5jc2dw4-9">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="184" y="610" />
+              <mxPoint x="555" y="610" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-7" value="For epoch = 1, 2,., K" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="60" y="515" width="165" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-8" value="&lt;div&gt;Update Actor policy&lt;/div&gt;&lt;div&gt;by maximizing the PPO&lt;/div&gt;&lt;div&gt;objective L_CLIP&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="650" width="295" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-9" value="&lt;div&gt;Update Critic value V(Φ)&lt;/div&gt;&lt;div&gt;by minimizing loss (e.g., MSE)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="445" y="650" width="220" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-27" value="end training" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="560" y="350" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-28" value="enough timesteps" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="480" y="206" width="120" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-29" value="&lt;span class=&quot;math-inline&quot;&gt;&lt;span style=&quot;height: 0.6864em; vertical-align: -0.2559em;&quot; class=&quot;strut&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right: 0.0359em;&quot;&gt;π&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.3361em;&quot; class=&quot;vlist&quot;&gt;&lt;span style=&quot;top: -2.55em; margin-left: -0.0359em; margin-right: 0.05em;&quot; class=&quot;&quot;&gt;&lt;span style=&quot;height: 2.7em;&quot; class=&quot;pstrut&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size6 size3 mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mathnormal mtight&quot; style=&quot;margin-right: 0.0278em;&quot;&gt;θ&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.3448em;&quot; class=&quot;vlist&quot;&gt;&lt;span style=&quot;top: -2.3488em; margin-left: -0.0278em; margin-right: 0.0714em;&quot; class=&quot;&quot;&gt;&lt;span style=&quot;height: 2.5em;&quot; class=&quot;pstrut&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size3 size1 mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mathnormal mtight&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;mord mathnormal mtight&quot; style=&quot;margin-right: 0.0197em;&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;mord mathnormal mtight&quot;&gt;d&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.1512em;&quot; class=&quot;vlist&quot;&gt;&lt;span class=&quot;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.2559em;&quot; class=&quot;vlist&quot;&gt;&lt;span class=&quot;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; (Actor) and&amp;nbsp;&lt;span class=&quot;math-inline&quot;&gt;&lt;span class=&quot;katex&quot;&gt;&lt;span aria-hidden=&quot;true&quot; class=&quot;katex-html&quot;&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathnormal&quot; style=&quot;margin-right: 0.2222em;&quot;&gt;V&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.3361em;&quot; class=&quot;vlist&quot;&gt;&lt;span style=&quot;top: -2.55em; margin-left: -0.2222em; margin-right: 0.05em;&quot; class=&quot;&quot;&gt;&lt;span style=&quot;height: 2.7em;&quot; class=&quot;pstrut&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size6 size3 mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mathnormal mtight&quot;&gt;ϕ&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.3448em;&quot; class=&quot;vlist&quot;&gt;&lt;span style=&quot;top: -2.3488em; margin-left: 0em; margin-right: 0.0714em;&quot; class=&quot;&quot;&gt;&lt;span style=&quot;height: 2.5em;&quot; class=&quot;pstrut&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size3 size1 mtight&quot;&gt;&lt;span class=&quot;mord mtight&quot;&gt;&lt;span class=&quot;mord mathnormal mtight&quot;&gt;o&lt;/span&gt;&lt;span class=&quot;mord mathnormal mtight&quot; style=&quot;margin-right: 0.0197em;&quot;&gt;l&lt;/span&gt;&lt;span class=&quot;mord mathnormal mtight&quot;&gt;d&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.1512em;&quot; class=&quot;vlist&quot;&gt;&lt;span class=&quot;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span style=&quot;height: 0.2861em;&quot; class=&quot;vlist&quot;&gt;&lt;span class=&quot;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt; (Critic)" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="115" y="208" width="190" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="-jLRQ6ywCPKzy5jc2dw4-33" value="same minibatch in buffer" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="335" y="588" width="150" height="30" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

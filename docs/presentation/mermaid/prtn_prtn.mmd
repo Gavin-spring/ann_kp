@@ -1,0 +1,37 @@
+graph TD
+    subgraph "Pointer Networks"
+        direction TB
+        
+        A_Input("Input Items<br/>(Batch, SeqLen, 2)");
+        
+        subgraph "Embedding"
+            B["Embedding Layer<br/>nn.Linear(2, embedding_dim)"];
+        end
+        
+        subgraph "Encoder (Pointer Network)"
+            C["LSTM Encoder<br/>- Takes embedded items<br/>- Outputs context & hidden state"];
+        end
+        
+        subgraph "Decoder (Pointer Network)"
+            D[LSTMCell Decoder];
+            E[Glimpse Attention];
+            F[Pointer Attention];
+            D -- query --> E;
+            C -- context --> E;
+            E -- refined query --> F;
+            C -- context --> F;
+        end
+        
+        G_Output("Output: Action Probabilities<br/>(Policy)");
+        
+        A_Input --> B;
+        B --> C;
+        C --> D;
+        F --> G_Output;
+        
+        %% subgraph "Value Estimation"
+        %%     H[No Critic Network<br/>Baseline is calculated via<br/>Exponential Moving Average of rewards in rl_solver.py];
+        %% end
+    end
+
+    %% style H fill:#f9f,stroke:#333,stroke-width:2px
